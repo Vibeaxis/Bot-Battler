@@ -9,7 +9,7 @@ import { calculateBotStats } from '@/utils/statCalculator';
 
 const IconMap = { ...LucideIcons };
 
-const BotCard = ({ bot, slotLevels, className = '' }) => {
+const BotCard = ({ bot, slotLevels, isAttacking, side = 'player', className = '' }) => {
   // Use the utility for consistent stat calculation including multipliers
   const stats = calculateBotStats({
     ...bot,
