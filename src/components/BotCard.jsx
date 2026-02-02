@@ -15,7 +15,23 @@ const BotCard = ({ bot, slotLevels, className = '' }) => {
     ...bot,
     slotLevels: slotLevels || bot.slotLevels
   });
-
+// Add these to your CSS or a <style> tag in this file
+const attackStyles = `
+  @keyframes lunge-right {
+    0% { transform: translateX(0); }
+    20% { transform: translateX(-10px); } /* Wind up */
+    40% { transform: translateX(30px); }  /* Impact */
+    100% { transform: translateX(0); }
+  }
+  @keyframes lunge-left {
+    0% { transform: translateX(0); }
+    20% { transform: translateX(10px); }
+    40% { transform: translateX(-30px); }
+    100% { transform: translateX(0); }
+  }
+  .animate-attack-right { animation: lunge-right 0.4s ease-out; }
+  .animate-attack-left { animation: lunge-left 0.4s ease-out; }
+`;
   // CHANGED: Reordered slots and added 'gridClass' for layout control
   // Head & Chassis span full width (col-span-2) but are centered (w-2/3 mx-auto)
   const slots = [
@@ -47,14 +63,21 @@ const BotCard = ({ bot, slotLevels, className = '' }) => {
           const colors = RARITY_COLORS[tier] || RARITY_COLORS[1];
           
           return (
-            // CHANGED: Added gridClass here to control span/width
-            <div key={`${key}-${index}`} className={`relative group z-10 hover:z-50 ${gridClass}`}>
+            <div 
+              key={`${key}-${index}`} 
+              className={cn(
+                `relative group z-10 hover:z-50 ${gridClass}`,
+                shouldAnimateArm && (side === 'player' ? 'animate-attack-right' : 'animate-attack-left')
+              )}
+            >
               <div 
                 className={cn(
                   "w-full aspect-square max-h-24 flex flex-col items-center justify-center rounded-none border transition-all duration-300 relative overflow-hidden",
                   part ? "bg-[rgba(var(--accent-rgb),0.05)]" : "bg-black/50",
                   part ? colors.border : "border-gray-800 border-dashed",
-                  "group-hover:bg-[rgba(var(--accent-rgb),0.1)]"
+                  "group-hover:bg-[rgba(var(--accent-rgb),0.1)]",
+                  // Add a subtle glow when the arm is "Active"
+                  shouldAnimateArm && "ring-2 ring-white shadow-[0_0_15px_rgba(255,255,255,0.5)]"
                 )}
               >
                 <Icon className={cn("w-8 h-8 mb-1", part ? colors.text : "text-gray-700")} />
