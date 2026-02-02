@@ -29,7 +29,6 @@ export const simulateBattle = (botA, botB, protocolA, protocolB) => {
   let statsB = calculateBotStats(botB);
   
   const battleLog = [];
-  
   const criticalHits = [];
   
   battleLog.push(`⚔️ Battle Start: ${botA.name} vs ${botB.name}`);
