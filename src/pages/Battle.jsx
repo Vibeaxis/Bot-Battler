@@ -344,6 +344,8 @@ return (
                             <SpeechToast message={leftToast} position="left" />
                             <BotCard
                                 bot={gameState.playerBot}
+                                side="player" 
+  isAttacking={combatState === 'PLAYER_STRIKE'}
                                 slotLevels={gameState.slotLevels}
                                 className="shadow-[0_0_30px_-5px_rgba(var(--accent-rgb),0.3)] border-[var(--accent-color)]"
                             />
@@ -450,7 +452,8 @@ return (
                         {/* Enemy Column */}
                         <div className="xl:col-span-3 order-3 xl:order-3 h-full relative flex flex-col justify-start pt-2">
                             <SpeechToast message={rightToast} position="right" />
-                            <BotCard bot={enemy} className="shadow-red-900/20 shadow-xl border-red-900/30" />
+                            <BotCard bot={enemy} side="enemy" 
+  isAttacking={combatState === 'ENEMY_STRIKE'} className="shadow-red-900/20 shadow-xl border-red-900/30" />
                             {isBattling && enemyProtocol && (
                                 <div className="mt-2 text-center text-xs font-bold px-2 py-1 rounded border border-red-500 text-red-500 bg-red-900/20">
                                     PROTOCOL: {enemyProtocol.name}
