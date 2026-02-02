@@ -311,7 +311,6 @@ const Battle = () => {
             >
                 <div className="absolute inset-0 bg-gray-900/90" />
 
-                {/* Header is standard height */}
                 <BattleHeader
                     playerHealth={playerHealth}
                     enemyHealth={enemyHealth}
@@ -321,15 +320,14 @@ const Battle = () => {
 
                 <motion.div
                     animate={controls}
-                    // CHANGED: Removed pb-8, added h-full to force flex container to fill remaining space
                     className="relative w-full max-w-[1600px] mx-auto px-6 pb-4 flex-1 flex flex-col min-h-0"
                 >
-                    {/* Top Bar - Made more compact with mb-2 instead of mb-4 */}
+                    {/* Top Bar */}
                     <div className="flex justify-between items-center mb-2 shrink-0">
                         <Button
                             onClick={() => navigate('/hub')}
                             variant="ghost"
-                            size="sm" // Smaller button to save space
+                            size="sm"
                             className="text-gray-400 hover:text-white hover:bg-white/10 h-8"
                         >
                             <ArrowLeft className="w-4 h-4 mr-2" />
@@ -338,13 +336,12 @@ const Battle = () => {
                         <BattleSpeedToggle speed={battleSpeed} setSpeed={setBattleSpeed} />
                     </div>
 
-                    {/* Main Grid - CHANGED: gap-8 -> gap-4, removed min-h-[600px] */}
-                    <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 h-full min-h-0">
+                    {/* Main Grid: Added items-start to force top alignment */}
+                    <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 h-full min-h-0 items-start">
 
-                        {/* Player Column */}
-                        <div className="xl:col-span-3 order-2 xl:order-1 h-full relative flex flex-col justify-center">
+                        {/* Player Column - CHANGED: justify-center -> justify-start pt-2 */}
+                        <div className="xl:col-span-3 order-2 xl:order-1 h-full relative flex flex-col justify-start pt-2">
                             <SpeechToast message={leftToast} position="left" />
-                            {/* Added scale-95 to slightly shrink cards if needed, or keep standard */}
                             <BotCard
                                 bot={gameState.playerBot}
                                 slotLevels={gameState.slotLevels}
@@ -357,14 +354,12 @@ const Battle = () => {
                             )}
                         </div>
 
-                        {/* Combat Log Column - Center Stage */}
+                        {/* Combat Log Column - Remains Full Height for formatting */}
                         <div className="xl:col-span-6 order-1 xl:order-2 flex flex-col gap-2 h-full min-h-0">
-                            {/* The Log takes all available space */}
                             <div className="flex-1 min-h-0 relative">
                                 <CombatLog logs={battleLog} playerName={gameState.playerBot.name} />
                             </div>
 
-                            {/* Controls Area - Compacted padding */}
                             <div className="flex flex-col gap-2 justify-center mt-auto pt-2 shrink-0">
                                 {!battleResult ? (
                                     <>
@@ -426,8 +421,8 @@ const Battle = () => {
                             </div>
                         </div>
 
-                        {/* Enemy Column */}
-                        <div className="xl:col-span-3 order-3 xl:order-3 h-full relative flex flex-col justify-center">
+                        {/* Enemy Column - CHANGED: justify-center -> justify-start pt-2 */}
+                        <div className="xl:col-span-3 order-3 xl:order-3 h-full relative flex flex-col justify-start pt-2">
                             <SpeechToast message={rightToast} position="right" />
                             <BotCard bot={enemy} className="shadow-red-900/20 shadow-xl border-red-900/30" />
                             {isBattling && enemyProtocol && (
