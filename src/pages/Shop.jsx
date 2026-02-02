@@ -94,7 +94,10 @@ const Shop = () => {
   
   // Separate inventory parts (sellable) and equipped parts (read-only in shop)
   const inventoryParts = gameState.inventory.map(id => getPartById(id)).filter(Boolean);
-  
+  // NEW: Filter logic
+  const filteredParts = activeCategory === 'ALL' 
+    ? inventoryParts 
+    : inventoryParts.filter(p => p.slot === activeCategory);
   const equippedParts = Object.values(gameState.playerBot.equipment)
     .filter(id => id)
     .map(id => getPartById(id))
