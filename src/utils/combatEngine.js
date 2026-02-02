@@ -29,7 +29,7 @@ export const simulateBattle = (botA, botB, protocolA, protocolB) => {
   let statsB = calculateBotStats(botB);
   
   const battleLog = [];
-  const healthTimeline = []; // NEW: Track health for every single log line
+  
   const criticalHits = [];
   
   battleLog.push(`⚔️ Battle Start: ${botA.name} vs ${botB.name}`);
