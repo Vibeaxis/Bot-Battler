@@ -39,7 +39,8 @@ const Battle = () => {
   const [showScavengeModal, setShowScavengeModal] = useState(false);
   const [pendingRewards, setPendingRewards] = useState({ scrap: 0 });
   const [battleSpeed, setBattleSpeed] = useState(1);
-  
+  const [playerAttacking, setPlayerAttacking] = useState(false);
+const [enemyAttacking, setEnemyAttacking] = useState(false);
   // Protocol State
   const [playerProtocol, setPlayerProtocol] = useState(null);
   const [enemyProtocol, setEnemyProtocol] = useState(null);
@@ -199,21 +200,34 @@ const Battle = () => {
         if (roundMatch) setCurrentRound(parseInt(roundMatch[1]));
       }
       
-      // Sound effects based on log content
+    // Sound effects and Animations based on log content
+      const isPlayerAction = logEntry.includes(gameState.playerBot.name);
+      const isEnemyAction = logEntry.includes(enemy.name);
+      const isHit = logEntry.includes('damage') || logEntry.includes('CRITICAL');
+
       if (logEntry.includes('CRITICAL')) {
         playSound('CRIT');
         
-        const isPlayerCrit = logEntry.includes(gameState.playerBot.name) && logEntry.includes('CRITICAL');
-        const isEnemyCrit = logEntry.includes(enemy.name) && logEntry.includes('CRITICAL');
-
-        if (isPlayerCrit) {
+        if (isPlayerAction) {
            setRightToast(getRandomFlavor('HIT'));
-        } else if (isEnemyCrit) {
+           setPlayerAttacking(true);
+           setTimeout(() => setPlayerAttacking(false), 400 / battleSpeedRef.current);
+        } else if (isEnemyAction) {
            setLeftToast(getRandomFlavor('HIT'));
+           setEnemyAttacking(true);
+           setTimeout(() => setEnemyAttacking(false), 400 / battleSpeedRef.current);
         }
 
       } else if (logEntry.includes('damage')) {
         playSound('HIT');
+
+        if (isPlayerAction) {
+          setPlayerAttacking(true);
+          setTimeout(() => setPlayerAttacking(false), 400 / battleSpeedRef.current);
+        } else if (isEnemyAction) {
+          setEnemyAttacking(true);
+          setTimeout(() => setEnemyAttacking(false), 400 / battleSpeedRef.current);
+        }
       }
 
       // Updated delay logic with battle speed multiplier
