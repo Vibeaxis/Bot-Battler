@@ -1,0 +1,17 @@
+/*
+  TEMPLATE STYLES: These styles are used as a base template.
+  AI is allowed to modify these styles as needed.
+*/
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --accent-color: #00ff9d;
+  --accent-rgb: 0, 255, 157;
+}
+
+body {
+    @apply bg-gradient-to-br from-indigo-900 via-purple-900 to-slate-900 bg-slate-900 text-white;
+    font-family: 'DM Sans', sans-serif;
+}
