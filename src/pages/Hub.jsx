@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Helmet } from 'react-helmet';
 import { motion } from 'framer-motion';
@@ -27,6 +26,13 @@ const Hub = () => {
   
   const menuItems = [
     {
+      title: 'Battle Arena',
+      description: 'Combat Zone',
+      icon: Swords,
+      path: '/battle',
+      borderColor: 'border-green-500' // Keep as fallback or use theme
+    },
+    {
       title: 'Workshop',
       description: 'System Config',
       icon: Wrench,
@@ -46,13 +52,6 @@ const Hub = () => {
       icon: ShoppingCart,
       path: '/shop',
       borderColor: 'border-purple-500'
-    },
-    {
-      title: 'Battle Arena',
-      description: 'Combat Zone',
-      icon: Swords,
-      path: '/battle',
-      borderColor: 'border-green-500'
     }
   ];
 
@@ -60,7 +59,7 @@ const Hub = () => {
   
   const handleFactoryReset = () => {
     if (window.confirm("WARNING: This will wipe your save file permanently. Are you sure?")) {
-      playSound('FUSE'); // Sound effect for destruction
+      playSound('FUSE');
       factoryReset();
     }
   };
@@ -75,153 +74,155 @@ const Hub = () => {
       <HangarModal isOpen={isHangarOpen} onClose={() => setIsHangarOpen(false)} />
 
       <div className="min-h-screen bg-[#0a0a12] p-4 font-mono text-[#e0e0e0] selection:bg-[var(--accent-color)] selection:text-black">
-        <div className="max-w-6xl mx-auto py-8 relative">
+        <div className="max-w-7xl mx-auto py-8 relative">
           
-          {/* Factory Reset Button */}
-          <div className="absolute top-0 left-0 z-10">
+          {/* Header & Factory Reset */}
+          <div className="flex justify-between items-start mb-8">
+             <div className="text-left">
+                <h1 className="text-4xl md:text-5xl font-bold text-[var(--accent-color)] uppercase tracking-widest [text-shadow:0_0_10px_var(--accent-color)] leading-none">
+                  Command Center
+                </h1>
+                <p className="text-sm md:text-xl text-gray-500 uppercase tracking-[0.4em] mt-2">
+                  Robot Battle Arena
+                </p>
+             </div>
+
              <Button 
-               onClick={handleFactoryReset}
-               variant="ghost" 
-               className="text-red-500 hover:text-red-400 hover:bg-red-900/20 opacity-30 hover:opacity-100 transition-all p-2 h-auto rounded-none"
-               title="Factory Reset Data"
+                onClick={handleFactoryReset}
+                variant="ghost" 
+                className="text-red-900 hover:text-red-500 hover:bg-red-900/20 transition-all p-2 h-auto rounded-none border border-transparent hover:border-red-500"
+                title="Factory Reset Data"
              >
-               <Trash2 className="w-5 h-5" />
+                <Trash2 className="w-5 h-5" />
              </Button>
           </div>
 
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-center mb-8"
-          >
-            <h1 className="text-5xl font-bold mb-4 text-[var(--accent-color)] uppercase tracking-widest [text-shadow:0_0_10px_var(--accent-color)]">
-              Robot Battle Arena
-            </h1>
-            <p className="text-xl text-gray-500 uppercase tracking-[0.2em] border-b border-gray-800 inline-block pb-2">Command Center</p>
-          </motion.div>
-
-          <motion.div
-             initial={{ opacity: 0, scale: 0.95 }}
-             animate={{ opacity: 1, scale: 1 }}
-             onClick={() => setIsHangarOpen(true)}
-             className="bg-black/80 border border-[var(--accent-color)] rounded-none p-6 mb-8 flex items-center justify-center gap-4 max-w-md mx-auto shadow-[0_0_15px_rgba(var(--accent-rgb),0.1)] cursor-pointer hover:bg-[rgba(var(--accent-rgb),0.1)] transition-all group relative overflow-hidden"
-          >
-             {/* Hover indicator */}
-             <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity text-[10px] text-[var(--accent-color)] border border-[var(--accent-color)] px-1 uppercase">
-               Change Unit
-             </div>
-
-             <div className="p-3 bg-[rgba(var(--accent-rgb),0.1)] rounded-none border border-[var(--accent-color)] group-hover:scale-110 transition-transform">
-               <BotIcon className="w-8 h-8 text-[var(--accent-color)]" />
-             </div>
-             <div className="text-left">
-               <div className="text-xs text-gray-500 uppercase tracking-widest group-hover:text-[var(--accent-color)]">Active Unit</div>
-               <div className="text-2xl font-bold text-[#e0e0e0] uppercase tracking-wider">{gameState.playerBot.name}</div>
-             </div>
-          </motion.div>
-          
-          <div className="grid md:grid-cols-3 gap-6 mb-8">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.1 }}
-              className="bg-black/80 rounded-none p-6 border border-[var(--accent-color)] hover:bg-[rgba(var(--accent-rgb),0.05)] transition-colors"
-            >
-              <div className="flex items-center gap-3 mb-2">
-                <Coins className="w-8 h-8 text-yellow-500" />
-                <div>
-                  <div className="text-xs text-gray-500 uppercase">Current Scrap</div>
-                  <div className="text-3xl font-bold text-yellow-500">{gameState.scrap}</div>
-                </div>
-              </div>
-              <div className="text-xs text-gray-600 font-mono border-t border-gray-800 pt-2 mt-2">Total Earned: {gameState.totalScrapEarned}</div>
-            </motion.div>
-            
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.2 }}
-              className="bg-black/80 rounded-none p-6 border border-[var(--accent-color)] hover:bg-[rgba(var(--accent-rgb),0.05)] transition-colors"
-            >
-              <div className="flex items-center gap-3">
-                <Trophy className="w-8 h-8 text-green-500" />
-                <div>
-                  <div className="text-xs text-gray-500 uppercase">Win Streak</div>
-                  <div className="text-3xl font-bold text-green-500">{gameState.winStreak}</div>
-                </div>
-              </div>
-            </motion.div>
-            
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.3 }}
-              className="bg-black/80 rounded-none p-6 border border-[var(--accent-color)] hover:bg-[rgba(var(--accent-rgb),0.05)] transition-colors"
-            >
-              <div className="flex items-center gap-3">
-                <Flame className="w-8 h-8 text-red-500" />
-                <div>
-                  <div className="text-xs text-gray-500 uppercase">Loss Streak</div>
-                  <div className="text-3xl font-bold text-red-500">{gameState.lossStreak}</div>
-                </div>
-              </div>
-            </motion.div>
-          </div>
-          
-          {lastBattle && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
-              className="bg-black/80 rounded-none p-6 border border-[var(--accent-color)] mb-8 font-mono"
-            >
-              <div className="flex justify-between items-center border-b border-gray-800 pb-2 mb-2">
-                 <h3 className="text-lg font-bold text-[#e0e0e0] uppercase">Last Battle Log</h3>
-                 <span className="text-xs text-gray-500">{new Date(lastBattle.timestamp).toLocaleTimeString()}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <p className="text-gray-400 text-sm">
-                  {gameState.playerBot.name} <span className="text-gray-600">VS</span> {lastBattle.enemyName}
-                </p>
-                <div className="text-right">
-                  <p className={`text-sm font-bold uppercase ${lastBattle.playerWon ? 'text-green-500' : 'text-red-500'}`}>
-                    {lastBattle.playerWon ? 'Victory' : 'Defeat'}
-                  </p>
-                  <p className="text-gray-500 text-xs">
-                    +{lastBattle.scrapEarned} Scrap
-                  </p>
-                </div>
-              </div>
-            </motion.div>
-          )}
-          
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {/* SECTION 1: MAIN ACTION BUTTONS (Moved to Top) */}
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
             {menuItems.map((item, index) => {
               const Icon = item.icon;
-              
               return (
                 <motion.div
                   key={item.title}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.1 * (index + 5) }}
+                  transition={{ delay: 0.1 * index }}
                 >
                   <Button
                     onClick={() => navigate(item.path)}
-                    className="w-full h-auto p-0 overflow-hidden group bg-black/80 border border-[var(--accent-color)] hover:bg-[rgba(var(--accent-rgb),0.1)] hover:scale-[1.02] transition-all rounded-none"
+                    className="w-full h-32 p-0 overflow-hidden group bg-black/80 border border-[var(--accent-color)] hover:bg-[rgba(var(--accent-rgb),0.1)] transition-all rounded-none relative"
                   >
-                    <div className="p-8 w-full flex flex-col items-center">
-                      <div className="border border-[rgba(var(--accent-rgb),0.3)] p-4 mb-4 rounded-none group-hover:border-[var(--accent-color)] transition-colors">
-                        <Icon className="w-10 h-10 text-[var(--accent-color)] group-hover:[filter:drop-shadow(0_0_5px_var(--accent-color))] transition-all" />
-                      </div>
-                      <h3 className="text-xl font-bold text-[#e0e0e0] mb-2 font-mono uppercase tracking-wider group-hover:text-[var(--accent-color)] transition-colors">{item.title}</h3>
-                      <p className="text-gray-500 text-xs font-mono uppercase tracking-widest">{item.description}</p>
+                    <div className="absolute top-0 right-0 p-2 opacity-50">
+                        <Icon className="w-16 h-16 text-[var(--accent-color)] opacity-10 group-hover:opacity-20 group-hover:scale-110 transition-all duration-500" />
+                    </div>
+                    
+                    <div className="w-full h-full flex flex-col items-center justify-center relative z-10">
+                      <Icon className="w-8 h-8 mb-3 text-[var(--accent-color)] group-hover:drop-shadow-[0_0_8px_var(--accent-color)] transition-all" />
+                      <h3 className="text-xl font-bold text-[#e0e0e0] font-mono uppercase tracking-wider group-hover:text-[var(--accent-color)] transition-colors">
+                        {item.title}
+                      </h3>
+                      <div className="h-[1px] w-8 bg-gray-700 my-1 group-hover:w-16 group-hover:bg-[var(--accent-color)] transition-all" />
+                      <p className="text-gray-500 text-[10px] font-mono uppercase tracking-widest">
+                        {item.description}
+                      </p>
                     </div>
                   </Button>
                 </motion.div>
               );
             })}
           </div>
+
+          {/* SECTION 2: STATUS DASHBOARD (Active Bot + Stats) */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-8">
+              
+              {/* Left Column: Active Unit (Takes 4/12 columns on large screens) */}
+              <div className="lg:col-span-4 flex flex-col">
+                  <motion.div
+                     initial={{ opacity: 0, x: -20 }}
+                     animate={{ opacity: 1, x: 0 }}
+                     transition={{ delay: 0.3 }}
+                     onClick={() => setIsHangarOpen(true)}
+                     className="flex-1 bg-black/40 border border-[var(--accent-color)] p-6 relative cursor-pointer group hover:bg-[rgba(var(--accent-rgb),0.05)] transition-all flex flex-col items-center justify-center min-h-[200px]"
+                  >
+                     <div className="absolute top-0 left-0 bg-[var(--accent-color)] text-black text-[10px] font-bold px-2 py-0.5 uppercase">
+                        Active Unit
+                     </div>
+                     <div className="absolute top-2 right-2 text-[var(--accent-color)] opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Wrench className="w-4 h-4" />
+                     </div>
+
+                     <div className="mb-4 p-4 rounded-full border-2 border-[var(--accent-color)] bg-black shadow-[0_0_20px_rgba(var(--accent-rgb),0.2)] group-hover:shadow-[0_0_30px_rgba(var(--accent-rgb),0.4)] transition-all">
+                        <BotIcon className="w-12 h-12 text-[var(--accent-color)]" />
+                     </div>
+                     
+                     <h2 className="text-2xl font-bold text-white uppercase tracking-widest text-center group-hover:text-[var(--accent-color)] transition-colors">
+                        {gameState.playerBot.name}
+                     </h2>
+                     <p className="text-xs text-gray-500 mt-2 uppercase tracking-widest">[ CLICK TO SWAP ]</p>
+                  </motion.div>
+              </div>
+
+              {/* Right Column: Stats Grid (Takes 8/12 columns) */}
+              <div className="lg:col-span-8 grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.4 }}
+                    className="bg-black/40 border border-gray-800 p-4 flex flex-col justify-center items-center hover:border-yellow-500/50 transition-colors"
+                  >
+                      <Coins className="w-6 h-6 text-yellow-500 mb-2" />
+                      <div className="text-3xl font-bold text-yellow-500">{gameState.scrap}</div>
+                      <div className="text-[10px] text-gray-500 uppercase tracking-widest">Scrap Reserves</div>
+                      <div className="text-[9px] text-gray-700 mt-1">Total: {gameState.totalScrapEarned}</div>
+                  </motion.div>
+
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.5 }}
+                    className="bg-black/40 border border-gray-800 p-4 flex flex-col justify-center items-center hover:border-green-500/50 transition-colors"
+                  >
+                      <Trophy className="w-6 h-6 text-green-500 mb-2" />
+                      <div className="text-3xl font-bold text-green-500">{gameState.winStreak}</div>
+                      <div className="text-[10px] text-gray-500 uppercase tracking-widest">Win Streak</div>
+                  </motion.div>
+
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.6 }}
+                    className="bg-black/40 border border-gray-800 p-4 flex flex-col justify-center items-center hover:border-red-500/50 transition-colors"
+                  >
+                      <Flame className="w-6 h-6 text-red-500 mb-2" />
+                      <div className="text-3xl font-bold text-red-500">{gameState.lossStreak}</div>
+                      <div className="text-[10px] text-gray-500 uppercase tracking-widest">Loss Streak</div>
+                  </motion.div>
+                  
+                  {/* Last Battle Log (Spans full width of the stats column) */}
+                  {lastBattle && (
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 0.7 }}
+                      className="md:col-span-3 bg-black/40 border border-gray-800 p-4 mt-2"
+                    >
+                        <div className="flex justify-between items-center mb-2 border-b border-gray-800 pb-2">
+                            <span className="text-xs text-gray-400 uppercase tracking-widest">Latest Engagement</span>
+                            <span className="text-[10px] text-gray-600">{new Date(lastBattle.timestamp).toLocaleTimeString()}</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                            <span className="text-sm font-mono text-gray-300">
+                                VS <span className="text-white font-bold">{lastBattle.enemyName}</span>
+                            </span>
+                            <span className={`text-sm font-bold uppercase px-2 py-0.5 rounded-sm ${lastBattle.playerWon ? 'bg-green-900/20 text-green-500' : 'bg-red-900/20 text-red-500'}`}>
+                                {lastBattle.playerWon ? 'VICTORY' : 'DEFEAT'}
+                            </span>
+                        </div>
+                    </motion.div>
+                  )}
+              </div>
+          </div>
+
         </div>
       </div>
     </>
