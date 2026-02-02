@@ -295,7 +295,7 @@ const Battle = () => {
     </div>;
   }
   
-    return (
+return (
         <>
             <Helmet>
                 <title>Battle Arena - Robot Battle Arena</title>
@@ -328,39 +328,58 @@ const Battle = () => {
                             onClick={() => navigate('/hub')}
                             variant="ghost"
                             size="sm"
-                           className="text-gray-400 hover:text-[var(--accent-color)] hover:bg-[rgba(var(--accent-rgb),0.1)] h-8"
->
+                            className="text-gray-400 hover:text-[var(--accent-color)] hover:bg-[rgba(var(--accent-rgb),0.1)] h-8"
+                        >
                             <ArrowLeft className="w-4 h-4 mr-2" />
                             Exit Arena
                         </Button>
                         <BattleSpeedToggle speed={battleSpeed} setSpeed={setBattleSpeed} />
                     </div>
 
-                    {/* Main Grid: Added items-start to force top alignment */}
+                    {/* Main Grid */}
                     <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 h-full min-h-0 items-start">
 
-                        {/* Player Column - CHANGED: justify-center -> justify-start pt-2 */}
+                        {/* Player Column */}
                         <div className="xl:col-span-3 order-2 xl:order-1 h-full relative flex flex-col justify-start pt-2">
                             <SpeechToast message={leftToast} position="left" />
                             <BotCard
                                 bot={gameState.playerBot}
                                 slotLevels={gameState.slotLevels}
-                               className="shadow-[0_0_30px_-5px_rgba(var(--accent-rgb),0.3)] border-[var(--accent-color)]"
-    />
+                                className="shadow-[0_0_30px_-5px_rgba(var(--accent-rgb),0.3)] border-[var(--accent-color)]"
+                            />
                             {isBattling && playerProtocol && (
-                               <div className="mt-2 text-center text-xs font-bold px-2 py-1 rounded border border-[var(--accent-color)] text-[var(--accent-color)] bg-[rgba(var(--accent-rgb),0.1)]">
+                                <div className="mt-2 text-center text-xs font-bold px-2 py-1 rounded border border-[var(--accent-color)] text-[var(--accent-color)] bg-[rgba(var(--accent-rgb),0.1)]">
                                     PROTOCOL: {playerProtocol.name}
                                 </div>
                             )}
                         </div>
 
-                        {/* Combat Log Column - Remains Full Height for formatting */}
+                        {/* Combat Log Column - Center Stage */}
                         <div className="xl:col-span-6 order-1 xl:order-2 flex flex-col gap-2 h-full min-h-0">
+                            {/* The Log takes all available space */}
                             <div className="flex-1 min-h-0 relative">
                                 <CombatLog logs={battleLog} playerName={gameState.playerBot.name} />
                             </div>
 
+                            {/* Controls Area */}
                             <div className="flex flex-col gap-2 justify-center mt-auto pt-2 shrink-0">
+                                
+                                {/* MOVED: Defeated Banner is now IN FLOW here, not absolute */}
+                                {battleResult && !battleResult.playerWon && (
+                                    <motion.div
+                                        initial={{ opacity: 0, scale: 0.95 }}
+                                        animate={{ opacity: 1, scale: 1 }}
+                                        className="w-full p-6 rounded-xl border-4 backdrop-blur-xl text-center shadow-2xl bg-red-900/90 border-red-500 text-red-100 mb-2"
+                                    >
+                                        <h2 className="text-5xl font-black mb-1 uppercase tracking-tighter">
+                                            DEFEATED
+                                        </h2>
+                                        <p className="text-xl">
+                                            Consolation: <span className="text-yellow-400 font-mono font-bold">{battleResult.reward}</span> Scrap
+                                        </p>
+                                    </motion.div>
+                                )}
+
                                 {!battleResult ? (
                                     <>
                                         <ProtocolSelector
@@ -381,31 +400,30 @@ const Battle = () => {
                                             </Button>
 
                                             <Button
-    onClick={startBattle}
-    disabled={isBattling || !playerProtocol}
-    // CHANGED: Dynamic background gradient using CSS variables
-    // We use style={{}} to inject the specific linear-gradient for the theme
-    style={!isBattling && playerProtocol ? {
-        background: `linear-gradient(135deg, rgba(var(--accent-rgb), 1) 0%, rgba(var(--accent-rgb), 0.6) 100%)`,
-        boxShadow: `0 0 20px rgba(var(--accent-rgb), 0.4)`
-    } : {}}
-    className={`text-black text-lg py-3 font-bold tracking-widest uppercase shadow-lg transform transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed ${!playerProtocol
-        ? 'bg-gray-700 text-gray-500' // Disabled State
-        : '' // Enabled state handled by style prop above
-    }`}
->
-    {isBattling ? (
-        <span className="text-[var(--accent-color)] flex items-center gap-2">
-             <RefreshCw className="w-5 h-5 animate-spin" /> BATTLE IN PROGRESS
-        </span>
-    ) : !playerProtocol ? (
-        <span className="text-gray-400 text-sm">Select Protocol</span>
-    ) : (
-        <span className="flex items-center gap-2 text-sm">
-            <Play className="w-4 h-4 fill-current" /> ENGAGE
-        </span>
-    )}
-</Button>
+                                                onClick={startBattle}
+                                                disabled={isBattling || !playerProtocol}
+                                                // CHANGED: Dynamic Theme Gradient
+                                                style={!isBattling && playerProtocol ? {
+                                                    background: `linear-gradient(135deg, rgba(var(--accent-rgb), 1) 0%, rgba(var(--accent-rgb), 0.6) 100%)`,
+                                                    boxShadow: `0 0 20px rgba(var(--accent-rgb), 0.4)`
+                                                } : {}}
+                                                className={`text-black text-lg py-3 font-bold tracking-widest uppercase shadow-lg transform transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed ${!playerProtocol
+                                                    ? 'bg-gray-700 text-gray-500'
+                                                    : ''
+                                                    }`}
+                                            >
+                                                {isBattling ? (
+                                                    <span className="text-[var(--accent-color)] flex items-center gap-2">
+                                                         <RefreshCw className="w-5 h-5 animate-spin" /> BATTLE IN PROGRESS
+                                                    </span>
+                                                ) : !playerProtocol ? (
+                                                    <span className="text-gray-400 text-sm">Select Protocol</span>
+                                                ) : (
+                                                    <span className="flex items-center gap-2 text-sm">
+                                                        <Play className="w-4 h-4 fill-current" /> ENGAGE
+                                                    </span>
+                                                )}
+                                            </Button>
                                         </div>
                                     </>
                                 ) : (
@@ -429,34 +447,18 @@ const Battle = () => {
                             </div>
                         </div>
 
-                        {/* Enemy Column - CHANGED: justify-center -> justify-start pt-2 */}
+                        {/* Enemy Column */}
                         <div className="xl:col-span-3 order-3 xl:order-3 h-full relative flex flex-col justify-start pt-2">
                             <SpeechToast message={rightToast} position="right" />
                             <BotCard bot={enemy} className="shadow-red-900/20 shadow-xl border-red-900/30" />
                             {isBattling && enemyProtocol && (
-                                <div className={`mt-2 text-center text-xs font-bold px-2 py-1 rounded border ${enemyProtocol.twColor} ${enemyProtocol.twBorder} bg-black/50`}>
+                                <div className="mt-2 text-center text-xs font-bold px-2 py-1 rounded border border-red-500 text-red-500 bg-red-900/20">
                                     PROTOCOL: {enemyProtocol.name}
                                 </div>
                             )}
                         </div>
 
                     </div>
-
-                    {battleResult && !battleResult.playerWon && (
-                        <motion.div
-                            initial={{ opacity: 0, y: 50 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 p-8 rounded-2xl border-4 backdrop-blur-xl z-50 text-center shadow-2xl bg-red-900/80 border-red-500 text-red-100"
-                        >
-                            <h2 className="text-6xl font-black mb-2 uppercase tracking-tighter">
-                                DEFEATED
-                            </h2>
-                            <p className="text-2xl">
-                                Consolation: <span className="text-yellow-400 font-mono font-bold">{battleResult.reward}</span> Scrap
-                            </p>
-                        </motion.div>
-                    )}
-
                 </motion.div>
 
                 <ScavengeModal
