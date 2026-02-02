@@ -31,7 +31,18 @@ const attackStyles = `
   }
   .animate-attack-right { animation: lunge-right 0.4s ease-out; }
   .animate-attack-left { animation: lunge-left 0.4s ease-out; }
+  @keyframes shake-damage {
+    0% { transform: translate(1px, 1px) rotate(0deg); }
+    10% { transform: translate(-1px, -2px) rotate(-1deg); }
+    30% { transform: translate(3px, 2px) rotate(0deg); }
+    50% { transform: translate(-1px, 2px) rotate(1deg); }
+    70% { transform: translate(3px, 1px) rotate(-1deg); }
+    100% { transform: translate(0, 0) rotate(0deg); }
+  }
+  .animate-recoil { animation: shake-damage 0.3s linear; }
+
 `;
+
   // CHANGED: Reordered slots and added 'gridClass' for layout control
   // Head & Chassis span full width (col-span-2) but are centered (w-2/3 mx-auto)
   const slots = [
@@ -53,8 +64,7 @@ const attackStyles = `
         <h3 className="text-lg font-bold text-[#e0e0e0] truncate font-mono uppercase tracking-widest">{bot.name}</h3>
       </div>
       
-      {/* Slots Grid */}
-      {/* CHANGED: Switched to grid-cols-2 for the 'Cross' layout */}
+    {/* Slots Grid */}
       <div className="p-4 grid grid-cols-2 gap-3 justify-center">
         {slots.map(({ key, partId, gridClass }, index) => {
           const part = partId ? getPartById(partId) : null;
@@ -62,11 +72,18 @@ const attackStyles = `
           const tier = part ? part.tier : 1;
           const colors = RARITY_COLORS[tier] || RARITY_COLORS[1];
           
+          // ADD THIS LINE: Define the logic for this specific slot
+          const shouldAnimateArm = isAttacking && (
+            (side === 'player' && key === 'RightArm') || 
+            (side === 'enemy' && key === 'LeftArm')
+          );
+
           return (
             <div 
               key={`${key}-${index}`} 
               className={cn(
                 `relative group z-10 hover:z-50 ${gridClass}`,
+                // Now this check will work!
                 shouldAnimateArm && (side === 'player' ? 'animate-attack-right' : 'animate-attack-left')
               )}
             >
@@ -76,7 +93,7 @@ const attackStyles = `
                   part ? "bg-[rgba(var(--accent-rgb),0.05)]" : "bg-black/50",
                   part ? colors.border : "border-gray-800 border-dashed",
                   "group-hover:bg-[rgba(var(--accent-rgb),0.1)]",
-                  // Add a subtle glow when the arm is "Active"
+                  // Added the active glow back in for extra polish
                   shouldAnimateArm && "ring-2 ring-white shadow-[0_0_15px_rgba(255,255,255,0.5)]"
                 )}
               >
@@ -84,10 +101,9 @@ const attackStyles = `
                 {part && <RarityBadge tier={tier} className="scale-75 origin-center rounded-none" />}
               </div>
 
-              {/* Hover Tooltip */}
+              {/* Hover Tooltip (Your existing tooltip code below) */}
               <div className="absolute left-[calc(100%+10px)] top-0 z-[100] w-64 hidden group-hover:block pointer-events-none">
                 <div className="bg-black/95 text-[#e0e0e0] text-xs rounded-none p-3 border border-[var(--accent-color)] shadow-[0_0_25px_rgba(0,0,0,0.8)] backdrop-blur-md relative">
-                   {/* Tooltip Arrow */}
                    <div className="absolute top-4 -left-2.5 w-0 h-0 border-t-[6px] border-t-transparent border-r-[10px] border-r-[var(--accent-color)] border-b-[6px] border-b-transparent"></div>
                   
                   <div className={cn("font-bold text-sm mb-1 font-mono uppercase border-b border-gray-800 pb-1", part ? colors.text : "text-gray-400")}>
