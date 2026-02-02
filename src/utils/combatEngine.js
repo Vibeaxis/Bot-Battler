@@ -31,7 +31,14 @@ export const simulateBattle = (botA, botB, protocolA, protocolB) => {
   const battleLog = [];
   const healthTimeline = []; // NEW: Track health for every single log line
   const criticalHits = [];
-  
+  // --- MOVE THIS BLOCK UP HERE ---
+  let healthA = 100; // Use your BASE_HEALTH constant
+  let healthB = 100;
+
+  const record = (message) => {
+    battleLog.push(message);
+    healthTimeline.push({ a: Math.max(0, healthA), b: Math.max(0, healthB) });
+  };
   battleLog.push(`⚔️ Battle Start: ${botA.name} vs ${botB.name}`);
 
   // 2. Apply Protocol Bonuses
@@ -64,13 +71,7 @@ export const simulateBattle = (botA, botB, protocolA, protocolB) => {
   record(`${botB.name} (Buffed) - DMG: ${statsB.Damage} | SPD: ${statsB.Speed} | ARM: ${statsB.Armor}`);
   record('---');
   
-  let healthA = BASE_HEALTH;
-  let healthB = BASE_HEALTH;
-  // This helper ensures every log line has a matching health snapshot
-  const record = (message) => {
-    battleLog.push(message);
-    healthTimeline.push({ a: Math.max(0, healthA), b: Math.max(0, healthB) });
-  };
+
   let missStreakA = 0;
   let missStreakB = 0;
   let round = 0;
