@@ -92,7 +92,10 @@ const CombatLog = ({ logs, playerName }) => {
     };
 
     return (
-        <div className="relative h-[60vh] flex flex-col bg-black/90 rounded-lg border-2 border-green-500/50 shadow-[0_0_15px_rgba(34,197,94,0.2)] overflow-hidden font-mono text-sm">
+        // CHANGED: 
+        // 1. border-green-500/50 -> border-[var(--accent-color)]
+        // 2. shadow-[...rgba(34,197,94...)] -> shadow-[0_0_15px_rgba(var(--accent-rgb),0.2)]
+        <div className="relative h-[60vh] flex flex-col bg-black/90 rounded-lg border-2 border-[var(--accent-color)] shadow-[0_0_15px_rgba(var(--accent-rgb),0.2)] overflow-hidden font-mono text-sm">
             {/* CRT Scanline Overlay */}
             <div
                 className="absolute inset-0 pointer-events-none z-20 opacity-50"
@@ -108,22 +111,26 @@ const CombatLog = ({ logs, playerName }) => {
                     <div className="w-3 h-3 rounded-full bg-red-500/80"></div>
                     <div className="w-3 h-3 rounded-full bg-yellow-500/80"></div>
                     <div className="w-3 h-3 rounded-full bg-green-500/80"></div>
-                    <div className="ml-2 text-green-500/70 text-xs font-bold tracking-wider">TERMINAL://COMBAT_LOG.EXE</div>
+                    {/* CHANGED: Text color uses theme variable */}
+                    <div className="ml-2 text-[var(--accent-color)] text-xs font-bold tracking-wider opacity-70">TERMINAL://COMBAT_LOG.EXE</div>
                 </div>
-                <div className="text-[10px] text-green-500/30">V.2.1.1</div>
+                {/* CHANGED: Text color uses theme variable */}
+                <div className="text-[10px] text-[var(--accent-color)] opacity-30">V.2.1.1</div>
             </div>
 
             {/* Log Content */}
             <div
                 ref={containerRef}
-                className="flex-1 overflow-y-auto p-4 space-y-1.5 scrollbar-thin scrollbar-thumb-green-900 scrollbar-track-black z-10 relative scroll-smooth"
+                // CHANGED: Scrollbar thumb matches theme
+                className="flex-1 overflow-y-auto p-4 space-y-1.5 scrollbar-thin scrollbar-thumb-[var(--accent-color)] scrollbar-track-black z-10 relative scroll-smooth"
             >
                 {/* PERFORMANCE NOTE: Removed AnimatePresence for the list itself.
                    Framer Motion struggles to diff 50+ items in real-time. 
                    Standard rendering is much faster for a rapid-fire log.
                 */}
                 {visibleLogs.length === 0 ? (
-                    <div className="h-full flex flex-col items-center justify-center text-green-500/50 mt-10">
+                    // CHANGED: Waiting text uses theme color
+                    <div className="h-full flex flex-col items-center justify-center text-[var(--accent-color)] opacity-50 mt-10">
                         <span className="animate-pulse">_ WAITING FOR BATTLE DATA _</span>
                         <span className="text-xs mt-2 opacity-50">System Ready...</span>
                     </div>
