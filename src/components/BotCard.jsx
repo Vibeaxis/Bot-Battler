@@ -6,33 +6,32 @@ import { RARITY_COLORS } from '@/constants/gameConstants';
 import RarityBadge from './RarityBadge';
 import { cn } from '@/lib/utils';
 import { calculateBotStats } from '@/utils/statCalculator';
-// Add these to your CSS or a <style> tag in this file
-const attackStyles = `
-  @keyframes lunge-right {
-    0% { transform: translateX(0); }
-    20% { transform: translateX(-10px); } /* Wind up */
-    40% { transform: translateX(30px); }  /* Impact */
-    100% { transform: translateX(0); }
-  }
-  @keyframes lunge-left {
-    0% { transform: translateX(0); }
-    20% { transform: translateX(10px); }
-    40% { transform: translateX(-30px); }
-    100% { transform: translateX(0); }
-  }
-  .animate-attack-right { animation: lunge-right 0.4s ease-out; }
-  .animate-attack-left { animation: lunge-left 0.4s ease-out; }
-  @keyframes shake-damage {
-    0% { transform: translate(1px, 1px) rotate(0deg); }
-    10% { transform: translate(-1px, -2px) rotate(-1deg); }
-    30% { transform: translate(3px, 2px) rotate(0deg); }
-    50% { transform: translate(-1px, 2px) rotate(1deg); }
-    70% { transform: translate(3px, 1px) rotate(-1deg); }
-    100% { transform: translate(0, 0) rotate(0deg); }
-  }
-  .animate-recoil { animation: shake-damage 0.3s linear; }
+const injectStyles = () => {
+  if (typeof document === 'undefined') return;
+  const styleId = 'bot-card-animations';
+  if (document.getElementById(styleId)) return;
 
-`;
+  const style = document.createElement('style');
+  style.id = styleId;
+  style.innerHTML = `
+    @keyframes lunge-right {
+      0% { transform: translateX(0); }
+      20% { transform: translateX(-15px); }
+      40% { transform: translateX(40px); }
+      100% { transform: translateX(0); }
+    }
+    @keyframes lunge-left {
+      0% { transform: translateX(0); }
+      20% { transform: translateX(15px); }
+      40% { transform: translateX(-40px); }
+      100% { transform: translateX(0); }
+    }
+    .animate-attack-right { animation: lunge-right 0.3s ease-out !important; }
+    .animate-attack-left { animation: lunge-left 0.3s ease-out !important; }
+  `;
+  document.head.appendChild(style);
+};
+injectStyles();
 const IconMap = { ...LucideIcons };
 
 const BotCard = ({ bot, slotLevels, isAttacking, side = 'player', className = '' }) => {
