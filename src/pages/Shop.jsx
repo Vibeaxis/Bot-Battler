@@ -115,7 +115,8 @@ const Shop = () => {
         <meta name="description" content="Purchase mystery crates and view your inventory of robot parts." />
       </Helmet>
       
-      <div className="min-h-screen bg-[#0a0a12] p-4 font-mono text-[#e0e0e0] selection:bg-[var(--accent-color)] selection:text-black">
+      {/* CHANGED: Added 'pb-24' to ensure bottom content isn't cut off by browser chrome */}
+      <div className="min-h-screen bg-[#0a0a12] p-4 font-mono text-[#e0e0e0] selection:bg-[var(--accent-color)] selection:text-black pb-24">
         <div className="max-w-6xl mx-auto py-8">
           <motion.div
             initial={{ opacity: 0, x: -20 }}
