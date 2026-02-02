@@ -23,7 +23,8 @@ const Shop = () => {
   const navigate = useNavigate();
   const { gameState, updateScrap, addToInventory, purchaseMysteryBox, unlockTheme, getSellValue, sellItem, sellAllCommonItems } = useGameContext();
   const { playSound } = useSoundContext();
-  
+  // NEW: State for filtering the inventory dump
+  const [activeCategory, setActiveCategory] = useState('ALL');
   const handlePurchase = () => {
     if (gameState.scrap < MYSTERY_CRATE_COST) {
       toast({
