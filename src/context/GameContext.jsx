@@ -10,7 +10,11 @@ export const THEMES = {
   'Green': { hex: '#00ff9d', rgb: '0, 255, 157' },
   'Cyber Blue': { hex: '#00f0ff', rgb: '0, 240, 255' },
   'Crimson Red': { hex: '#ff0055', rgb: '255, 0, 85' },
-  'Midas Gold': { hex: '#ffd700', rgb: '255, 215, 0' }
+  'Midas Gold': { hex: '#ffd700', rgb: '255, 215, 0' },
+  // --- NEW THEMES ---
+  'Neon Violet': { hex: '#d946ef', rgb: '217, 70, 239' }, // A rich synthwave purple
+  'Toxic Acid': { hex: '#ccff00', rgb: '204, 255, 0' },   // High-vis yellow/green
+  'Ice White': { hex: '#ffffff', rgb: '255, 255, 255' }   // Stark, monochrome, high-tech
 };
 
 const GameContext = createContext();

@@ -328,8 +328,8 @@ const Battle = () => {
                             onClick={() => navigate('/hub')}
                             variant="ghost"
                             size="sm"
-                            className="text-gray-400 hover:text-white hover:bg-white/10 h-8"
-                        >
+                           className="text-gray-400 hover:text-[var(--accent-color)] hover:bg-[rgba(var(--accent-rgb),0.1)] h-8"
+>
                             <ArrowLeft className="w-4 h-4 mr-2" />
                             Exit Arena
                         </Button>
@@ -345,10 +345,10 @@ const Battle = () => {
                             <BotCard
                                 bot={gameState.playerBot}
                                 slotLevels={gameState.slotLevels}
-                                className="shadow-blue-900/20 shadow-xl"
-                            />
+                               className="shadow-[0_0_30px_-5px_rgba(var(--accent-rgb),0.3)] border-[var(--accent-color)]"
+    />
                             {isBattling && playerProtocol && (
-                                <div className={`mt-2 text-center text-xs font-bold px-2 py-1 rounded border ${playerProtocol.twColor} ${playerProtocol.twBorder} bg-black/50`}>
+                               <div className="mt-2 text-center text-xs font-bold px-2 py-1 rounded border border-[var(--accent-color)] text-[var(--accent-color)] bg-[rgba(var(--accent-rgb),0.1)]">
                                     PROTOCOL: {playerProtocol.name}
                                 </div>
                             )}
@@ -381,23 +381,31 @@ const Battle = () => {
                                             </Button>
 
                                             <Button
-                                                onClick={startBattle}
-                                                disabled={isBattling || !playerProtocol}
-                                                className={`text-white text-lg py-3 font-bold tracking-widest uppercase shadow-lg transform transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed ${!playerProtocol
-                                                    ? 'bg-gray-700'
-                                                    : 'bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700'
-                                                    }`}
-                                            >
-                                                {isBattling ? (
-                                                    <RefreshCw className="w-5 h-5 animate-spin" />
-                                                ) : !playerProtocol ? (
-                                                    <span className="text-gray-400 text-sm">Select Protocol</span>
-                                                ) : (
-                                                    <span className="flex items-center gap-2 text-sm">
-                                                        <Play className="w-4 h-4 fill-current" /> ENGAGE
-                                                    </span>
-                                                )}
-                                            </Button>
+    onClick={startBattle}
+    disabled={isBattling || !playerProtocol}
+    // CHANGED: Dynamic background gradient using CSS variables
+    // We use style={{}} to inject the specific linear-gradient for the theme
+    style={!isBattling && playerProtocol ? {
+        background: `linear-gradient(135deg, rgba(var(--accent-rgb), 1) 0%, rgba(var(--accent-rgb), 0.6) 100%)`,
+        boxShadow: `0 0 20px rgba(var(--accent-rgb), 0.4)`
+    } : {}}
+    className={`text-black text-lg py-3 font-bold tracking-widest uppercase shadow-lg transform transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed ${!playerProtocol
+        ? 'bg-gray-700 text-gray-500' // Disabled State
+        : '' // Enabled state handled by style prop above
+    }`}
+>
+    {isBattling ? (
+        <span className="text-[var(--accent-color)] flex items-center gap-2">
+             <RefreshCw className="w-5 h-5 animate-spin" /> BATTLE IN PROGRESS
+        </span>
+    ) : !playerProtocol ? (
+        <span className="text-gray-400 text-sm">Select Protocol</span>
+    ) : (
+        <span className="flex items-center gap-2 text-sm">
+            <Play className="w-4 h-4 fill-current" /> ENGAGE
+        </span>
+    )}
+</Button>
                                         </div>
                                     </>
                                 ) : (
