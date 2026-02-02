@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Route, Routes, BrowserRouter as Router, Navigate } from 'react-router-dom';
+import { Route, Routes, HashRouter as Router } from 'react-router-dom';
 import { GameProvider } from './context/GameContext';
 import { SoundProvider } from './context/SoundContext';
 import { SettingsProvider, useSettingsContext } from './context/SettingsContext';
