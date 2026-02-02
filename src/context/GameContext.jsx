@@ -7,14 +7,35 @@ import { PART_SLOTS } from '@/data/parts';
 import { useToast } from '@/components/ui/use-toast';
 
 export const THEMES = {
+  // --- CLASSICS ---
   'Green': { hex: '#00ff9d', rgb: '0, 255, 157' },
   'Cyber Blue': { hex: '#00f0ff', rgb: '0, 240, 255' },
   'Crimson Red': { hex: '#ff0055', rgb: '255, 0, 85' },
   'Midas Gold': { hex: '#ffd700', rgb: '255, 215, 0' },
-  // --- NEW THEMES ---
-  'Neon Violet': { hex: '#d946ef', rgb: '217, 70, 239' }, // A rich synthwave purple
-  'Toxic Acid': { hex: '#ccff00', rgb: '204, 255, 0' },   // High-vis yellow/green
-  'Ice White': { hex: '#ffffff', rgb: '255, 255, 255' }   // Stark, monochrome, high-tech
+
+  // --- NEON & VIBRANT ---
+  'Neon Violet': { hex: '#d946ef', rgb: '217, 70, 239' },
+  'Toxic Acid': { hex: '#ccff00', rgb: '204, 255, 0' },
+  'Hot Pink': { hex: '#ff00cc', rgb: '255, 0, 204' },
+  'Electric Orange': { hex: '#ff5e00', rgb: '255, 94, 0' },
+
+  // --- DARK & TACTICAL ---
+  'Stealth Grey': { hex: '#9ca3af', rgb: '156, 163, 175' },
+  'Night Ops': { hex: '#3b82f6', rgb: '59, 130, 246' }, // Deep blue
+  'Blood Moon': { hex: '#881337', rgb: '136, 19, 55' }, // Dark red
+
+  // --- LUXURY & RARE ---
+  'Ice White': { hex: '#ffffff', rgb: '255, 255, 255' },
+  'Royal Purple': { hex: '#7e22ce', rgb: '126, 34, 206' },
+  'Rose Gold': { hex: '#fb7185', rgb: '251, 113, 133' },
+  'Obsidian': { hex: '#475569', rgb: '71, 85, 105' }, // Slate-ish
+
+  // --- RETRO / ELEMENTAL ---
+  'Amber Terminal': { hex: '#ffb000', rgb: '255, 176, 0' }, // Fallout style
+  'Matrix Code': { hex: '#008f11', rgb: '0, 143, 17' },     // Darker, classic hacker green
+  'Plasma Teal': { hex: '#2dd4bf', rgb: '45, 212, 191' },
+  'Solar Flare': { hex: '#f59e0b', rgb: '245, 158, 11' },
+  'Void': { hex: '#a855f7', rgb: '168, 85, 247' }
 };
 
 const GameContext = createContext();

@@ -107,12 +107,27 @@ const Shop = () => {
   const commonItemsCount = inventoryParts.filter(p => p.tier === 1).length;
   
 const purchasableThemes = [
+    // Standard (Cheap?)
     { name: 'Cyber Blue', color: THEMES['Cyber Blue'].hex },
     { name: 'Crimson Red', color: THEMES['Crimson Red'].hex },
     { name: 'Midas Gold', color: THEMES['Midas Gold'].hex },
+    { name: 'Amber Terminal', color: THEMES['Amber Terminal'].hex },
+    
+    // Neon (Mid-Tier?)
     { name: 'Neon Violet', color: THEMES['Neon Violet'].hex },
     { name: 'Toxic Acid', color: THEMES['Toxic Acid'].hex },
-    { name: 'Ice White', color: THEMES['Ice White'].hex }
+    { name: 'Hot Pink', color: THEMES['Hot Pink'].hex },
+    { name: 'Electric Orange', color: THEMES['Electric Orange'].hex },
+    
+    // High Tech / Premium
+    { name: 'Ice White', color: THEMES['Ice White'].hex },
+    { name: 'Plasma Teal', color: THEMES['Plasma Teal'].hex },
+    { name: 'Matrix Code', color: THEMES['Matrix Code'].hex },
+    
+    // Luxury (Expensive?)
+    { name: 'Royal Purple', color: THEMES['Royal Purple'].hex },
+    { name: 'Rose Gold', color: THEMES['Rose Gold'].hex },
+    { name: 'Void', color: THEMES['Void'].hex },
   ];
 return (
     <>
