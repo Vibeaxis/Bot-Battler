@@ -31,14 +31,7 @@ export const simulateBattle = (botA, botB, protocolA, protocolB) => {
   const battleLog = [];
   const healthTimeline = []; // NEW: Track health for every single log line
   const criticalHits = [];
-  // --- MOVE THIS BLOCK UP HERE ---
-  let healthA = 100; // Use your BASE_HEALTH constant
-  let healthB = 100;
-
-  const record = (message) => {
-    battleLog.push(message);
-    healthTimeline.push({ a: Math.max(0, healthA), b: Math.max(0, healthB) });
-  };
+  
   battleLog.push(`⚔️ Battle Start: ${botA.name} vs ${botB.name}`);
 
   // 2. Apply Protocol Bonuses
@@ -66,12 +59,14 @@ export const simulateBattle = (botA, botB, protocolA, protocolB) => {
     battleLog.push('---');
   }
 
-// Log post-buff stats
-  record(`${botA.name} (Buffed) - DMG: ${statsA.Damage} | SPD: ${statsA.Speed} | ARM: ${statsA.Armor}`);
-  record(`${botB.name} (Buffed) - DMG: ${statsB.Damage} | SPD: ${statsB.Speed} | ARM: ${statsB.Armor}`);
-  record('---');
+  // Log post-buff stats
+  battleLog.push(`${botA.name} (Buffed) - DMG: ${statsA.Damage} | SPD: ${statsA.Speed} | ARM: ${statsA.Armor}`);
+  battleLog.push(`${botB.name} (Buffed) - DMG: ${statsB.Damage} | SPD: ${statsB.Speed} | ARM: ${statsB.Armor}`);
+  battleLog.push('---');
   
-
+  let healthA = BASE_HEALTH;
+  let healthB = BASE_HEALTH;
+  
   let missStreakA = 0;
   let missStreakB = 0;
   let round = 0;
@@ -142,15 +137,14 @@ export const simulateBattle = (botA, botB, protocolA, protocolB) => {
   const winner = healthA > 0 ? botA : botB;
   const loser = healthA > 0 ? botB : botA;
   
-record('---');
-  record(`🏆 ${winner.name} wins with ${healthA > 0 ? healthA : healthB} HP remaining!`);
+  battleLog.push('---');
+  battleLog.push(`🏆 ${winner.name} wins with ${healthA > 0 ? healthA : healthB} HP remaining!`);
   
   return {
     winner,
     loser,
     rounds: round,
     battleLog,
-    healthTimeline,
     criticalHits,
     finalHealthA: Math.max(0, healthA),
     finalHealthB: Math.max(0, healthB)
