@@ -191,47 +191,65 @@ const [enemyAttacking, setEnemyAttacking] = useState(false);
     // 3. Simulate with Protocols
     const result = simulateBattle(playerBotWithStats, enemy, playerProtocol, selectedEnemyProtocol);
     
-    // Simulation Loop
-    for (let i = 0; i < result.battleLog.length; i++) {
-      const logEntry = result.battleLog[i];
-      
-      if (logEntry.includes('Round')) {
-        const roundMatch = logEntry.match(/Round (\d+)/);
-        if (roundMatch) setCurrentRound(parseInt(roundMatch[1]));
-      }
-      
-    // Sound effects and Animations based on log content
-      const isPlayerAction = logEntry.includes(gameState.playerBot.name);
-      const isEnemyAction = logEntry.includes(enemy.name);
-      const isHit = logEntry.includes('damage') || logEntry.includes('CRITICAL');
+    // --- New Optimized Simulation Loop ---
+for (let i = 0; i < result.battleLog.length; i++) {
+  const logEntry = result.battleLog[i];
+  
+  // 1. Detect Round updates
+  if (logEntry.includes('Round')) {
+    const roundMatch = logEntry.match(/Round (\d+)/);
+    if (roundMatch) setCurrentRound(parseInt(roundMatch[1]));
+  }
 
-      if (logEntry.includes('CRITICAL')) {
-        playSound('CRIT');
-        
-        if (isPlayerAction) {
-           setRightToast(getRandomFlavor('HIT'));
-           setPlayerAttacking(true);
-           setTimeout(() => setPlayerAttacking(false), 400 / battleSpeedRef.current);
-        } else if (isEnemyAction) {
-           setLeftToast(getRandomFlavor('HIT'));
-           setEnemyAttacking(true);
-           setTimeout(() => setEnemyAttacking(false), 400 / battleSpeedRef.current);
-        }
+  // 2. Determine Action Type
+  const isPlayerAction = logEntry.includes(gameState.playerBot.name);
+  const isEnemyAction = logEntry.includes(enemy.name);
+  const isHit = logEntry.includes('damage') || logEntry.includes('CRITICAL');
 
-      } else if (logEntry.includes('damage')) {
-        playSound('HIT');
+  // 3. TRIGGER ANIMATION & SOUND (Visuals lead the data)
+  if (isHit) {
+    if (logEntry.includes('CRITICAL')) {
+      playSound('CRIT');
+      if (isPlayerAction) setRightToast(getRandomFlavor('HIT'));
+      else setLeftToast(getRandomFlavor('HIT'));
+    } else {
+      playSound('HIT');
+    }
 
-        if (isPlayerAction) {
-          setPlayerAttacking(true);
-          setTimeout(() => setPlayerAttacking(false), 400 / battleSpeedRef.current);
-        } else if (isEnemyAction) {
-          setEnemyAttacking(true);
-          setTimeout(() => setEnemyAttacking(false), 400 / battleSpeedRef.current);
-        }
-      }
+    // Start the lunge
+    if (isPlayerAction) {
+      setPlayerAttacking(true);
+      setTimeout(() => setPlayerAttacking(false), 400 / battleSpeedRef.current);
+    } else {
+      setEnemyAttacking(true);
+      setTimeout(() => setEnemyAttacking(false), 400 / battleSpeedRef.current);
+    }
 
-      // Updated delay logic with battle speed multiplier
-      await new Promise(resolve => setTimeout(resolve, 800 / battleSpeedRef.current));
+    // IMPACT DELAY: Wait 200ms for the bot icon to reach the target before health drops
+    await new Promise(r => setTimeout(r, 200 / battleSpeedRef.current));
+  }
+
+  // 4. UPDATE DATA (The log and health change now)
+  setBattleLog(prev => [...prev, logEntry]);
+
+  // Update health bars (Triggering the Ghost Bar in Header)
+  if (i > 2 && i < result.battleLog.length - 2) {
+    const progress = i / (result.battleLog.length - 4);
+    setPlayerHealth(BASE_HEALTH - (BASE_HEALTH - result.finalHealthA) * progress);
+    setEnemyHealth(BASE_HEALTH - (BASE_HEALTH - result.finalHealthB) * progress);
+  }
+
+  // Critical Screen Shake
+  if (logEntry.includes('CRITICAL') && result.criticalHits.includes(Math.floor(i / 4) + 1)) {
+    controls.start({
+      x: [0, -10, 10, -10, 10, 0],
+      transition: { duration: 0.2 }
+    });
+  }
+
+  // 5. TURN RECOVERY: Total delay between log entries
+  // Reduced to 600ms total to keep it snappy at 4x speed
+  await new Promise(r => setTimeout(r, 600 / battleSpeedRef.current));
       
       setBattleLog(prev => [...prev, logEntry]);
       
