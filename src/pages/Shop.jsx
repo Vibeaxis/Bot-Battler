@@ -18,7 +18,7 @@ import { cn } from '@/lib/utils';
 const IconMap = { ...LucideIcons };
 
 const THEME_PRICE = 500;
-
+const CATEGORIES = ['ALL', 'Head', 'RightArm', 'LeftArm', 'Chassis'];
 const Shop = () => {
   const navigate = useNavigate();
   const { gameState, updateScrap, addToInventory, purchaseMysteryBox, unlockTheme, getSellValue, sellItem, sellAllCommonItems } = useGameContext();
