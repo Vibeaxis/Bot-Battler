@@ -102,22 +102,29 @@ const Shop = () => {
 
   const commonItemsCount = inventoryParts.filter(p => p.tier === 1).length;
   
-  const purchasableThemes = [
+const purchasableThemes = [
     { name: 'Cyber Blue', color: THEMES['Cyber Blue'].hex },
     { name: 'Crimson Red', color: THEMES['Crimson Red'].hex },
-    { name: 'Midas Gold', color: THEMES['Midas Gold'].hex }
+    { name: 'Midas Gold', color: THEMES['Midas Gold'].hex },
+    { name: 'Neon Violet', color: THEMES['Neon Violet'].hex },
+    { name: 'Toxic Acid', color: THEMES['Toxic Acid'].hex },
+    { name: 'Ice White', color: THEMES['Ice White'].hex }
   ];
-
-  return (
+return (
     <>
       <Helmet>
         <title>Shop - Robot Battle Arena</title>
         <meta name="description" content="Purchase mystery crates and view your inventory of robot parts." />
       </Helmet>
       
-      {/* CHANGED: Added 'pb-24' to ensure bottom content isn't cut off by browser chrome */}
-      <div className="min-h-screen bg-[#0a0a12] p-4 font-mono text-[#e0e0e0] selection:bg-[var(--accent-color)] selection:text-black pb-24">
-        <div className="max-w-6xl mx-auto py-8">
+      {/* CRITICAL FIX: 
+          1. Changed min-h-screen to h-screen.
+          2. Added overflow-y-auto to force scrolling WITHIN this container.
+          3. Added scroll-smooth for nicer feel.
+      */}
+      <div className="h-screen overflow-y-auto bg-[#0a0a12] p-4 font-mono text-[#e0e0e0] selection:bg-[var(--accent-color)] selection:text-black scroll-smooth">
+        <div className="max-w-6xl mx-auto py-8 pb-32">
+          
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -218,7 +225,7 @@ const Shop = () => {
                  </div>
                </div>
 
-               <div className="space-y-4">
+               <div className="space-y-4 max-h-[220px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-700">
                  {purchasableThemes.map((theme) => {
                    const isOwned = gameState.unlockedThemes.includes(theme.name);
                    return (
@@ -249,7 +256,7 @@ const Shop = () => {
             </motion.div>
           </div>
           
-          {/* Active Loadout Section (Read-Only) */}
+          {/* Active Loadout Section */}
           {equippedParts.length > 0 && (
              <motion.div
                initial={{ opacity: 0, y: 20 }}
@@ -277,38 +284,57 @@ const Shop = () => {
              </motion.div>
           )}
 
-          {/* Inventory Section */}
+          {/* NEW INVENTORY SECTION WITH TABS */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
             className="bg-black/40 rounded-xl p-6 border border-gray-800"
           >
-            <div className="flex flex-col md:flex-row justify-between items-center border-b border-gray-800 pb-4 mb-4 gap-4">
-               <h3 className="text-xl font-bold text-[#e0e0e0] uppercase tracking-widest flex items-center gap-3">
-                 <Box className="w-5 h-5 text-[var(--accent-color)]" />
-                 Storage / <span className="text-[var(--accent-color)]">{inventoryParts.length}</span> Items
-               </h3>
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-gray-800 pb-4 mb-4 gap-4">
+               <div className="flex flex-col">
+                   <h3 className="text-xl font-bold text-[#e0e0e0] uppercase tracking-widest flex items-center gap-3">
+                     <Box className="w-5 h-5 text-[var(--accent-color)]" />
+                     Storage
+                   </h3>
+                   <span className="text-xs text-gray-500 mt-1">{filteredParts.length} items found</span>
+               </div>
                
+               <div className="flex flex-wrap gap-2">
+                   {CATEGORIES.map(cat => (
+                       <button
+                           key={cat}
+                           onClick={() => setActiveCategory(cat)}
+                           className={cn(
+                               "px-3 py-1 text-xs font-bold uppercase tracking-wider rounded border transition-all",
+                               activeCategory === cat 
+                                ? "bg-[var(--accent-color)] text-black border-[var(--accent-color)]" 
+                                : "bg-black text-gray-500 border-gray-800 hover:border-gray-600"
+                           )}
+                       >
+                           {cat === 'RightArm' ? 'R-Arm' : cat === 'LeftArm' ? 'L-Arm' : cat}
+                       </button>
+                   ))}
+               </div>
+
                {commonItemsCount > 0 && (
                  <Button 
                     onClick={handleSellAllCommons}
                     className="bg-red-900/20 text-red-400 border border-red-900 hover:bg-red-900/40 hover:text-red-300 uppercase font-mono text-xs tracking-wider"
                  >
-                    <Trash2 className="w-4 h-4 mr-2" /> Sell All Common ({commonItemsCount})
+                    <Trash2 className="w-4 h-4 mr-2" /> Dump Commons ({commonItemsCount})
                  </Button>
                )}
             </div>
             
-            {inventoryParts.length === 0 ? (
+            {filteredParts.length === 0 ? (
               <div className="text-gray-600 text-center py-12 border-2 border-dashed border-gray-800 font-mono uppercase rounded-lg bg-black/50">
-                <p>Storage Empty // No sellable assets</p>
-                <p className="text-xs mt-2 text-gray-700">Equipped items are listed above</p>
+                <p>No items found in category: {activeCategory}</p>
               </div>
             ) : (
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-                <AnimatePresence>
-                  {inventoryParts.map((part, index) => {
+                <AnimatePresence mode='popLayout'>
+                  {filteredParts.map((part, index) => {
                     const Icon = IconMap[part.icon] || IconMap.Box;
                     const colors = RARITY_COLORS[part.tier];
                     const sellValue = getSellValue(part.tier);
