@@ -303,7 +303,7 @@ const Battle = () => {
             </Helmet>
 
             <div
-                className="min-h-screen bg-cover bg-center relative flex flex-col"
+                className="h-screen max-h-screen bg-cover bg-center relative flex flex-col overflow-hidden"
                 style={{
                     backgroundImage: 'url(https://images.unsplash.com/photo-1579803815615-1203fb5a2e9d)',
                     backgroundAttachment: 'fixed'
@@ -311,6 +311,7 @@ const Battle = () => {
             >
                 <div className="absolute inset-0 bg-gray-900/90" />
 
+                {/* Header is standard height */}
                 <BattleHeader
                     playerHealth={playerHealth}
                     enemyHealth={enemyHealth}
@@ -320,13 +321,16 @@ const Battle = () => {
 
                 <motion.div
                     animate={controls}
-                    className="relative w-full max-w-[1600px] mx-auto px-6 pb-8 flex-1 flex flex-col"
+                    // CHANGED: Removed pb-8, added h-full to force flex container to fill remaining space
+                    className="relative w-full max-w-[1600px] mx-auto px-6 pb-4 flex-1 flex flex-col min-h-0"
                 >
-                    <div className="flex justify-between items-center mb-4">
+                    {/* Top Bar - Made more compact with mb-2 instead of mb-4 */}
+                    <div className="flex justify-between items-center mb-2 shrink-0">
                         <Button
                             onClick={() => navigate('/hub')}
                             variant="ghost"
-                            className="text-gray-400 hover:text-white hover:bg-white/10"
+                            size="sm" // Smaller button to save space
+                            className="text-gray-400 hover:text-white hover:bg-white/10 h-8"
                         >
                             <ArrowLeft className="w-4 h-4 mr-2" />
                             Exit Arena
@@ -334,18 +338,18 @@ const Battle = () => {
                         <BattleSpeedToggle speed={battleSpeed} setSpeed={setBattleSpeed} />
                     </div>
 
-                    {/* 12-column grid layout */}
-                    <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 h-full min-h-[600px]">
+                    {/* Main Grid - CHANGED: gap-8 -> gap-4, removed min-h-[600px] */}
+                    <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 h-full min-h-0">
 
-                        {/* Player Column (Takes 3/12 = 25%) */}
-                        <div className="xl:col-span-3 order-2 xl:order-1 h-full relative">
+                        {/* Player Column */}
+                        <div className="xl:col-span-3 order-2 xl:order-1 h-full relative flex flex-col justify-center">
                             <SpeechToast message={leftToast} position="left" />
+                            {/* Added scale-95 to slightly shrink cards if needed, or keep standard */}
                             <BotCard
                                 bot={gameState.playerBot}
                                 slotLevels={gameState.slotLevels}
                                 className="shadow-blue-900/20 shadow-xl"
                             />
-                            {/* Player Protocol Status */}
                             {isBattling && playerProtocol && (
                                 <div className={`mt-2 text-center text-xs font-bold px-2 py-1 rounded border ${playerProtocol.twColor} ${playerProtocol.twBorder} bg-black/50`}>
                                     PROTOCOL: {playerProtocol.name}
@@ -353,11 +357,15 @@ const Battle = () => {
                             )}
                         </div>
 
-                        {/* Combat Log Column (Takes 6/12 = 50%) */}
-                        <div className="xl:col-span-6 order-1 xl:order-2 flex flex-col gap-4 h-full">
-                            <CombatLog logs={battleLog} playerName={gameState.playerBot.name} />
+                        {/* Combat Log Column - Center Stage */}
+                        <div className="xl:col-span-6 order-1 xl:order-2 flex flex-col gap-2 h-full min-h-0">
+                            {/* The Log takes all available space */}
+                            <div className="flex-1 min-h-0 relative">
+                                <CombatLog logs={battleLog} playerName={gameState.playerBot.name} />
+                            </div>
 
-                            <div className="flex flex-col gap-3 justify-center mt-auto py-4">
+                            {/* Controls Area - Compacted padding */}
+                            <div className="flex flex-col gap-2 justify-center mt-auto pt-2 shrink-0">
                                 {!battleResult ? (
                                     <>
                                         <ProtocolSelector
@@ -366,53 +374,51 @@ const Battle = () => {
                                             disabled={isBattling}
                                         />
 
-                                        <Button
-                                            onClick={handleReroll}
-                                            disabled={isBattling || gameState.scrap < REROLL_COST}
-                                            className="w-full bg-yellow-900/20 border border-yellow-600/50 text-yellow-500 hover:bg-yellow-600/20 hover:text-yellow-400 py-4 font-mono uppercase tracking-widest mb-2"
-                                        >
-                                            <span className="flex items-center gap-2 font-bold text-xs">
-                                                <Scan className="w-3 h-3" /> Scout New Target ({REROLL_COST} Scrap)
-                                            </span>
-                                        </Button>
+                                        <div className="grid grid-cols-2 gap-2">
+                                            <Button
+                                                onClick={handleReroll}
+                                                disabled={isBattling || gameState.scrap < REROLL_COST}
+                                                className="bg-yellow-900/20 border border-yellow-600/50 text-yellow-500 hover:bg-yellow-600/20 hover:text-yellow-400 py-3 font-mono uppercase tracking-widest"
+                                            >
+                                                <span className="flex items-center gap-2 font-bold text-xs">
+                                                    <Scan className="w-3 h-3" /> Scout ({REROLL_COST})
+                                                </span>
+                                            </Button>
 
-                                        <Button
-                                            onClick={startBattle}
-                                            disabled={isBattling || !playerProtocol}
-                                            className={`w-full text-white text-lg py-8 font-bold tracking-widest uppercase shadow-lg transform transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed ${!playerProtocol
+                                            <Button
+                                                onClick={startBattle}
+                                                disabled={isBattling || !playerProtocol}
+                                                className={`text-white text-lg py-3 font-bold tracking-widest uppercase shadow-lg transform transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed ${!playerProtocol
                                                     ? 'bg-gray-700'
                                                     : 'bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700'
-                                                }`}
-                                        >
-                                            {isBattling ? (
-                                                <span className="flex items-center gap-2">
-                                                    <RefreshCw className="w-5 h-5 animate-spin" /> Battle in Progress
-                                                </span>
-                                            ) : !playerProtocol ? (
-                                                <span className="flex items-center gap-2 text-gray-400">
-                                                    Select Protocol First
-                                                </span>
-                                            ) : (
-                                                <span className="flex items-center gap-2">
-                                                    <Play className="w-6 h-6 fill-current" /> ENGAGE
-                                                </span>
-                                            )}
-                                        </Button>
+                                                    }`}
+                                            >
+                                                {isBattling ? (
+                                                    <RefreshCw className="w-5 h-5 animate-spin" />
+                                                ) : !playerProtocol ? (
+                                                    <span className="text-gray-400 text-sm">Select Protocol</span>
+                                                ) : (
+                                                    <span className="flex items-center gap-2 text-sm">
+                                                        <Play className="w-4 h-4 fill-current" /> ENGAGE
+                                                    </span>
+                                                )}
+                                            </Button>
+                                        </div>
                                     </>
                                 ) : (
-                                    <div className="flex gap-4 w-full">
+                                    <div className="flex gap-2 w-full">
                                         <Button
                                             onClick={() => navigate('/hub')}
-                                            className="flex-1 bg-gray-700 hover:bg-gray-600 py-6 text-lg"
+                                            className="flex-1 bg-gray-700 hover:bg-gray-600 py-4 text-lg"
                                         >
-                                            Return to Hub
+                                            Hub
                                         </Button>
                                         {!battleResult.playerWon && (
                                             <Button
                                                 onClick={generateNewEnemy}
-                                                className="flex-1 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 py-6 text-lg font-bold"
+                                                className="flex-1 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 py-4 text-lg font-bold"
                                             >
-                                                Try Again
+                                                Retry
                                             </Button>
                                         )}
                                     </div>
@@ -420,11 +426,10 @@ const Battle = () => {
                             </div>
                         </div>
 
-                        {/* Enemy Column (Takes 3/12 = 25%) */}
-                        <div className="xl:col-span-3 order-3 xl:order-3 h-full relative">
+                        {/* Enemy Column */}
+                        <div className="xl:col-span-3 order-3 xl:order-3 h-full relative flex flex-col justify-center">
                             <SpeechToast message={rightToast} position="right" />
                             <BotCard bot={enemy} className="shadow-red-900/20 shadow-xl border-red-900/30" />
-                            {/* Enemy Protocol Status */}
                             {isBattling && enemyProtocol && (
                                 <div className={`mt-2 text-center text-xs font-bold px-2 py-1 rounded border ${enemyProtocol.twColor} ${enemyProtocol.twBorder} bg-black/50`}>
                                     PROTOCOL: {enemyProtocol.name}
