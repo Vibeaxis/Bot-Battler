@@ -6,15 +6,6 @@ import { RARITY_COLORS } from '@/constants/gameConstants';
 import RarityBadge from './RarityBadge';
 import { cn } from '@/lib/utils';
 import { calculateBotStats } from '@/utils/statCalculator';
-
-const IconMap = { ...LucideIcons };
-
-const BotCard = ({ bot, slotLevels, isAttacking, side = 'player', className = '' }) => {
-  // Use the utility for consistent stat calculation including multipliers
-  const stats = calculateBotStats({
-    ...bot,
-    slotLevels: slotLevels || bot.slotLevels
-  });
 // Add these to your CSS or a <style> tag in this file
 const attackStyles = `
   @keyframes lunge-right {
@@ -42,6 +33,15 @@ const attackStyles = `
   .animate-recoil { animation: shake-damage 0.3s linear; }
 
 `;
+const IconMap = { ...LucideIcons };
+
+const BotCard = ({ bot, slotLevels, isAttacking, side = 'player', className = '' }) => {
+  // Use the utility for consistent stat calculation including multipliers
+  const stats = calculateBotStats({
+    ...bot,
+    slotLevels: slotLevels || bot.slotLevels
+  });
+
 
   // CHANGED: Reordered slots and added 'gridClass' for layout control
   // Head & Chassis span full width (col-span-2) but are centered (w-2/3 mx-auto)
