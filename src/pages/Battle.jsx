@@ -193,45 +193,38 @@ const [enemyAttacking, setEnemyAttacking] = useState(false);
     
     // Simulation Loop
     for (let i = 0; i < result.battleLog.length; i++) {
-      const logEntry = result.battleLog[i];
-      
-      if (logEntry.includes('Round')) {
-        const roundMatch = logEntry.match(/Round (\d+)/);
-        if (roundMatch) setCurrentRound(parseInt(roundMatch[1]));
-      }
-      
-    // Sound effects and Animations based on log content
-      const isPlayerAction = logEntry.includes(gameState.playerBot.name);
-      const isEnemyAction = logEntry.includes(enemy.name);
-      const isHit = logEntry.includes('damage') || logEntry.includes('CRITICAL');
+      // Inside your for loop in Battle.jsx
+const logEntry = result.battleLog[i];
 
-      if (logEntry.includes('CRITICAL')) {
-        playSound('CRIT');
-        
-        if (isPlayerAction) {
-           setRightToast(getRandomFlavor('HIT'));
-           setPlayerAttacking(true);
-           setTimeout(() => setPlayerAttacking(false), 400 / battleSpeedRef.current);
-        } else if (isEnemyAction) {
-           setLeftToast(getRandomFlavor('HIT'));
-           setEnemyAttacking(true);
-           setTimeout(() => setEnemyAttacking(false), 400 / battleSpeedRef.current);
-        }
+if (logEntry.includes('damage') || logEntry.includes('CRITICAL')) {
+  // 1. TRIGGER THE VISUALS FIRST
+  const isPlayerAction = logEntry.includes(gameState.playerBot.name);
+  if (isPlayerAction) setPlayerAttacking(true);
+  else setEnemyAttacking(true);
+  
+  playSound(logEntry.includes('CRITICAL') ? 'CRIT' : 'HIT');
 
-      } else if (logEntry.includes('damage')) {
-        playSound('HIT');
+  // 2. THE IMPACT DELAY (Wait for the arm to reach the target)
+  // 200ms is the "sweet spot" where the lunge looks like it connects
+  await new Promise(resolve => setTimeout(resolve, 200 / battleSpeedRef.current));
 
-        if (isPlayerAction) {
-          setPlayerAttacking(true);
-          setTimeout(() => setPlayerAttacking(false), 400 / battleSpeedRef.current);
-        } else if (isEnemyAction) {
-          setEnemyAttacking(true);
-          setTimeout(() => setEnemyAttacking(false), 400 / battleSpeedRef.current);
-        }
-      }
+  // 3. NOW UPDATE THE LOG AND HEALTH
+  // This triggers the Framer Motion bars in your BattleHeader to move
+  setBattleLog(prev => [...prev, logEntry]);
+  
+  // Update health state here (using the progress logic you already had)
+  if (i > 2 && i < result.battleLog.length - 2) {
+    const progress = i / (result.battleLog.length - 4);
+    setPlayerHealth(BASE_HEALTH - (BASE_HEALTH - result.finalHealthA) * progress);
+    setEnemyHealth(BASE_HEALTH - (BASE_HEALTH - result.finalHealthB) * progress);
+  }
+} else {
+  // For non-damage entries (like "Round X"), update immediately
+  setBattleLog(prev => [...prev, logEntry]);
+}
 
-      // Updated delay logic with battle speed multiplier
-      await new Promise(resolve => setTimeout(resolve, 800 / battleSpeedRef.current));
+// 4. THE TURN DELAY (Wait for the rest of the round/animation to finish)
+await new Promise(resolve => setTimeout(resolve, 600 / battleSpeedRef.current));
       
       setBattleLog(prev => [...prev, logEntry]);
       
