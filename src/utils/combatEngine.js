@@ -1,4 +1,3 @@
-
 import { calculateBotStats } from '@/utils/statCalculator';
 import { calculateProtocolBonus } from '@/data/tactics';
 import { 
@@ -24,16 +23,30 @@ const calculateDodgeChance = (defenderSpeed) => {
 };
 
 export const simulateBattle = (botA, botB, protocolA, protocolB) => {
-  // 1. Initial Stat Calculation
+  // 1. Initial Setup (Moved Health UP so we can record it immediately)
+  let healthA = BASE_HEALTH;
+  let healthB = BASE_HEALTH;
+
   let statsA = calculateBotStats(botA);
   let statsB = calculateBotStats(botB);
   
   const battleLog = [];
+  const healthTimeline = []; // <--- The Fix for NaN
   const criticalHits = [];
   
-  battleLog.push(`⚔️ Battle Start: ${botA.name} vs ${botB.name}`);
+  // 2. The Recorder Helper
+  // Ensures battleLog and healthTimeline stay perfectly synced (1-to-1)
+  const record = (message) => {
+    battleLog.push(message);
+    healthTimeline.push({ 
+      a: Math.max(0, healthA), 
+      b: Math.max(0, healthB) 
+    });
+  };
 
-  // 2. Apply Protocol Bonuses
+  record(`⚔️ Battle Start: ${botA.name} vs ${botB.name}`);
+
+  // 3. Apply Protocol Bonuses
   if (protocolA && protocolB) {
     const bonusA = calculateProtocolBonus(protocolA, protocolB.id);
     const bonusB = calculateProtocolBonus(protocolB, protocolA.id);
@@ -44,32 +57,30 @@ export const simulateBattle = (botA, botB, protocolA, protocolB) => {
     // Apply B's bonus
     statsB = { ...statsB, [protocolB.statType]: Math.floor(statsB[protocolB.statType] * (1 + bonusB)) };
     
-    battleLog.push(`📡 PROTOCOLS ACTIVE:`);
-    battleLog.push(`${botA.name}: [${protocolA.name}] -> +${Math.round(bonusA * 100)}% ${protocolA.statType}`);
-    battleLog.push(`${botB.name}: [${protocolB.name}] -> +${Math.round(bonusB * 100)}% ${protocolB.statType}`);
+    record(`📡 PROTOCOLS ACTIVE:`);
+    record(`${botA.name}: [${protocolA.name}] -> +${Math.round(bonusA * 100)}% ${protocolA.statType}`);
+    record(`${botB.name}: [${protocolB.name}] -> +${Math.round(bonusB * 100)}% ${protocolB.statType}`);
     
     if (bonusA > protocolA.baseBonus) {
-      battleLog.push(`⚡ TACTICAL ADVANTAGE: ${botA.name} counters ${botB.name}!`);
+      record(`⚡ TACTICAL ADVANTAGE: ${botA.name} counters ${botB.name}!`);
     } else if (bonusB > protocolB.baseBonus) {
-      battleLog.push(`⚡ TACTICAL ADVANTAGE: ${botB.name} counters ${botA.name}!`);
+      record(`⚡ TACTICAL ADVANTAGE: ${botB.name} counters ${botA.name}!`);
     } else {
-      battleLog.push(`⚖️ NEUTRAL MATCHUP: Standard protocols engaged.`);
+      record(`⚖️ NEUTRAL MATCHUP: Standard protocols engaged.`);
     }
-    battleLog.push('---');
+    record('---');
   }
 
   // Log post-buff stats
-  battleLog.push(`${botA.name} (Buffed) - DMG: ${statsA.Damage} | SPD: ${statsA.Speed} | ARM: ${statsA.Armor}`);
-  battleLog.push(`${botB.name} (Buffed) - DMG: ${statsB.Damage} | SPD: ${statsB.Speed} | ARM: ${statsB.Armor}`);
-  battleLog.push('---');
-  
-  let healthA = BASE_HEALTH;
-  let healthB = BASE_HEALTH;
+  record(`${botA.name} (Buffed) - DMG: ${statsA.Damage} | SPD: ${statsA.Speed} | ARM: ${statsA.Armor}`);
+  record(`${botB.name} (Buffed) - DMG: ${statsB.Damage} | SPD: ${statsB.Speed} | ARM: ${statsB.Armor}`);
+  record('---');
   
   let missStreakA = 0;
   let missStreakB = 0;
   let round = 0;
   
+  // 4. Combat Loop
   while (healthA > 0 && healthB > 0 && round < 50) {
     round++;
     
@@ -105,12 +116,14 @@ export const simulateBattle = (botA, botB, protocolA, protocolB) => {
           if (isCrit) {
             damage = Math.floor(damage * CRIT_MULTIPLIER);
             criticalHits.push(round);
-            battleLog.push(`💥 Round ${round}: ${attacker.name} lands a CRITICAL HIT for ${damage} damage!`);
+            // Apply Damage BEFORE recording so timeline matches
+            if (defRef === 'A') healthA -= damage; else healthB -= damage;
+            record(`💥 Round ${round}: ${attacker.name} lands a CRITICAL HIT for ${damage} damage!`);
           } else {
-            battleLog.push(`⚡ Round ${round}: ${attacker.name} attacks for ${damage} damage`);
+            // Apply Damage BEFORE recording
+            if (defRef === 'A') healthA -= damage; else healthB -= damage;
+            record(`⚡ Round ${round}: ${attacker.name} attacks for ${damage} damage`);
           }
-          
-          if (defRef === 'A') healthA -= damage; else healthB -= damage;
           
         } else {
           if (attRef === 'A') missStreakA++; else missStreakB++;
@@ -119,16 +132,17 @@ export const simulateBattle = (botA, botB, protocolA, protocolB) => {
             let damage = calculateDamage(attStats.Damage, defStats.Armor);
             damage = Math.max(1, Math.floor(damage * 0.3)); 
 
-            battleLog.push(`⚠️ Round ${round}: ${attacker.name} lands a glancing blow for ${damage} damage.`);
-            
+            // Apply Damage BEFORE recording
             if (defRef === 'A') healthA -= damage; else healthB -= damage;
+            record(`⚠️ Round ${round}: ${attacker.name} lands a glancing blow for ${damage} damage.`);
+            
           } else {
-            battleLog.push(`❌ Round ${round}: ${attacker.name}'s attack misses!`);
+            record(`❌ Round ${round}: ${attacker.name}'s attack misses!`);
           }
         }
       } else {
         if (attRef === 'A') missStreakA++; else missStreakB++;
-        battleLog.push(`🌀 Round ${round}: ${defender.name} dodges ${attacker.name}'s attack!`);
+        record(`🌀 Round ${round}: ${defender.name} dodges ${attacker.name}'s attack!`);
       }
     }
   }
@@ -136,14 +150,15 @@ export const simulateBattle = (botA, botB, protocolA, protocolB) => {
   const winner = healthA > 0 ? botA : botB;
   const loser = healthA > 0 ? botB : botA;
   
-  battleLog.push('---');
-  battleLog.push(`🏆 ${winner.name} wins with ${healthA > 0 ? healthA : healthB} HP remaining!`);
+  record('---');
+  record(`🏆 ${winner.name} wins with ${healthA > 0 ? healthA : healthB} HP remaining!`);
   
   return {
     winner,
     loser,
     rounds: round,
     battleLog,
+    healthTimeline, // <--- Returns populated timeline
     criticalHits,
     finalHealthA: Math.max(0, healthA),
     finalHealthB: Math.max(0, healthB)
