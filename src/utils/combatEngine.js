@@ -8,7 +8,6 @@ import {
   DAMAGE_VARIANCE 
 } from '@/constants/gameConstants';
 
-
 // SAFEGUARD 1: Fallback values prevent NaN if imports fail
 const STARTING_HP = BASE_HEALTH || 100; 
 
