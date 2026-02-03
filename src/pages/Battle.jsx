@@ -25,10 +25,19 @@ import { ScreenFlash, ImpactParticles } from '@/components/CombatEffects'; // Im
 
 
 
+import electricGrid from '@/assets/electric_grid.jpg';
+import rooftopRain from '@/assets/rooftop_rain.jpg';
+import spaceStation from '@/assets/space_station.jpg';
 
 
-
-
+// --- 2. DEFINE THE ARENA POOL ---
+const BATTLE_ARENAS = [
+  rooftopRain,
+  electricGrid,
+  spaceStation,
+  // You can still mix in URLs if you want more variety later:
+  // 'https://images.unsplash.com/photo-1563089145-599997674d42'
+];
 
 
 const REROLL_COST = 10;
@@ -64,7 +73,11 @@ const [enemyAttacking, setEnemyAttacking] = useState(false);
 const [enemyFloatingText, setEnemyFloatingText] = useState(null);
   // Animation controls
   const controls = useAnimation();
-  
+  // --- 3. INITIALIZE STATE ---
+    // Randomize the start so it's not always the same map on refresh
+    const [currentArena, setCurrentArena] = useState(() => {
+        return BATTLE_ARENAS[Math.floor(Math.random() * BATTLE_ARENAS.length)];
+    });
   // Refs
   const timersRef = useRef([]);
   const battleSpeedRef = useRef(1);
@@ -100,7 +113,14 @@ const [enemyFloatingText, setEnemyFloatingText] = useState(null);
     setEnemyHealth(BASE_HEALTH);
     setCurrentRound(0);
     setShowScavengeModal(false);
-    
+    // --- 4. ROTATE ARENA LOGIC ---
+        // Ensures we pick a DIFFERENT map than the current one
+        let nextArena;
+        do {
+            nextArena = BATTLE_ARENAS[Math.floor(Math.random() * BATTLE_ARENAS.length)];
+        } while (nextArena === currentArena && BATTLE_ARENAS.length > 1);
+        
+        setCurrentArena(nextArena);
     // Reset Protocol
     setPlayerProtocol(null);
     setEnemyProtocol(null);
@@ -338,17 +358,31 @@ return (
             <div className="h-screen max-h-screen bg-black flex flex-col overflow-hidden relative">
                 {/* NEW: Screen Flash Effect */}
     <ScreenFlash type={flashType} />
-                {/* Tech Grid Background (Fixes Ghost Boxes) */}
-                <div className="absolute inset-0 bg-[#050505]">
-                    <div 
-                        className="absolute inset-0 opacity-20" 
-                        style={{ 
-                            backgroundImage: `radial-gradient(circle at 2px 2px, var(--accent-color) 1px, transparent 0)`,
-                            backgroundSize: '40px 40px' 
-                        }} 
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/80" />
-                </div>
+            {/* --- BATTLE STAGE BACKGROUND --- */}
+            <div className="absolute inset-0 bg-black z-0">
+                
+                {/* Layer 1: The Rotating Image */}
+                <motion.div 
+                    key={currentArena} // Triggers the fade animation on change
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 0.4 }} 
+                    transition={{ duration: 1 }}
+                    className="absolute inset-0 bg-cover bg-center"
+                    style={{ backgroundImage: `url(${currentArena})` }}
+                />
+
+                {/* Layer 2: Tech Grid (The Vibe) */}
+                <div 
+                    className="absolute inset-0 opacity-20" 
+                    style={{ 
+                        backgroundImage: `radial-gradient(circle at 2px 2px, var(--accent-color) 1px, transparent 0)`,
+                        backgroundSize: '40px 40px' 
+                    }} 
+                />
+                
+                {/* Layer 3: Vignette */}
+                <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black/90" />
+            </div>
 
                 <BattleHeader
                     playerHealth={playerHealth}
