@@ -393,15 +393,16 @@ return (
             {/* --- BATTLE STAGE BACKGROUND --- */}
             <div className="absolute inset-0 bg-black z-0">
                 
-                {/* Layer 1: The Rotating Image */}
-                <motion.div 
-                    key={currentArena} // Triggers the fade animation on change
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 0.4 }} 
-                    transition={{ duration: 1 }}
-                    className="absolute inset-0 bg-cover bg-center"
-                    style={{ backgroundImage: `url(${currentArena})` }}
-                />
+               {/* Layer 1: The Rotating Image + Ken Burns Animation */}
+                    <motion.div 
+                        key={currentArena} // Triggers fade when map changes
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 0.4 }} 
+                        transition={{ duration: 1 }}
+                        // ADDED: 'animate-ken-burns' class here
+                        className="absolute inset-0 bg-cover bg-center animate-ken-burns"
+                        style={{ backgroundImage: `url(${currentArena})` }}
+                    />
 
                 {/* Layer 2: Tech Grid (The Vibe) */}
                 <div 
@@ -412,9 +413,10 @@ return (
                     }} 
                 />
                 
-                {/* Layer 3: Vignette */}
-                <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black/90" />
-            </div>
+              {/* Layer 3: Vignette & CRT Scanlines */}
+                    <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black/90" />
+                    <div className="absolute inset-0 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] bg-[length:100%_4px,6px_100%] opacity-20" />
+                </div>
 
                 <BattleHeader
                     playerHealth={playerHealth}

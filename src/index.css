@@ -19,3 +19,15 @@ body {
   font-family: 'DM Sans', sans-serif;
   margin: 0;
 }
+@keyframes ken-burns {
+  0% { transform: scale(1.05) translate(0, 0); }
+  50% { transform: scale(1.15) translate(-2%, -2%); }
+  100% { transform: scale(1.05) translate(0, 0); }
+}
+
+.animate-ken-burns {
+  /* 30s duration makes it feel cinematic, not dizzying */
+  animation: ken-burns 30s ease-in-out infinite alternate;
+  /* Ensures the image doesn't look pixelated when scaling up */
+  will-change: transform;
+}
