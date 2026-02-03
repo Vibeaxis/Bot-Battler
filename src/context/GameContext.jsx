@@ -278,7 +278,7 @@ export const GameProvider = ({ children }) => {
     }));
   };
   
-  const recordBattle = (result) => {
+const recordBattle = (result) => {
     setGameState(prev => {
       const newHistory = [result, ...prev.battleHistory].slice(0, 10);
       const newWinStreak = result.playerWon ? prev.winStreak + 1 : 0;
@@ -286,9 +286,14 @@ export const GameProvider = ({ children }) => {
       
       return {
         ...prev,
+        // Standard Streak Logic
         winStreak: newWinStreak,
         lossStreak: newLossStreak,
-        battleHistory: newHistory
+        battleHistory: newHistory,
+
+        // --- NEW: LIFETIME CAREER STATS (These never reset) ---
+        totalBattles: (prev.totalBattles || 0) + 1,
+        totalWins: (prev.totalWins || 0) + (result.playerWon ? 1 : 0)
       };
     });
   };
