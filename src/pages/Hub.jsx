@@ -237,8 +237,11 @@ const Hub = () => {
           </div>
 
         </div>
-        {/* STEP 2: SLOT THE TICKER HERE (Before the final closing div) */}
-        <div className="mt-auto z-10 w-full -mx-4 md:mx-0">
+       {/* FIXED POSITION TICKER:
+            This sits OUTSIDE the main flow. It won't shrink your UI.
+            "fixed bottom-0" glues it to the screen edge.
+        */}
+        <div className="fixed bottom-0 left-0 right-0 z-50">
            <SystemTicker />
         </div>
       </div>
