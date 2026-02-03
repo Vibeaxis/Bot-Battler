@@ -124,6 +124,8 @@ const RIGHT_ARM_PARTS = [
   { id: 'la_puzzle', name: 'Encryptor', tier: 3, stats: { Damage: 15, Speed: 20, Armor: 25, Weight: 10 }, icon: 'Puzzle', rarity: RARITY.RARE },
   { id: 'la_watch', name: 'Time Dial', tier: 3, stats: { Damage: 5, Speed: 40, Armor: 10, Weight: 5 }, icon: 'Watch', rarity: RARITY.RARE },
   { id: 'la_vault', name: 'Bank Vault', tier: 3, stats: { Damage: 0, Speed: 0, Armor: 60, Weight: 50 }, icon: 'Vault', rarity: RARITY.RARE },
+  { id: 'ra_wand_spark', name: 'Magic Wand', tier: 3, stats: { Damage: 40, Speed: 15, Armor: 0, Weight: 5 }, icon: 'WandSparkles', rarity: RARITY.RARE },
+  { id: 'ra_cross', name: 'Holy Smite', tier: 3, stats: { Damage: 50, Speed: 5, Armor: 10, Weight: 15 }, icon: 'Cross', rarity: RARITY.RARE },
 
   // --- TIER 4: EPIC ---
   { id: 'ra_void_blade', name: 'Void Blade', tier: 4, stats: { Damage: 60, Speed: 25, Armor: 5, Weight: 10 }, icon: 'Unplug', rarity: RARITY.EPIC },
@@ -178,6 +180,8 @@ const LEFT_ARM_PARTS = [
   { id: 'la_puzzle', name: 'Encryptor', tier: 3, stats: { Damage: 15, Speed: 20, Armor: 25, Weight: 10 }, icon: 'Puzzle', rarity: RARITY.RARE },
   { id: 'la_watch', name: 'Time Dial', tier: 3, stats: { Damage: 5, Speed: 40, Armor: 10, Weight: 5 }, icon: 'Watch', rarity: RARITY.RARE },
   { id: 'la_vault', name: 'Bank Vault', tier: 3, stats: { Damage: 0, Speed: 0, Armor: 60, Weight: 50 }, icon: 'Vault', rarity: RARITY.RARE },
+  { id: 'la_percent', name: 'Odds Maker', tier: 3, stats: { Damage: 15, Speed: 15, Armor: 20, Weight: 10 }, icon: 'BadgePercent', rarity: RARITY.RARE },
+  { id: 'la_shield_off', name: 'Ghost Shield', tier: 3, stats: { Damage: 0, Speed: 40, Armor: 10, Weight: 2 }, icon: 'ShieldOff', rarity: RARITY.RARE },
 
   // --- TIER 4: EPIC ---
   { id: 'la_void_shield', name: 'Void Shield', tier: 4, stats: { Damage: 15, Speed: 10, Armor: 55, Weight: 25 }, icon: 'ShieldUser', rarity: RARITY.EPIC },
@@ -225,6 +229,8 @@ const CHASSIS_PARTS = [
   { id: 'ch_spider', name: 'Spider Legs', tier: 3, stats: { Damage: 15, Speed: 30, Armor: 15, Weight: 15 }, icon: 'Bug', rarity: RARITY.RARE },
   { id: 'ch_cloud', name: 'Hover Cloud', tier: 3, stats: { Damage: 5, Speed: 40, Armor: 15, Weight: 5 }, icon: 'CloudSun', rarity: RARITY.RARE },
   { id: 'ch_fuel', name: 'Nitro Tank', tier: 3, stats: { Damage: 20, Speed: 50, Armor: 5, Weight: 20 }, icon: 'Fuel', rarity: RARITY.RARE },
+  { id: 'ch_keyboard', name: 'WASD Drive', tier: 3, stats: { Damage: 10, Speed: 40, Armor: 5, Weight: 5 }, icon: 'Keyboard', rarity: RARITY.RARE },
+  { id: 'ch_waves', name: 'Frequency Hover', tier: 3, stats: { Damage: 10, Speed: 30, Armor: 10, Weight: 10 }, icon: 'WavesLadder', rarity: RARITY.RARE },
 
   // --- TIER 4: EPIC ---
   { id: 'ch_void_core', name: 'Void Core Chassis', tier: 4, stats: { Damage: 30, Speed: 20, Armor: 50, Weight: 30 }, icon: 'Circle', rarity: RARITY.EPIC },
