@@ -23,7 +23,8 @@ const ForgeScreen = () => {
   // Crafting Costs
   const CRAFT_COSTS = {
     COMMON: 100,
-    UNCOMMON: 300
+    UNCOMMON: 300,
+    UNSTABLE: 50 // New gambling cost
   };
 
   // ... (fusibleItems logic remains the same) ...
@@ -103,6 +104,47 @@ const ForgeScreen = () => {
     });
   };
 
+  // --- UNSTABLE FABRICATION LOGIC ---
+  const handleUnstableCraft = () => {
+      if (gameState.scrap < CRAFT_COSTS.UNSTABLE) {
+          toast({ title: "Insufficient Scrap", variant: "destructive" });
+          return;
+      }
+
+      const roll = Math.random();
+      let tier = 1;
+      // Chances: 1% Epic, 9% Rare, 30% Uncommon, 60% Common
+      if (roll > 0.99) tier = 4; // Epic
+      else if (roll > 0.90) tier = 3; // Rare
+      else if (roll > 0.60) tier = 2; // Uncommon
+      // else Common
+
+      const possibleParts = parts.filter(p => p.tier === tier);
+      const randomPart = possibleParts[Math.floor(Math.random() * possibleParts.length)];
+
+      setGameState(prev => ({
+          ...prev,
+          scrap: prev.scrap - CRAFT_COSTS.UNSTABLE,
+          inventory: [...prev.inventory, randomPart.id]
+      }));
+
+      // Different toast for big wins
+      if (tier >= 3) {
+           toast({
+              title: "CRITICAL SUCCESS! ⚡",
+              description: `Unstable fusion stabilized! Created ${randomPart.name} (${RARITY_COLORS[tier].name})`,
+              className: "bg-purple-600 text-white border-2 border-yellow-400"
+          });
+      } else {
+          toast({
+              title: "Fabrication Complete",
+              description: `Created: ${randomPart.name}`,
+              className: cn("border-2", RARITY_COLORS[tier].border, "bg-black text-white")
+          });
+      }
+  };
+
+
   const handleReset = () => {
       setFusionResult(null);
       setSelectedItemId(null);
@@ -113,11 +155,6 @@ const ForgeScreen = () => {
       setFusionResult(null);
       setSelectedItemId(id);
   };
-
-  // Styles update: 
-  // bg-gray-900 -> bg-[#0a0a12]
-  // borders -> border-[var(--accent-color)] or gray-800 depending on prominence
-  // text -> use theme colors
 
   return (
     <>
@@ -207,7 +244,7 @@ const ForgeScreen = () => {
             {/* Right Panel: Crafting & Fusion */}
             <div className="lg:col-span-2 flex flex-col gap-6">
                 
-                {/* 1. Crafting Station (New Addition) */}
+                {/* 1. Crafting Station */}
                 <div className="bg-black/40 border border-gray-800 p-6 relative overflow-hidden">
                     <div className="absolute top-0 right-0 p-4 opacity-10">
                         <Zap className="w-32 h-32 text-[var(--accent-color)]" />
@@ -241,12 +278,30 @@ const ForgeScreen = () => {
                             </div>
                             <div className="mt-2 text-[10px] text-gray-500 group-hover:text-green-400/70">Generates Random Tier 2 Part</div>
                         </Button>
+
+                        {/* Unstable Fabrication (Gambling) */}
+                        <Button 
+                            onClick={handleUnstableCraft}
+                            className="sm:col-span-2 h-auto py-6 flex flex-col items-center bg-black border border-red-900/50 hover:border-red-500 hover:bg-red-900/10 rounded-none group transition-all relative overflow-hidden"
+                        >
+                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-red-500/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
+                            
+                            <div className="text-lg font-bold text-red-500 mb-1 uppercase tracking-wider flex items-center gap-2">
+                                <Zap className="w-5 h-5 animate-pulse" /> Unstable Fabrication
+                            </div>
+                            <div className="flex items-center gap-2 text-yellow-500 text-sm">
+                                <Coins className="w-3 h-3" /> {CRAFT_COSTS.UNSTABLE} Scrap
+                            </div>
+                            <div className="mt-2 text-[10px] text-gray-500 group-hover:text-red-400/70">
+                                Risk of failure. Chance of <span className="text-purple-400 font-bold">EPIC</span> loot.
+                            </div>
+                        </Button>
                     </div>
                 </div>
 
                 {/* 2. Fusion Interface (Existing) */}
                 <div className="flex-1 bg-black/40 border border-gray-800 p-6 relative flex flex-col items-center justify-center min-h-[400px]">
-                     <h2 className="absolute top-6 left-6 text-sm font-bold text-[var(--accent-color)] uppercase tracking-widest flex items-center gap-2">
+                      <h2 className="absolute top-6 left-6 text-sm font-bold text-[var(--accent-color)] uppercase tracking-widest flex items-center gap-2">
                         <Hammer className="w-4 h-4" /> Fusion Chamber
                     </h2>
 
