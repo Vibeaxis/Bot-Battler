@@ -381,10 +381,9 @@ return (
                             </div>
                         )}
 
-                        {/* LEFT: PROTOCOLS (Compact) */}
+                     {/* LEFT: PROTOCOLS */}
                         <div className={`flex-1 w-full md:w-auto transition-opacity duration-300 ${isBattling ? 'opacity-50 pointer-events-none grayscale' : ''}`}>
                             <div className="text-[10px] text-gray-500 font-mono mb-1 tracking-widest uppercase">Select Strategy</div>
-                            {/* We wrap the selector in a scaled div to shrink it slightly */}
                             <div className="origin-top-left scale-90 w-[110%]">
                                 <ProtocolSelector
                                     selectedProtocol={playerProtocol}
