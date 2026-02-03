@@ -71,7 +71,7 @@ const Hub = () => {
         <meta name="description" content="Main hub for Robot Battle Arena. Customize your bot, buy parts, and enter battles." />
       </Helmet>
       
-      <HangarModal isOpen={isHangarOpen} onClose={() => setIsHangarOpen(false)} />
+      <ProfileModal isOpen={isHangarOpen} onClose={() => setIsHangarOpen(false)} />
 {/* <--- YOU WERE MISSING THIS BLOCK ---> */}
       <CombatLogModal 
         isOpen={isLogOpen} 
