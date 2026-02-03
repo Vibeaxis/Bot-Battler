@@ -1,22 +1,20 @@
 import React, { useState } from 'react';
 import { getPartById } from '@/data/parts';
 import * as LucideIcons from 'lucide-react';
-import { RARITY_COLORS } from '@/constants/gameConstants';
+// Import the full Rarity Object so we can look up colors by ID
+import { RARITY_COLORS } from '@/constants/gameConstants'; 
 import RarityBadge from './RarityBadge';
 import { cn } from '@/lib/utils';
 import { calculateBotStats } from '@/utils/statCalculator';
 
-// --- FIXED SVG COMPONENTS (No Percentages in Paths) ---
-
+// --- FIXED SVG COMPONENTS (No Changes Needed Here) ---
 const SchematicSkeleton = () => (
-  // 1. Added viewBox 0-100 and preserveAspectRatio to allow simple coords to stretch
   <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-20" style={{ zIndex: 0 }} viewBox="0 0 100 100" preserveAspectRatio="none">
     <defs>
       <pattern id="grid-pattern" width="10" height="10" patternUnits="userSpaceOnUse">
         <path d="M 10 0 L 0 0 0 10" fill="none" stroke="currentColor" strokeWidth="0.5" />
       </pattern>
     </defs>
-    {/* 2. Converted 50% -> 50, etc. */}
     <path d="M 50 15 L 50 85" stroke="currentColor" strokeWidth="2" fill="none" className="text-[var(--accent-color)]" vectorEffect="non-scaling-stroke" />
     <path d="M 50 25 L 20 25 L 20 40" stroke="currentColor" strokeWidth="1" fill="none" className="text-gray-500" vectorEffect="non-scaling-stroke" />
     <path d="M 50 25 L 80 25 L 80 40" stroke="currentColor" strokeWidth="1" fill="none" className="text-gray-500" vectorEffect="non-scaling-stroke" />
@@ -27,20 +25,15 @@ const SchematicSkeleton = () => (
 const TechFrame = ({ children, className, isActive, colorClass = "text-gray-800" }) => (
   <div className={`relative ${className}`}>
     <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 0 }} viewBox="0 0 100 100" preserveAspectRatio="none">
-      {/* Fixed Path: "M 0 10..." creates a chamfered box using 0-100 coordinates.
-         The corners are cut at 10% of the box size.
-      */}
       <path 
         d="M 0 10 L 10 0 L 90 0 L 100 10 L 100 90 L 90 100 L 10 100 L 0 90 Z" 
         fill="none" 
         stroke="currentColor" 
         strokeWidth="1.5"
-        vectorEffect="non-scaling-stroke" // Keeps border thin even when stretched
+        vectorEffect="non-scaling-stroke"
         className={isActive ? "text-[var(--accent-color)] drop-shadow-[0_0_5px_rgba(var(--accent-rgb),0.8)]" : colorClass}
       />
     </svg>
-    
-    {/* Clip Path matches the SVG shape above (using percentages is fine in CSS clip-path) */}
     <div 
         className="relative z-10 w-full h-full flex flex-col items-center justify-center overflow-hidden"
         style={{ clipPath: 'polygon(10% 0, 90% 0, 100% 10%, 100% 90%, 90% 100%, 10% 100%, 0 90%, 0 10%)' }}
@@ -49,6 +42,7 @@ const TechFrame = ({ children, className, isActive, colorClass = "text-gray-800"
     </div>
   </div>
 );
+
 // --- MAIN COMPONENT ---
 
 const injectStyles = () => {
@@ -68,8 +62,19 @@ const injectStyles = () => {
 injectStyles();
 
 const IconMap = { ...LucideIcons };
+
+// Helper map to convert string IDs (common, rare) to integer Tiers (1, 3) for color lookup
+const RARITY_MAP = {
+    'common': 1,
+    'uncommon': 2,
+    'rare': 3,
+    'epic': 4,
+    'legendary': 5,
+    'omega': 6,
+    'mythic': 7
+};
+
 const BotCard = ({ bot, slotLevels, isAttacking, side = 'player', className = '' }) => {
-  // State for Contextual Footer
   const [hoveredPart, setHoveredPart] = useState(null);
 
   const stats = calculateBotStats({ ...bot, slotLevels: slotLevels || bot.slotLevels });
@@ -87,7 +92,18 @@ const BotCard = ({ bot, slotLevels, isAttacking, side = 'player', className = ''
   const ArmIcon = IconMap.Shield;
   const WgtIcon = IconMap.Weight;
 
-  // Reusable Stat Row Component
+  // Determine Bot Rarity Color
+  // 1. If it has a rarityId (from enemy generator), use that.
+  // 2. Otherwise default to 'text-white'
+  let nameColorClass = 'text-white';
+  
+  if (bot.rarityId && RARITY_MAP[bot.rarityId]) {
+      const tier = RARITY_MAP[bot.rarityId];
+      if (RARITY_COLORS[tier]) {
+          nameColorClass = RARITY_COLORS[tier].text;
+      }
+  }
+
   const StatBox = ({ label, value, icon: Icon, colorClass, borderClass }) => (
     <div className={`bg-[#111] border ${borderClass} px-2 py-1.5 flex items-center justify-between`}>
         <div className="flex items-center gap-2">
@@ -116,13 +132,22 @@ const BotCard = ({ bot, slotLevels, isAttacking, side = 'player', className = ''
           <BotIcon className="w-5 h-5 text-[var(--accent-color)]" />
         </div>
         <div className="flex-1 min-w-0">
-          <h3 className="text-lg font-black text-white truncate font-mono uppercase tracking-widest drop-shadow-md">
+          {/* CHANGED: Added nameColorClass to h3 */}
+          <h3 className={cn(
+             "text-lg font-black truncate font-mono uppercase tracking-widest drop-shadow-md",
+             nameColorClass // Applies the rarity color (e.g., text-blue-400)
+          )}>
             {bot.name}
           </h3>
           <div className="text-[9px] text-gray-500 font-mono tracking-widest flex items-center gap-2">
             <span>LVL {bot.level || 1}</span>
             <span className="w-1 h-1 rounded-full bg-gray-500" />
-            <span>{side === 'player' ? 'OPERATOR' : 'TARGET'}</span>
+            {/* Added Bot Rarity text if available */}
+            {bot.rarity ? (
+                <span className={nameColorClass}>{bot.rarity.toUpperCase()}</span>
+            ) : (
+                <span>{side === 'player' ? 'OPERATOR' : 'TARGET'}</span>
+            )}
           </div>
         </div>
       </div>
@@ -150,7 +175,6 @@ const BotCard = ({ bot, slotLevels, isAttacking, side = 'player', className = ''
                             `relative group ${gridClass}`,
                             shouldAnimateArm && (side === 'player' ? 'animate-attack-right' : 'animate-attack-left')
                         )}
-                        // MOUSE EVENTS
                         onMouseEnter={() => part && setHoveredPart({ ...part, slotKey: key })}
                         onMouseLeave={() => setHoveredPart(null)}
                     >
@@ -201,10 +225,10 @@ const BotCard = ({ bot, slotLevels, isAttacking, side = 'player', className = ''
                     </span>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
-                     <StatBox label="DMG" value={hoveredPart.stats.Damage || 0} icon={DmgIcon} colorClass="text-red-500" borderClass="border-red-900/30" />
-                     <StatBox label="SPD" value={hoveredPart.stats.Speed || 0} icon={SpdIcon} colorClass="text-cyan-400" borderClass="border-cyan-900/30" />
-                     <StatBox label="ARM" value={hoveredPart.stats.Armor || 0} icon={ArmIcon} colorClass="text-emerald-500" borderClass="border-emerald-900/30" />
-                     <StatBox label="WGT" value={hoveredPart.stats.Weight || 0} icon={WgtIcon} colorClass="text-amber-500" borderClass="border-amber-900/30" />
+                      <StatBox label="DMG" value={hoveredPart.stats.Damage || 0} icon={DmgIcon} colorClass="text-red-500" borderClass="border-red-900/30" />
+                      <StatBox label="SPD" value={hoveredPart.stats.Speed || 0} icon={SpdIcon} colorClass="text-cyan-400" borderClass="border-cyan-900/30" />
+                      <StatBox label="ARM" value={hoveredPart.stats.Armor || 0} icon={ArmIcon} colorClass="text-emerald-500" borderClass="border-emerald-900/30" />
+                      <StatBox label="WGT" value={hoveredPart.stats.Weight || 0} icon={WgtIcon} colorClass="text-amber-500" borderClass="border-amber-900/30" />
                 </div>
             </div>
         ) : (
