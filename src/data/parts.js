@@ -40,6 +40,7 @@ const HEAD_PARTS = [
   { id: 'h_scrap_cowl', name: 'Scrapper Cowl', tier: 1, stats: { Damage: 4, Speed: 6, Armor: 12, Weight: 9 }, icon: 'Skull', rarity: RARITY.COMMON },
   { id: 'h_bucket', name: 'Steel Bucket', tier: 1, stats: { Damage: 0, Speed: 0, Armor: 15, Weight: 10 }, icon: 'Container', rarity: RARITY.COMMON },
   { id: 'h_miner_lamp', name: 'Miner Lamp', tier: 1, stats: { Damage: 5, Speed: 8, Armor: 5, Weight: 6 }, icon: 'Lightbulb', rarity: RARITY.COMMON },
+  
 
   // --- TIER 2: UNCOMMON (Green) ---
   { id: 'h_tac_hud', name: 'Tactical HUD', tier: 2, stats: { Damage: 8, Speed: 10, Armor: 5, Weight: 8 }, icon: 'Target', rarity: RARITY.UNCOMMON },
@@ -48,6 +49,14 @@ const HEAD_PARTS = [
   { id: 'h_sens_array', name: 'Sensor Array', tier: 2, stats: { Damage: 6, Speed: 15, Armor: 3, Weight: 9 }, icon: 'Radio', rarity: RARITY.UNCOMMON },
   { id: 'h_night_vis', name: 'Night Vision', tier: 2, stats: { Damage: 7, Speed: 12, Armor: 4, Weight: 6 }, icon: 'EyeOff', rarity: RARITY.UNCOMMON },
   { id: 'h_comm_link', name: 'Comm Link', tier: 2, stats: { Damage: 4, Speed: 18, Armor: 2, Weight: 5 }, icon: 'Wifi', rarity: RARITY.UNCOMMON },
+  { id: 'h_webcam', name: 'Optic Eye', tier: 2, stats: { Damage: 5, Speed: 15, Armor: 2, Weight: 5 }, icon: 'Webcam', rarity: RARITY.UNCOMMON },
+  { id: 'h_router', name: 'Wi-Fi Hub', tier: 2, stats: { Damage: 8, Speed: 12, Armor: 0, Weight: 6 }, icon: 'Router', rarity: RARITY.UNCOMMON },
+  { id: 'h_monitor', name: 'CRT Monitor', tier: 2, stats: { Damage: 2, Speed: 5, Armor: 15, Weight: 20 }, icon: 'Monitor', rarity: RARITY.UNCOMMON },
+  { id: 'h_brain_cog', name: 'Logic Gear', tier: 2, stats: { Damage: 12, Speed: 10, Armor: 5, Weight: 10 }, icon: 'BrainCog', rarity: RARITY.UNCOMMON },
+  { id: 'h_radar_v2', name: 'Pulse Radar', tier: 2, stats: { Damage: 5, Speed: 18, Armor: 3, Weight: 8 }, icon: 'Radar', rarity: RARITY.UNCOMMON },
+  { id: 'h_chef', name: 'Combat Chef', tier: 2, stats: { Damage: 10, Speed: 5, Armor: 8, Weight: 5 }, icon: 'ChefHat', rarity: RARITY.UNCOMMON },
+  { id: 'h_mask', name: 'Stealth Mask', tier: 2, stats: { Damage: 8, Speed: 15, Armor: 5, Weight: 4 }, icon: 'VenetianMask', rarity: RARITY.UNCOMMON },
+  { id: 'h_bot_chat', name: 'Chat Bot', tier: 2, stats: { Damage: 15, Speed: 5, Armor: 2, Weight: 5 }, icon: 'BotMessageSquare', rarity: RARITY.UNCOMMON },
 
   // --- TIER 3: RARE (Blue) ---
   { id: 'h_quant_cpu', name: 'Quantum CPU', tier: 3, stats: { Damage: 18, Speed: 22, Armor: 8, Weight: 10 }, icon: 'Cpu', rarity: RARITY.RARE },
@@ -55,6 +64,10 @@ const HEAD_PARTS = [
   { id: 'h_ai_assistant', name: 'AI Assistant', tier: 3, stats: { Damage: 12, Speed: 30, Armor: 5, Weight: 8 }, icon: 'Bot', rarity: RARITY.RARE },
   { id: 'h_carbon_mask', name: 'Carbon Mask', tier: 3, stats: { Damage: 20, Speed: 15, Armor: 15, Weight: 9 }, icon: 'Ghost', rarity: RARITY.RARE },
   { id: 'h_third_eye', name: 'Third Eye', tier: 3, stats: { Damage: 25, Speed: 25, Armor: 2, Weight: 5 }, icon: 'Triangle', rarity: RARITY.RARE },
+  { id: 'h_telescope', name: 'Sniper Scope', tier: 3, stats: { Damage: 30, Speed: 5, Armor: 0, Weight: 12 }, icon: 'Telescope', rarity: RARITY.RARE },
+  { id: 'h_micro', name: 'Bio Scanner', tier: 3, stats: { Damage: 15, Speed: 25, Armor: 5, Weight: 8 }, icon: 'Microscope', rarity: RARITY.RARE },
+  { id: 'h_queen', name: 'Tactician Core', tier: 3, stats: { Damage: 25, Speed: 25, Armor: 10, Weight: 10 }, icon: 'ChessQueen', rarity: RARITY.RARE },
+  { id: 'h_haze', name: 'Fog Unit', tier: 3, stats: { Damage: 5, Speed: 20, Armor: 20, Weight: 15 }, icon: 'Haze', rarity: RARITY.RARE },
 
   // --- TIER 4: EPIC (Purple) ---
   { id: 'h_void_gaze', name: 'Void Gaze', tier: 4, stats: { Damage: 35, Speed: 28, Armor: 10, Weight: 12 }, icon: 'Eye', rarity: RARITY.EPIC },
@@ -94,12 +107,23 @@ const RIGHT_ARM_PARTS = [
   { id: 'ra_shock', name: 'Shock Fist', tier: 2, stats: { Damage: 25, Speed: 6, Armor: 6, Weight: 14 }, icon: 'CloudOff', rarity: RARITY.UNCOMMON },
   { id: 'ra_laser', name: 'Laser Lance', tier: 2, stats: { Damage: 24, Speed: 10, Armor: 2, Weight: 10 }, icon: 'UtilityPole', rarity: RARITY.UNCOMMON },
   { id: 'ra_saw', name: 'Buzzsaw', tier: 2, stats: { Damage: 28, Speed: 5, Armor: 0, Weight: 16 }, icon: 'Slice', rarity: RARITY.UNCOMMON },
+  { id: 'la_brick', name: 'Brick Wall', tier: 2, stats: { Damage: 2, Speed: 2, Armor: 35, Weight: 25 }, icon: 'BrickWall', rarity: RARITY.UNCOMMON },
+  { id: 'la_stop', name: 'Blockade', tier: 2, stats: { Damage: 5, Speed: 5, Armor: 25, Weight: 15 }, icon: 'CirclePower', rarity: RARITY.UNCOMMON },
+  { id: 'la_extinguish', name: 'Coolant Spray', tier: 2, stats: { Damage: 0, Speed: 10, Armor: 20, Weight: 10 }, icon: 'FireExtinguisher', rarity: RARITY.UNCOMMON },
+  { id: 'la_solar', name: 'Solar Panel', tier: 2, stats: { Damage: 5, Speed: 15, Armor: 10, Weight: 8 }, icon: 'SolarPanel', rarity: RARITY.UNCOMMON },
+  { id: 'la_tool', name: 'Repair Kit', tier: 2, stats: { Damage: 0, Speed: 10, Armor: 15, Weight: 12 }, icon: 'ToolCase', rarity: RARITY.UNCOMMON },
+  { id: 'la_magnet', name: 'Magnet Field', tier: 2, stats: { Damage: 5, Speed: 8, Armor: 22, Weight: 18 }, icon: 'Minimize', rarity: RARITY.UNCOMMON },
+  { id: 'la_sign', name: 'Warning Sign', tier: 2, stats: { Damage: 8, Speed: 8, Armor: 18, Weight: 10 }, icon: 'TriangleAlert', rarity: RARITY.UNCOMMON },
 
   // --- TIER 3: RARE ---
   { id: 'ra_fusion', name: 'Fusion Blaster', tier: 3, stats: { Damage: 38, Speed: 10, Armor: 5, Weight: 18 }, icon: 'Rocket', rarity: RARITY.RARE },
   { id: 'ra_nano', name: 'Nano Blade', tier: 3, stats: { Damage: 35, Speed: 18, Armor: 4, Weight: 12 }, icon: 'Bolt', rarity: RARITY.RARE },
   { id: 'ra_tesla', name: 'Tesla Coil', tier: 3, stats: { Damage: 30, Speed: 15, Armor: 0, Weight: 14 }, icon: 'CloudLightning', rarity: RARITY.RARE },
   { id: 'ra_railgun', name: 'Mini Railgun', tier: 3, stats: { Damage: 45, Speed: 4, Armor: 0, Weight: 25 }, icon: 'ArrowRight', rarity: RARITY.RARE },
+  { id: 'la_diamond', name: 'Hardlight Shield', tier: 3, stats: { Damage: 10, Speed: 15, Armor: 40, Weight: 10 }, icon: 'Diamond', rarity: RARITY.RARE },
+  { id: 'la_puzzle', name: 'Encryptor', tier: 3, stats: { Damage: 15, Speed: 20, Armor: 25, Weight: 10 }, icon: 'Puzzle', rarity: RARITY.RARE },
+  { id: 'la_watch', name: 'Time Dial', tier: 3, stats: { Damage: 5, Speed: 40, Armor: 10, Weight: 5 }, icon: 'Watch', rarity: RARITY.RARE },
+  { id: 'la_vault', name: 'Bank Vault', tier: 3, stats: { Damage: 0, Speed: 0, Armor: 60, Weight: 50 }, icon: 'Vault', rarity: RARITY.RARE },
 
   // --- TIER 4: EPIC ---
   { id: 'ra_void_blade', name: 'Void Blade', tier: 4, stats: { Damage: 60, Speed: 25, Armor: 5, Weight: 10 }, icon: 'Unplug', rarity: RARITY.EPIC },
@@ -138,11 +162,22 @@ const LEFT_ARM_PARTS = [
   { id: 'la_saw', name: 'Power Saw', tier: 2, stats: { Damage: 18, Speed: 8, Armor: 8, Weight: 14 }, icon: 'Disc', rarity: RARITY.UNCOMMON },
   { id: 'la_emp', name: 'EMP Emitter', tier: 2, stats: { Damage: 10, Speed: 15, Armor: 10, Weight: 11 }, icon: 'NotepadTextDashed', rarity: RARITY.UNCOMMON },
   { id: 'la_repulsor', name: 'Repulsor Field', tier: 2, stats: { Damage: 8, Speed: 12, Armor: 18, Weight: 12 }, icon: 'Move', rarity: RARITY.UNCOMMON },
+  { id: 'la_brick', name: 'Brick Wall', tier: 2, stats: { Damage: 2, Speed: 2, Armor: 35, Weight: 25 }, icon: 'BrickWall', rarity: RARITY.UNCOMMON },
+  { id: 'la_stop', name: 'Blockade', tier: 2, stats: { Damage: 5, Speed: 5, Armor: 25, Weight: 15 }, icon: 'CirclePower', rarity: RARITY.UNCOMMON },
+  { id: 'la_extinguish', name: 'Coolant Spray', tier: 2, stats: { Damage: 0, Speed: 10, Armor: 20, Weight: 10 }, icon: 'FireExtinguisher', rarity: RARITY.UNCOMMON },
+  { id: 'la_solar', name: 'Solar Panel', tier: 2, stats: { Damage: 5, Speed: 15, Armor: 10, Weight: 8 }, icon: 'SolarPanel', rarity: RARITY.UNCOMMON },
+  { id: 'la_tool', name: 'Repair Kit', tier: 2, stats: { Damage: 0, Speed: 10, Armor: 15, Weight: 12 }, icon: 'ToolCase', rarity: RARITY.UNCOMMON },
+  { id: 'la_magnet', name: 'Magnet Field', tier: 2, stats: { Damage: 5, Speed: 8, Armor: 22, Weight: 18 }, icon: 'Minimize', rarity: RARITY.UNCOMMON },
+  { id: 'la_sign', name: 'Warning Sign', tier: 2, stats: { Damage: 8, Speed: 8, Armor: 18, Weight: 10 }, icon: 'TriangleAlert', rarity: RARITY.UNCOMMON },
 
   // --- TIER 3: RARE ---
   { id: 'la_aegis', name: 'Aegis Barrier', tier: 3, stats: { Damage: 10, Speed: 8, Armor: 35, Weight: 20 }, icon: 'ShieldAlert', rarity: RARITY.RARE },
   { id: 'la_whip', name: 'Plasma Whip', tier: 3, stats: { Damage: 28, Speed: 20, Armor: 12, Weight: 14 }, icon: 'Waves', rarity: RARITY.RARE },
   { id: 'la_repair', name: 'Repair Drone', tier: 3, stats: { Damage: 5, Speed: 10, Armor: 15, Weight: 10 }, icon: 'Wrench', rarity: RARITY.RARE },
+  { id: 'la_diamond', name: 'Hardlight Shield', tier: 3, stats: { Damage: 10, Speed: 15, Armor: 40, Weight: 10 }, icon: 'Diamond', rarity: RARITY.RARE },
+  { id: 'la_puzzle', name: 'Encryptor', tier: 3, stats: { Damage: 15, Speed: 20, Armor: 25, Weight: 10 }, icon: 'Puzzle', rarity: RARITY.RARE },
+  { id: 'la_watch', name: 'Time Dial', tier: 3, stats: { Damage: 5, Speed: 40, Armor: 10, Weight: 5 }, icon: 'Watch', rarity: RARITY.RARE },
+  { id: 'la_vault', name: 'Bank Vault', tier: 3, stats: { Damage: 0, Speed: 0, Armor: 60, Weight: 50 }, icon: 'Vault', rarity: RARITY.RARE },
 
   // --- TIER 4: EPIC ---
   { id: 'la_void_shield', name: 'Void Shield', tier: 4, stats: { Damage: 15, Speed: 10, Armor: 55, Weight: 25 }, icon: 'ShieldUser', rarity: RARITY.EPIC },
@@ -177,11 +212,19 @@ const CHASSIS_PARTS = [
   { id: 'ch_hover', name: 'Hover Drive', tier: 2, stats: { Damage: 5, Speed: 20, Armor: 10, Weight: 15 }, icon: 'LifeBuoy', rarity: RARITY.UNCOMMON },
   { id: 'ch_treads', name: 'Tank Treads', tier: 2, stats: { Damage: 8, Speed: 4, Armor: 30, Weight: 35 }, icon: 'WrapText', rarity: RARITY.UNCOMMON },
   { id: 'ch_stealth', name: 'Stealth Hull', tier: 2, stats: { Damage: 12, Speed: 15, Armor: 12, Weight: 14 }, icon: 'HatGlasses', rarity: RARITY.UNCOMMON },
+  { id: 'ch_pyramid', name: 'Monolith Base', tier: 2, stats: { Damage: 10, Speed: 5, Armor: 30, Weight: 30 }, icon: 'Pyramid', rarity: RARITY.UNCOMMON },
+  { id: 'ch_cube', name: 'Weighted Cube', tier: 2, stats: { Damage: 5, Speed: 5, Armor: 40, Weight: 35 }, icon: 'Cuboid', rarity: RARITY.UNCOMMON },
+  { id: 'ch_worm', name: 'Flex Treads', tier: 2, stats: { Damage: 8, Speed: 18, Armor: 15, Weight: 15 }, icon: 'Worm', rarity: RARITY.UNCOMMON },
+  { id: 'ch_bug', name: 'Crawler Frame', tier: 2, stats: { Damage: 12, Speed: 20, Armor: 12, Weight: 12 }, icon: 'BugPlay', rarity: RARITY.UNCOMMON },
+  { id: 'ch_dam', name: 'Heavy Wall', tier: 2, stats: { Damage: 0, Speed: 2, Armor: 50, Weight: 50 }, icon: 'Dam', rarity: RARITY.UNCOMMON },
+  { id: 'ch_torus', name: 'Donut Drive', tier: 2, stats: { Damage: 5, Speed: 25, Armor: 10, Weight: 10 }, icon: 'Torus', rarity: RARITY.UNCOMMON },
 
   // --- TIER 3: RARE ---
   { id: 'ch_nano', name: 'Nanocarbon Hull', tier: 3, stats: { Damage: 10, Speed: 25, Armor: 25, Weight: 18 }, icon: 'Hexagon', rarity: RARITY.RARE },
   { id: 'ch_reactor', name: 'Reactor Core', tier: 3, stats: { Damage: 25, Speed: 12, Armor: 20, Weight: 25 }, icon: 'Atom', rarity: RARITY.RARE },
   { id: 'ch_spider', name: 'Spider Legs', tier: 3, stats: { Damage: 15, Speed: 30, Armor: 15, Weight: 15 }, icon: 'Bug', rarity: RARITY.RARE },
+  { id: 'ch_cloud', name: 'Hover Cloud', tier: 3, stats: { Damage: 5, Speed: 40, Armor: 15, Weight: 5 }, icon: 'CloudSun', rarity: RARITY.RARE },
+  { id: 'ch_fuel', name: 'Nitro Tank', tier: 3, stats: { Damage: 20, Speed: 50, Armor: 5, Weight: 20 }, icon: 'Fuel', rarity: RARITY.RARE },
 
   // --- TIER 4: EPIC ---
   { id: 'ch_void_core', name: 'Void Core Chassis', tier: 4, stats: { Damage: 30, Speed: 20, Armor: 50, Weight: 30 }, icon: 'Circle', rarity: RARITY.EPIC },
