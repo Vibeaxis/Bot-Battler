@@ -72,7 +72,12 @@ const Hub = () => {
       </Helmet>
       
       <HangarModal isOpen={isHangarOpen} onClose={() => setIsHangarOpen(false)} />
-
+{/* <--- YOU WERE MISSING THIS BLOCK ---> */}
+      <CombatLogModal 
+        isOpen={isLogOpen} 
+        onClose={() => setIsLogOpen(false)} 
+        battle={lastBattle} 
+      />
       <div className="min-h-screen bg-[#0a0a12] p-4 font-mono text-[#e0e0e0] selection:bg-[var(--accent-color)] selection:text-black">
         <div className="max-w-7xl mx-auto py-8 relative">
           
