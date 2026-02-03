@@ -49,9 +49,25 @@ const TechFrame = ({ children, className, isActive, colorClass = "text-gray-800"
     </div>
   </div>
 );
+// --- MAIN COMPONENT ---
+
+const injectStyles = () => {
+  if (typeof document === 'undefined') return;
+  const styleId = 'bot-card-animations';
+  if (document.getElementById(styleId)) return;
+  const style = document.createElement('style');
+  style.id = styleId;
+  style.innerHTML = `
+    @keyframes lunge-right { 0% { transform: translateX(0); } 20% { transform: translateX(-15px); } 40% { transform: translateX(40px); } 100% { transform: translateX(0); } }
+    @keyframes lunge-left { 0% { transform: translateX(0); } 20% { transform: translateX(15px); } 40% { transform: translateX(-40px); } 100% { transform: translateX(0); } }
+    .animate-attack-right { animation: lunge-right 0.3s ease-out !important; }
+    .animate-attack-left { animation: lunge-left 0.3s ease-out !important; }
+  `;
+  document.head.appendChild(style);
+};
+injectStyles();
 
 const IconMap = { ...LucideIcons };
-
 const BotCard = ({ bot, slotLevels, isAttacking, side = 'player', className = '' }) => {
   // State for Contextual Footer
   const [hoveredPart, setHoveredPart] = useState(null);
