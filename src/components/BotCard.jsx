@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { getPartById } from '@/data/parts';
 import * as LucideIcons from 'lucide-react';
 import { RARITY_COLORS } from '@/constants/gameConstants';
