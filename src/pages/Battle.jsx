@@ -278,11 +278,18 @@ return (
             </Helmet>
 
             <div className="h-screen max-h-screen bg-black flex flex-col overflow-hidden relative">
-                {/* Background Image */}
-                <div 
-                    className="absolute inset-0 opacity-20 bg-cover bg-center"
-                    style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1579803815615-1203fb5a2e9d)' }}
-                />
+                
+                {/* Tech Grid Background (Fixes Ghost Boxes) */}
+                <div className="absolute inset-0 bg-[#050505]">
+                    <div 
+                        className="absolute inset-0 opacity-20" 
+                        style={{ 
+                            backgroundImage: `radial-gradient(circle at 2px 2px, var(--accent-color) 1px, transparent 0)`,
+                            backgroundSize: '40px 40px' 
+                        }} 
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/80" />
+                </div>
 
                 <BattleHeader
                     playerHealth={playerHealth}
@@ -291,7 +298,7 @@ return (
                     round={currentRound}
                 />
 
-                {/* MAIN ARENA - Added pb-48 to ensure bots never touch the footer */}
+                {/* MAIN ARENA */}
                 <motion.div 
                     animate={controls}
                     className="relative z-10 flex-1 flex flex-col w-full pb-48"
@@ -312,6 +319,15 @@ return (
                             <SpeechToast message={leftToast} position="left" />
                             <CombatTextOverlay activeText={playerFloatingText} />
                             
+                            {/* ACTIVE PROTOCOL TOAST - MOVED TOP & FIXED Z-INDEX */}
+                            {playerProtocol && (
+                                <div className="absolute -top-10 left-0 right-0 text-center z-20">
+                                    <span className="text-[10px] font-bold px-3 py-1 rounded-sm border border-[var(--accent-color)] text-[var(--accent-color)] bg-black shadow-[0_0_10px_rgba(var(--accent-rgb),0.3)] tracking-widest uppercase">
+                                        Active: {playerProtocol.name}
+                                    </span>
+                                </div>
+                            )}
+
                             <BotCard
                                 bot={gameState.playerBot}
                                 side="player"
@@ -320,14 +336,6 @@ return (
                                 slotLevels={gameState.slotLevels}
                                 className="scale-110 shadow-2xl"
                             />
-                            
-                            {playerProtocol && (
-                                <div className="absolute -top-8 left-0 right-0 text-center">
-                                    <span className="text-[10px] font-bold px-2 py-0.5 border border-[var(--accent-color)] text-[var(--accent-color)] bg-black/80 tracking-widest uppercase">
-                                        Active: {playerProtocol.name}
-                                    </span>
-                                </div>
-                            )}
                         </div>
 
                         {/* VS DIVIDER */}
@@ -340,15 +348,7 @@ return (
                             <SpeechToast message={rightToast} position="right" />
                             <CombatTextOverlay activeText={enemyFloatingText} />
                             
-                            <BotCard
-                                bot={enemy}
-                                side="enemy"
-                                isAttacking={enemyAttacking}
-                                isHit={playerAttacking}
-                                className="scale-110 shadow-2xl border-red-500/50"
-                            />
-
-                       {/* ENEMY PROTOCOL TOAST - MOVED TOP & FIXED Z-INDEX */}
+                            {/* ENEMY PROTOCOL TOAST - MOVED TOP & FIXED Z-INDEX */}
                             {enemyProtocol && (
                                 <div className="absolute -top-10 left-0 right-0 text-center z-20">
                                     <span className="text-[10px] font-bold px-3 py-1 rounded-sm border border-red-500 text-red-500 bg-black shadow-[0_0_10px_rgba(220,38,38,0.3)] tracking-widest uppercase">
@@ -356,6 +356,14 @@ return (
                                     </span>
                                 </div>
                             )}
+
+                            <BotCard
+                                bot={enemy}
+                                side="enemy"
+                                isAttacking={enemyAttacking}
+                                isHit={playerAttacking}
+                                className="scale-110 shadow-2xl border-red-500/50"
+                            />
                         </div>
                     </div>
                 </motion.div>
@@ -364,7 +372,7 @@ return (
                 <div className="fixed bottom-0 left-0 right-0 z-50 bg-[#0a0a0a] border-t border-gray-800 p-4 shadow-[0_-10px_40px_rgba(0,0,0,0.8)]">
                     <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
                         
-                        {/* DEFEATED MESSAGE (Overlays controls if active) */}
+                        {/* DEFEATED MESSAGE */}
                         {battleResult && !battleResult.playerWon && (
                             <div className="absolute inset-0 bg-black/90 z-50 flex items-center justify-center gap-6">
                                 <div className="text-center">
@@ -382,7 +390,7 @@ return (
                             </div>
                         )}
 
-                     {/* LEFT: PROTOCOLS */}
+                        {/* LEFT: PROTOCOLS */}
                         <div className={`flex-1 w-full md:w-auto transition-opacity duration-300 ${isBattling ? 'opacity-50 pointer-events-none grayscale' : ''}`}>
                             <div className="text-[10px] text-gray-500 font-mono mb-1 tracking-widest uppercase">Select Strategy</div>
                             <div className="origin-top-left scale-90 w-[110%]">
@@ -396,7 +404,6 @@ return (
 
                         {/* RIGHT: ACTION BUTTONS */}
                         <div className="flex items-end gap-3 shrink-0">
-                            {/* Scout Button */}
                             <div className="flex flex-col">
                                 <Button 
                                     onClick={handleReroll} 
@@ -411,7 +418,6 @@ return (
                                 </Button>
                             </div>
 
-                            {/* ENGAGE (Big Button) */}
                             <Button 
                                 onClick={startBattle} 
                                 disabled={isBattling || !playerProtocol}
