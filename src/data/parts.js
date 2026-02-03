@@ -91,7 +91,7 @@ const RIGHT_ARM_PARTS = [
   // --- TIER 2: UNCOMMON ---
   { id: 'ra_plasma', name: 'Plasma Cutter', tier: 2, stats: { Damage: 22, Speed: 8, Armor: 3, Weight: 12 }, icon: 'Scissors', rarity: RARITY.UNCOMMON },
   { id: 'ra_cannon', name: 'Autocannon', tier: 2, stats: { Damage: 20, Speed: 12, Armor: 4, Weight: 15 }, icon: 'Anvil', rarity: RARITY.UNCOMMON },
-  { id: 'ra_shock', name: 'Shock Fist', tier: 2, stats: { Damage: 25, Speed: 6, Armor: 6, Weight: 14 }, icon: 'Zap', rarity: RARITY.UNCOMMON },
+  { id: 'ra_shock', name: 'Shock Fist', tier: 2, stats: { Damage: 25, Speed: 6, Armor: 6, Weight: 14 }, icon: 'CloudOff', rarity: RARITY.UNCOMMON },
   { id: 'ra_laser', name: 'Laser Lance', tier: 2, stats: { Damage: 24, Speed: 10, Armor: 2, Weight: 10 }, icon: 'UtilityPole', rarity: RARITY.UNCOMMON },
   { id: 'ra_saw', name: 'Buzzsaw', tier: 2, stats: { Damage: 28, Speed: 5, Armor: 0, Weight: 16 }, icon: 'Slice', rarity: RARITY.UNCOMMON },
 
