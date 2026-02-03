@@ -23,7 +23,7 @@ const Hub = () => {
   const { playSound } = useSoundContext();
   const [isHangarOpen, setIsHangarOpen] = useState(false);
   const lastBattle = gameState.battleHistory[0];
-  
+  const [isLogOpen, setIsLogOpen] = useState(false); // <--- ADD THIS LINE
   const menuItems = [
     {
       title: 'Battle Arena',
