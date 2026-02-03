@@ -11,6 +11,16 @@ import {
 // SAFEGUARD 1: Fallback values prevent NaN if imports fail
 const STARTING_HP = BASE_HEALTH || 100; 
 
+// --- NEW: DAMAGE SOFT CAP LOGIC ---
+// Prevents one-shots by dampening damage that exceeds 35% of max HP
+const applySoftCap = (damage, maxHealth) => {
+  const cap = maxHealth * 0.35; 
+  if (damage <= cap) return damage;
+  
+  const excess = damage - cap;
+  return Math.floor(cap + (excess * 0.5)); // Only 50% of the overkill gets through
+};
+
 const calculateDamage = (attackerDamage, defenderArmor) => {
   // SAFEGUARD 2: Default to 0 if stats are missing
   const dmg = attackerDamage || 0;
@@ -36,6 +46,10 @@ const calculateDodgeChance = (defenderSpeed) => {
 
 export const simulateBattle = (botA, botB, protocolA, protocolB) => {
   // 1. Initial Setup
+  // We capture Max Health for the Soft Cap calculation
+  const MAX_HP_A = STARTING_HP;
+  const MAX_HP_B = STARTING_HP;
+
   let healthA = STARTING_HP;
   let healthB = STARTING_HP;
 
@@ -98,18 +112,18 @@ export const simulateBattle = (botA, botB, protocolA, protocolB) => {
 
     const turns = speedA >= speedB
       ? [
-          { attacker: botA, defender: botB, attStats: statsA, defStats: statsB, attRef: 'A', defRef: 'B' },
-          { attacker: botB, defender: botA, attStats: statsB, defStats: statsA, attRef: 'B', defRef: 'A' }
+          { attacker: botA, defender: botB, attStats: statsA, defStats: statsB, attRef: 'A', defRef: 'B', targetMaxHp: MAX_HP_B },
+          { attacker: botB, defender: botA, attStats: statsB, defStats: statsA, attRef: 'B', defRef: 'A', targetMaxHp: MAX_HP_A }
         ]
       : [
-          { attacker: botB, defender: botA, attStats: statsB, defStats: statsA, attRef: 'B', defRef: 'A' },
-          { attacker: botA, defender: botB, attStats: statsA, defStats: statsB, attRef: 'A', defRef: 'B' }
+          { attacker: botB, defender: botA, attStats: statsB, defStats: statsA, attRef: 'B', defRef: 'A', targetMaxHp: MAX_HP_A },
+          { attacker: botA, defender: botB, attStats: statsA, defStats: statsB, attRef: 'A', defRef: 'B', targetMaxHp: MAX_HP_B }
         ];
     
     for (const turn of turns) {
       if (healthA <= 0 || healthB <= 0) break;
 
-      const { attacker, defender, attStats, defStats, attRef, defRef } = turn;
+      const { attacker, defender, attStats, defStats, attRef, defRef, targetMaxHp } = turn;
 
       const currentMissStreak = attRef === 'A' ? missStreakA : missStreakB;
       const baseHitChance = calculateHitChance(attStats.Speed, defStats.Speed);
@@ -127,20 +141,29 @@ export const simulateBattle = (botA, botB, protocolA, protocolB) => {
           
           if (isCrit) {
             damage = Math.floor(damage * (CRIT_MULTIPLIER || 1.5));
+            // Apply Soft Cap to Crit
+            damage = applySoftCap(damage, targetMaxHp);
+            
             criticalHits.push(round);
             
             if (defRef === 'A') healthA -= damage; else healthB -= damage;
             record(`💥 Round ${round}: ${attacker.name} lands a CRITICAL HIT for ${damage} damage!`);
           } else {
+            // Apply Soft Cap to Normal Hit
+            damage = applySoftCap(damage, targetMaxHp);
+
             if (defRef === 'A') healthA -= damage; else healthB -= damage;
             record(`⚡ Round ${round}: ${attacker.name} attacks for ${damage} damage`);
           }
           
         } else {
+          // --- GRAZE MECHANIC ---
           if (attRef === 'A') missStreakA++; else missStreakB++;
 
           if (Math.random() < 0.5) {
             let damage = calculateDamage(attStats.Damage, defStats.Armor);
+            // Glancing blow is already heavily reduced (30%), so we usually don't need to Soft Cap it, 
+            // but the math is safe if you wanted to.
             damage = Math.max(1, Math.floor(damage * 0.3)); 
 
             if (defRef === 'A') healthA -= damage; else healthB -= damage;
