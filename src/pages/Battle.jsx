@@ -20,7 +20,7 @@ import { toast } from '@/components/ui/use-toast';
 import SpeechToast from '@/components/SpeechToast';
 import { getRandomFlavor } from '@/data/flavor';
 import { PROTOCOLS, getRandomProtocol } from '@/data/tactics';
-
+import CombatTextOverlay from '@/components/CombatTextOverlay';
 const REROLL_COST = 10;
 
 const Battle = () => {
