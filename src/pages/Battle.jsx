@@ -29,14 +29,27 @@ import electricGrid from '@/assets/electric_grid.jpg';
 import rooftopRain from '@/assets/rooftop_rain.jpg';
 import spaceStation from '@/assets/space_station.jpg';
 
+// --- NEW IMPORTS ---
+import downFactory from '@/assets/down_factory.jpg';
+import iceShelf from '@/assets/ice_shelf.jpg';
+import illumCenter from '@/assets/illum_center.jpg';
+import volcObs from '@/assets/volc_obs.jpg';
+import weapDepot from '@/assets/weap_depot.jpg';
+import arcadeGrave from '@/assets/arcade_grave.jpg';
+import rainBow from '@/assets/rain_bow.jpg';
 
 // --- 2. DEFINE THE ARENA POOL ---
 const BATTLE_ARENAS = [
   rooftopRain,
   electricGrid,
   spaceStation,
-  // You can still mix in URLs if you want more variety later:
-  // 'https://images.unsplash.com/photo-1563089145-599997674d42'
+  downFactory,
+  iceShelf,
+  illumCenter,
+  volcObs,
+  weapDepot,
+  arcadeGrave,
+  rainBow
 ];
 
 
