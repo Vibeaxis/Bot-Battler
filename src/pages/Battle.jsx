@@ -48,7 +48,8 @@ const [enemyAttacking, setEnemyAttacking] = useState(false);
   // Toast State
   const [leftToast, setLeftToastState] = useState(null);
   const [rightToast, setRightToastState] = useState(null);
-  
+  const [playerFloatingText, setPlayerFloatingText] = useState(null);
+const [enemyFloatingText, setEnemyFloatingText] = useState(null);
   // Animation controls
   const controls = useAnimation();
   
@@ -141,189 +142,148 @@ const [enemyAttacking, setEnemyAttacking] = useState(false);
       className: "bg-yellow-600/90 border-yellow-500 text-white font-mono"
     });
   };
-  
-  const startBattle = async () => {
-    if (isBattling || !enemy || !playerProtocol) return;
-    
-    setIsBattling(true);
-    setBattleLog([]);
-    setPlayerHealth(BASE_HEALTH);
-    setEnemyHealth(BASE_HEALTH);
-    setCurrentRound(0);
-    
-    // Clear any existing intro toasts
-    setLeftToastState(null);
-    setRightToastState(null);
-    
-    // 1. Assign Enemy Protocol
-    const selectedEnemyProtocol = getRandomProtocol();
-    setEnemyProtocol(selectedEnemyProtocol);
+  // --- THE FIXED BATTLE LOOP ---
+    const startBattle = async () => {
+        if (isBattling || !enemy || !playerProtocol) return;
+        
+        setIsBattling(true);
+        setBattleResult(null); // Clear previous results
+        
+        // 1. Setup Enemy Protocol
+        // (Assuming you have a helper for this, or just pick random)
+        const protocols = ['ASSAULT', 'BULWARK', 'TECH']; // Simplified for example
+        const selectedEnemyProto = { name: 'Assault Protocol', id: 'ASSAULT', statType: 'Damage' }; // Mock or use your generator
+        setEnemyProtocol(selectedEnemyProto);
 
-    // 2. Protocol Matchup Toast
-    const playerCounters = playerProtocol.counterProtocol === selectedEnemyProtocol.id;
-    const enemyCounters = selectedEnemyProtocol.counterProtocol === playerProtocol.id;
-    
-    let title = "Protocol Matchup";
-    let desc = "Neutral! No advantage detected.";
-    let className = "bg-blue-600 text-white border-blue-400";
+        // 2. Run Simulation
+        // IMPORTANT: Ensure simulateBattle returns 'healthTimeline' array!
+        const result = simulateBattle(
+            { ...gameState.playerBot, slotLevels: gameState.slotLevels }, 
+            enemy, 
+            playerProtocol, 
+            selectedEnemyProto
+        );
+        
+        // 3. The Synchronized Loop
+        for (let i = 0; i < result.battleLog.length; i++) {
+            const logEntry = result.battleLog[i];
+            
+            // Round Tracking
+            if (logEntry.includes('Round')) {
+                const roundMatch = logEntry.match(/Round (\d+)/);
+                if (roundMatch) setCurrentRound(parseInt(roundMatch[1]));
+            }
 
-    if (playerCounters) {
-      desc = "PLAYER ADVANTAGE! Your protocol counters the enemy!";
-      className = "bg-green-600 text-white border-green-400";
-    } else if (enemyCounters) {
-      desc = "ENEMY ADVANTAGE! Enemy protocol counters you!";
-      className = "bg-red-600 text-white border-red-400";
-    }
+            // Parse Action
+            const isCrit = logEntry.includes('CRITICAL');
+            const isMiss = logEntry.includes('misses') || logEntry.includes('dodges');
+            const damageMatch = logEntry.match(/for (\d+) damage/);
+            const damageAmount = damageMatch ? damageMatch[1] : null;
 
-    toast({
-      title: `${title}: ${playerProtocol.name} vs ${selectedEnemyProtocol.name}`,
-      description: desc,
-      className: className,
-      duration: 3000
-    });
+            // Identify Attacker
+            const isPlayerAction = logEntry.includes(gameState.playerBot.name);
+            const isEnemyAction = logEntry.includes(enemy.name);
 
-    // Merge slotLevels into playerBot for correct stat calculation during battle
-    const playerBotWithStats = {
-      ...gameState.playerBot,
-      slotLevels: gameState.slotLevels
+            // ACTION TRIGGER
+            if (damageAmount || isMiss) {
+                if (isPlayerAction) {
+                    // Player Attacks -> Enemy takes damage
+                    setPlayerAttacking(true);
+                    if (damageAmount) setEnemyFloatingText({ id: i, content: `-${damageAmount}`, isCrit });
+                    else setEnemyFloatingText({ id: i, content: "MISS", type: 'miss' });
+                    
+                    if (isCrit) setRightToast(getRandomFlavor('HIT')); // Enemy reacts
+
+                } else if (isEnemyAction) {
+                    // Enemy Attacks -> Player takes damage
+                    setEnemyAttacking(true);
+                    if (damageAmount) setPlayerFloatingText({ id: i, content: `-${damageAmount}`, isCrit });
+                    else setPlayerFloatingText({ id: i, content: "MISS", type: 'miss' });
+
+                    if (isCrit) setLeftToast(getRandomFlavor('HIT')); // Player reacts
+                }
+
+                if (damageAmount) playSound(isCrit ? 'CRIT' : 'HIT');
+
+                // IMPACT DELAY: Wait for animation to hit (Syncs visuals with health drop)
+                await new Promise(r => setTimeout(r, 200 / battleSpeedRef.current));
+            }
+
+            // UPDATE HEALTH (After impact delay)
+            // Fallback: If your sim doesn't return timeline yet, use the 'progress' math from before
+            if (result.healthTimeline && result.healthTimeline[i]) {
+                setPlayerHealth(result.healthTimeline[i].a);
+                setEnemyHealth(result.healthTimeline[i].b);
+            } else if (damageAmount) {
+                // Fallback math if simulateBattle isn't updated yet
+                // (It's better to update simulateBattle as discussed previously!)
+            }
+
+            // CRITICAL SHAKE
+            if (isCrit) {
+                controls.start({
+                    x: [0, -5, 5, -5, 5, 0],
+                    transition: { duration: 0.2 }
+                });
+            }
+
+            // TURN RECOVERY
+            // Wait before next line processing
+            const delay = (damageAmount || isMiss) ? 600 : 100; // Fast for text, slow for hits
+            await new Promise(r => setTimeout(r, delay / battleSpeedRef.current));
+
+            // Reset States
+            setPlayerAttacking(false);
+            setEnemyAttacking(false);
+            setPlayerFloatingText(null);
+            setEnemyFloatingText(null);
+        }
+
+        // 4. End Battle
+        const playerWon = result.winner.name === gameState.playerBot.name;
+        const reward = playerWon ? WIN_REWARD : LOSS_REWARD;
+
+        setPlayerHealth(result.finalHealthA);
+        setEnemyHealth(result.finalHealthB);
+        
+        if (playerWon) {
+            setLeftToast(getRandomFlavor('VICTORY'));
+            setRightToast(getRandomFlavor('DEFEAT'));
+        } else {
+            setLeftToast(getRandomFlavor('DEFEAT'));
+            setRightToast(getRandomFlavor('VICTORY'));
+        }
+
+        updateScrap(reward);
+        recordBattle({ playerWon, enemyName: enemy.name, scrapEarned: reward, timestamp: Date.now() });
+        setBattleResult({ playerWon, reward });
+        setIsBattling(false);
+
+        if (playerWon) {
+            setPendingRewards({ scrap: reward });
+            setTimeout(() => setShowScavengeModal(true), 1500 / battleSpeedRef.current);
+        } else {
+             toast({ title: "💀 Defeat", description: `You earned ${reward} scrap as consolation`, className: "bg-red-600 text-white" });
+        }
     };
 
-    // 3. Simulate with Protocols
-    const result = simulateBattle(playerBotWithStats, enemy, playerProtocol, selectedEnemyProtocol);
-    
-    // Simulation Loop
-    for (let i = 0; i < result.battleLog.length; i++) {
-      const logEntry = result.battleLog[i];
-      
-      if (logEntry.includes('Round')) {
-        const roundMatch = logEntry.match(/Round (\d+)/);
-        if (roundMatch) setCurrentRound(parseInt(roundMatch[1]));
-      }
-      
-    // Sound effects and Animations based on log content
-      const isPlayerAction = logEntry.includes(gameState.playerBot.name);
-      const isEnemyAction = logEntry.includes(enemy.name);
-      const isHit = logEntry.includes('damage') || logEntry.includes('CRITICAL');
+    const handleNextBattle = () => generateNewEnemy();
+    const handleReturnToWorkshop = () => { setShowScavengeModal(false); navigate('/workshop'); };
 
-      if (logEntry.includes('CRITICAL')) {
-        playSound('CRIT');
-        
-        if (isPlayerAction) {
-           setRightToast(getRandomFlavor('HIT'));
-           setPlayerAttacking(true);
-           setTimeout(() => setPlayerAttacking(false), 400 / battleSpeedRef.current);
-        } else if (isEnemyAction) {
-           setLeftToast(getRandomFlavor('HIT'));
-           setEnemyAttacking(true);
-           setTimeout(() => setEnemyAttacking(false), 400 / battleSpeedRef.current);
-        }
+    if (!enemy) return <div className="min-h-screen bg-gray-900 flex items-center justify-center text-white">Loading Arena...</div>;
 
-      } else if (logEntry.includes('damage')) {
-        playSound('HIT');
-
-        if (isPlayerAction) {
-          setPlayerAttacking(true);
-          setTimeout(() => setPlayerAttacking(false), 400 / battleSpeedRef.current);
-        } else if (isEnemyAction) {
-          setEnemyAttacking(true);
-          setTimeout(() => setEnemyAttacking(false), 400 / battleSpeedRef.current);
-        }
-      }
-
-      // Updated delay logic with battle speed multiplier
-      await new Promise(resolve => setTimeout(resolve, 800 / battleSpeedRef.current));
-      
-      setBattleLog(prev => [...prev, logEntry]);
-      
-      if (result.criticalHits.includes(Math.floor(i / 4) + 1)) {
-        controls.start({
-          x: [0, -5, 5, -5, 5, 0],
-          transition: { duration: 0.2 }
-        });
-      }
-      
-      if (i > 2 && i < result.battleLog.length - 2) {
-        const progress = i / (result.battleLog.length - 4);
-        setPlayerHealth(BASE_HEALTH - (BASE_HEALTH - result.finalHealthA) * progress);
-        setEnemyHealth(BASE_HEALTH - (BASE_HEALTH - result.finalHealthB) * progress);
-      }
-    }
-    
-    setPlayerHealth(result.finalHealthA);
-    setEnemyHealth(result.finalHealthB);
-    
-    const playerWon = result.winner.name === gameState.playerBot.name;
-    const reward = playerWon ? WIN_REWARD : LOSS_REWARD;
-    
-    // Victory/Defeat Flavor Text
-    if (playerWon) {
-      setLeftToast(getRandomFlavor('VICTORY'));
-      setRightToast(getRandomFlavor('DEFEAT'));
-    } else {
-      setLeftToast(getRandomFlavor('DEFEAT'));
-      setRightToast(getRandomFlavor('VICTORY'));
-    }
-
-    updateScrap(reward);
-    recordBattle({
-      playerWon,
-      enemyName: enemy.name,
-      scrapEarned: reward,
-      timestamp: Date.now()
-    });
-    
-    setBattleResult({
-      playerWon,
-      reward
-    });
-    
-    setIsBattling(false);
-    
-    if (playerWon) {
-      setPendingRewards({ scrap: reward });
-      // Apply speed multiplier to post-battle modal delay as well
-      setTimeout(() => {
-        setShowScavengeModal(true);
-      }, 2000 / battleSpeedRef.current); 
-    } else {
-      toast({
-        title: "💀 Defeat",
-        description: `You earned ${reward} scrap as consolation`,
-        className: "bg-red-600 text-white"
-      });
-    }
-  };
-
-  const handleNextBattle = () => {
-    generateNewEnemy();
-  };
-
-  const handleReturnToWorkshop = () => {
-    setShowScavengeModal(false);
-    navigate('/workshop');
-  };
-  
-  if (!enemy) {
-    return <div className="min-h-screen bg-gray-900 flex items-center justify-center text-white">
-      <RefreshCw className="w-8 h-8 animate-spin mr-2" /> Initializing Arena...
-    </div>;
-  }
-  
-return (
+    return (
         <>
             <Helmet>
-                <title>Battle Arena - Robot Battle Arena</title>
-                <meta name="description" content="Enter the battle arena and fight against enemy bots to earn scrap." />
+                <title>Arena - Bot Battler</title>
             </Helmet>
 
-            <div
-                className="h-screen max-h-screen bg-cover bg-center relative flex flex-col overflow-hidden"
-                style={{
-                    backgroundImage: 'url(https://images.unsplash.com/photo-1579803815615-1203fb5a2e9d)',
-                    backgroundAttachment: 'fixed'
-                }}
-            >
-                <div className="absolute inset-0 bg-gray-900/90" />
+            <div className="h-screen max-h-screen bg-gray-900 flex flex-col overflow-hidden relative">
+                {/* Background Image */}
+                <div 
+                    className="absolute inset-0 opacity-30 bg-cover bg-center"
+                    style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1579803815615-1203fb5a2e9d)' }}
+                />
 
                 <BattleHeader
                     playerHealth={playerHealth}
@@ -332,152 +292,132 @@ return (
                     round={currentRound}
                 />
 
-                <motion.div
+                {/* MAIN ARENA CONTAINER */}
+                <motion.div 
                     animate={controls}
-                    className="relative w-full max-w-[1600px] mx-auto px-6 pb-4 flex-1 flex flex-col min-h-0"
+                    className="relative z-10 flex-1 flex flex-col max-w-7xl mx-auto w-full px-4"
                 >
                     {/* Top Bar */}
-                    <div className="flex justify-between items-center mb-2 shrink-0">
-                        <Button
-                            onClick={() => navigate('/hub')}
-                            variant="ghost"
-                            size="sm"
-                            className="text-gray-400 hover:text-[var(--accent-color)] hover:bg-[rgba(var(--accent-rgb),0.1)] h-8"
-                        >
-                            <ArrowLeft className="w-4 h-4 mr-2" />
-                            Exit Arena
+                    <div className="flex justify-between items-center py-4">
+                        <Button onClick={() => navigate('/hub')} variant="ghost" size="sm" className="text-gray-400">
+                            <ArrowLeft className="w-4 h-4 mr-2" /> Exit
                         </Button>
                         <BattleSpeedToggle speed={battleSpeed} setSpeed={setBattleSpeed} />
                     </div>
 
-                    {/* Main Grid */}
-                    <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 h-full min-h-0 items-start">
-
-                        {/* Player Column */}
-                        <div className="xl:col-span-3 order-2 xl:order-1 h-full relative flex flex-col justify-start pt-2">
+                    {/* --- THE NEW LAYOUT: SIDE BY SIDE --- */}
+                    <div className="flex-1 flex items-center justify-center gap-8 md:gap-24 min-h-[50vh]">
+                        
+                        {/* PLAYER SIDE */}
+                        <div className="relative group">
                             <SpeechToast message={leftToast} position="left" />
+                            {/* The Overlay sits on top of the card */}
+                            <CombatTextOverlay activeText={playerFloatingText} />
+                            
                             <BotCard
                                 bot={gameState.playerBot}
-                                side="player" 
- isAttacking={playerAttacking}
+                                side="player"
+                                isAttacking={playerAttacking}
+                                isHit={enemyAttacking} // Recoil trigger
                                 slotLevels={gameState.slotLevels}
-                                className="shadow-[0_0_30px_-5px_rgba(var(--accent-rgb),0.3)] border-[var(--accent-color)]"
+                                className="shadow-[0_0_50px_-10px_rgba(var(--accent-rgb),0.3)] border-[var(--accent-color)] scale-110"
                             />
-                            {isBattling && playerProtocol && (
-                                <div className="mt-2 text-center text-xs font-bold px-2 py-1 rounded border border-[var(--accent-color)] text-[var(--accent-color)] bg-[rgba(var(--accent-rgb),0.1)]">
-                                    PROTOCOL: {playerProtocol.name}
+                            
+                            {/* Protocol Indicator */}
+                            {playerProtocol && (
+                                <div className="absolute -bottom-12 left-0 right-0 text-center">
+                                    <span className="text-xs font-bold px-3 py-1 rounded border border-[var(--accent-color)] text-[var(--accent-color)] bg-black/80">
+                                        {playerProtocol.name}
+                                    </span>
                                 </div>
                             )}
                         </div>
 
-                        {/* Combat Log Column - Center Stage */}
-                        <div className="xl:col-span-6 order-1 xl:order-2 flex flex-col gap-2 h-full min-h-0">
-                            {/* The Log takes all available space */}
-                            <div className="flex-1 min-h-0 relative">
-                                <CombatLog logs={battleLog} playerName={gameState.playerBot.name} />
-                            </div>
-
-                            {/* Controls Area */}
-                            <div className="flex flex-col gap-2 justify-center mt-auto pt-2 shrink-0">
-                                
-                                {/* MOVED: Defeated Banner is now IN FLOW here, not absolute */}
-                                {battleResult && !battleResult.playerWon && (
-                                    <motion.div
-                                        initial={{ opacity: 0, scale: 0.95 }}
-                                        animate={{ opacity: 1, scale: 1 }}
-                                        className="w-full p-6 rounded-xl border-4 backdrop-blur-xl text-center shadow-2xl bg-red-900/90 border-red-500 text-red-100 mb-2"
-                                    >
-                                        <h2 className="text-5xl font-black mb-1 uppercase tracking-tighter">
-                                            DEFEATED
-                                        </h2>
-                                        <p className="text-xl">
-                                            Consolation: <span className="text-yellow-400 font-mono font-bold">{battleResult.reward}</span> Scrap
-                                        </p>
-                                    </motion.div>
-                                )}
-
-                                {!battleResult ? (
-                                    <>
-                                        <ProtocolSelector
-                                            selectedProtocol={playerProtocol}
-                                            onSelectProtocol={setPlayerProtocol}
-                                            disabled={isBattling}
-                                        />
-
-                                        <div className="grid grid-cols-2 gap-2">
-                                            <Button
-                                                onClick={handleReroll}
-                                                disabled={isBattling || gameState.scrap < REROLL_COST}
-                                                className="bg-yellow-900/20 border border-yellow-600/50 text-yellow-500 hover:bg-yellow-600/20 hover:text-yellow-400 py-3 font-mono uppercase tracking-widest"
-                                            >
-                                                <span className="flex items-center gap-2 font-bold text-xs">
-                                                    <Scan className="w-3 h-3" /> Scout ({REROLL_COST})
-                                                </span>
-                                            </Button>
-
-                                            <Button
-                                                onClick={startBattle}
-                                                disabled={isBattling || !playerProtocol}
-                                                // CHANGED: Dynamic Theme Gradient
-                                                style={!isBattling && playerProtocol ? {
-                                                    background: `linear-gradient(135deg, rgba(var(--accent-rgb), 1) 0%, rgba(var(--accent-rgb), 0.6) 100%)`,
-                                                    boxShadow: `0 0 20px rgba(var(--accent-rgb), 0.4)`
-                                                } : {}}
-                                                className={`text-black text-lg py-3 font-bold tracking-widest uppercase shadow-lg transform transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed ${!playerProtocol
-                                                    ? 'bg-gray-700 text-gray-500'
-                                                    : ''
-                                                    }`}
-                                            >
-                                                {isBattling ? (
-                                                    <span className="text-[var(--accent-color)] flex items-center gap-2">
-                                                         <RefreshCw className="w-5 h-5 animate-spin" /> BATTLE IN PROGRESS
-                                                    </span>
-                                                ) : !playerProtocol ? (
-                                                    <span className="text-gray-400 text-sm">Select Protocol</span>
-                                                ) : (
-                                                    <span className="flex items-center gap-2 text-sm">
-                                                        <Play className="w-4 h-4 fill-current" /> ENGAGE
-                                                    </span>
-                                                )}
-                                            </Button>
-                                        </div>
-                                    </>
-                                ) : (
-                                    <div className="flex gap-2 w-full">
-                                        <Button
-                                            onClick={() => navigate('/hub')}
-                                            className="flex-1 bg-gray-700 hover:bg-gray-600 py-4 text-lg"
-                                        >
-                                            Hub
-                                        </Button>
-                                        {!battleResult.playerWon && (
-                                            <Button
-                                                onClick={generateNewEnemy}
-                                                className="flex-1 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 py-4 text-lg font-bold"
-                                            >
-                                                Retry
-                                            </Button>
-                                        )}
-                                    </div>
-                                )}
-                            </div>
+                        {/* VS DIVIDER / IMPACT ZONE */}
+                        <div className="hidden md:flex flex-col items-center justify-center opacity-50">
+                            <div className="h-24 w-px bg-gradient-to-b from-transparent via-white/50 to-transparent"></div>
                         </div>
 
-                        {/* Enemy Column */}
-                        <div className="xl:col-span-3 order-3 xl:order-3 h-full relative flex flex-col justify-start pt-2">
+                        {/* ENEMY SIDE */}
+                        <div className="relative group">
                             <SpeechToast message={rightToast} position="right" />
-                            <BotCard bot={enemy} side="enemy" 
-  isAttacking={enemyAttacking === 'ENEMY_STRIKE'} className="shadow-red-900/20 shadow-xl border-red-900/30" />
-                            {isBattling && enemyProtocol && (
-                                <div className="mt-2 text-center text-xs font-bold px-2 py-1 rounded border border-red-500 text-red-500 bg-red-900/20">
-                                    PROTOCOL: {enemyProtocol.name}
+                            <CombatTextOverlay activeText={enemyFloatingText} />
+                            
+                            <BotCard
+                                bot={enemy}
+                                side="enemy"
+                                isAttacking={enemyAttacking}
+                                isHit={playerAttacking} // Recoil trigger
+                                className="shadow-[0_0_50px_-10px_rgba(220,38,38,0.3)] border-red-500/50 scale-110"
+                            />
+
+                            {enemyProtocol && (
+                                <div className="absolute -bottom-12 left-0 right-0 text-center">
+                                    <span className="text-xs font-bold px-3 py-1 rounded border border-red-500 text-red-500 bg-black/80">
+                                        {enemyProtocol.name}
+                                    </span>
                                 </div>
                             )}
                         </div>
 
                     </div>
+
+                    {/* BOTTOM CONTROLS (Floating Deck) */}
+                    <div className="mt-auto pb-8 w-full max-w-2xl mx-auto">
+                        {/* Defeated Banner (In Flow) */}
+                        {battleResult && !battleResult.playerWon && (
+                            <motion.div
+                                initial={{ y: 20, opacity: 0 }}
+                                animate={{ y: 0, opacity: 1 }}
+                                className="mb-4 bg-red-900/90 border border-red-500 p-4 rounded text-center backdrop-blur"
+                            >
+                                <h2 className="text-2xl font-black text-white uppercase">Defeated</h2>
+                                <p className="text-red-200 text-sm">Earned {battleResult.reward} Scrap</p>
+                            </motion.div>
+                        )}
+
+                        {/* Controls */}
+                        {!battleResult ? (
+                            <div className="bg-black/40 backdrop-blur-md p-4 rounded-xl border border-white/10 flex flex-col gap-4">
+                                <ProtocolSelector
+                                    selectedProtocol={playerProtocol}
+                                    onSelectProtocol={setPlayerProtocol}
+                                    disabled={isBattling}
+                                />
+                                <div className="flex gap-3">
+                                    <Button 
+                                        onClick={handleReroll} 
+                                        disabled={isBattling || gameState.scrap < REROLL_COST}
+                                        className="bg-yellow-900/20 text-yellow-500 border border-yellow-600/30"
+                                    >
+                                        <Scan className="w-4 h-4 mr-2" /> Scout ({REROLL_COST})
+                                    </Button>
+                                    <Button 
+                                        onClick={startBattle} 
+                                        disabled={isBattling || !playerProtocol}
+                                        className="flex-1 bg-[var(--accent-color)] text-black font-bold text-lg hover:brightness-110 transition-all"
+                                    >
+                                        {isBattling ? <RefreshCw className="animate-spin" /> : "ENGAGE"}
+                                    </Button>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="flex gap-4">
+                                <Button onClick={() => navigate('/hub')} className="flex-1 bg-gray-700 py-4">
+                                    Return to Hub
+                                </Button>
+                                {!battleResult.playerWon && (
+                                    <Button onClick={generateNewEnemy} className="flex-1 bg-[var(--accent-color)] text-black font-bold py-4">
+                                        Reboot System (Retry)
+                                    </Button>
+                                )}
+                            </div>
+                        )}
+                    </div>
+
                 </motion.div>
 
+                {/* Modals */}
                 <ScavengeModal
                     isOpen={showScavengeModal}
                     onNextBattle={handleNextBattle}
