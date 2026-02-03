@@ -94,12 +94,14 @@ const injectStyles = () => {
 injectStyles();
 
 const IconMap = { ...LucideIcons };
-
 const BotCard = ({ bot, slotLevels, isAttacking, side = 'player', className = '' }) => {
+  // NEW STATE: Track what slot is being hovered
+  const [hoveredPart, setHoveredPart] = useState(null);
+
   const stats = calculateBotStats({ ...bot, slotLevels: slotLevels || bot.slotLevels });
   
   const slots = [
-    { key: 'Head', partId: bot.equipment.Head, gridClass: 'col-span-2 w-3/4 mx-auto' }, // Centered Head
+    { key: 'Head', partId: bot.equipment.Head, gridClass: 'col-span-2 w-3/4 mx-auto' },
     { key: 'LeftArm', partId: bot.equipment.LeftArm, gridClass: 'col-span-1' },
     { key: 'RightArm', partId: bot.equipment.RightArm, gridClass: 'col-span-1' },
     { key: 'Chassis', partId: bot.equipment.Chassis, gridClass: 'col-span-2 w-full' }
@@ -110,6 +112,19 @@ const BotCard = ({ bot, slotLevels, isAttacking, side = 'player', className = ''
   const SpdIcon = IconMap.Activity;
   const ArmIcon = IconMap.Shield;
   const WgtIcon = IconMap.Weight;
+
+  // Helper to render a stat box (Reused for both Total and Part view)
+  const StatBox = ({ label, value, icon: Icon, colorClass, borderClass }) => (
+    <div className={`bg-[#111] border ${borderClass} px-2 py-1.5 flex items-center justify-between`}>
+        <div className="flex items-center gap-2">
+            <Icon className={`w-3 h-3 ${colorClass}`} />
+            <span className="text-[10px] font-mono text-gray-500 font-bold">{label}</span>
+        </div>
+        <span className={`text-sm font-bold ${colorClass.replace('text-', 'text-opacity-80 ')} font-mono tracking-tighter`}>
+            {value}
+        </span>
+    </div>
+  );
 
   return (
     <div className={cn(
@@ -138,115 +153,99 @@ const BotCard = ({ bot, slotLevels, isAttacking, side = 'player', className = ''
         </div>
       </div>
       
-      {/* --- THE SCHEMATIC GRID --- */}
+      {/* Schematic Grid */}
       <div className="relative p-3 bg-[#050505] min-h-[220px]">
-        {/* Background SVG connecting the parts */}
         <SchematicSkeleton />
 
         <div className="grid grid-cols-2 gap-3 relative z-10">
             {slots.map(({ key, partId, gridClass }, index) => {
-            const part = partId ? getPartById(partId) : null;
-            const Icon = (part ? IconMap[part.icon] : null) || IconMap.Box;
-            const tier = part ? part.tier : 1;
-            const colors = RARITY_COLORS[tier] || RARITY_COLORS[1];
-            
-            const shouldAnimateArm = isAttacking && (
-                (side === 'player' && key === 'RightArm') || 
-                (side === 'enemy' && key === 'LeftArm')
-            );
+                const part = partId ? getPartById(partId) : null;
+                const Icon = (part ? IconMap[part.icon] : null) || IconMap.Box;
+                const tier = part ? part.tier : 1;
+                const colors = RARITY_COLORS[tier] || RARITY_COLORS[1];
+                
+                const shouldAnimateArm = isAttacking && (
+                    (side === 'player' && key === 'RightArm') || 
+                    (side === 'enemy' && key === 'LeftArm')
+                );
 
-            return (
-                <div 
-                    key={`${key}-${index}`} 
-                    className={cn(
-                        `relative group ${gridClass}`,
-                        shouldAnimateArm && (side === 'player' ? 'animate-attack-right' : 'animate-attack-left')
-                    )}
-                >
-                    {/* Replaced standard div with TechFrame */}
-                    <TechFrame 
-                        className="w-full aspect-square max-h-20 transition-all duration-200"
-                        isActive={shouldAnimateArm}
-                        colorClass={part ? "text-gray-700" : "text-gray-900"}
+                return (
+                    <div 
+                        key={`${key}-${index}`} 
+                        className={cn(
+                            `relative group ${gridClass}`,
+                            shouldAnimateArm && (side === 'player' ? 'animate-attack-right' : 'animate-attack-left')
+                        )}
+                        // MOUSE EVENTS FOR CONTEXTUAL FOOTER
+                        onMouseEnter={() => part && setHoveredPart({ ...part, slotKey: key })}
+                        onMouseLeave={() => setHoveredPart(null)}
                     >
-                        {/* Inner Content */}
-                        <div className={cn(
-                            "absolute inset-0 flex flex-col items-center justify-center transition-colors duration-300",
-                            part ? "bg-[#111]" : "bg-[#080808]",
-                            shouldAnimateArm && "bg-[#1a1a1a]"
-                        )}>
-                            <span className="absolute top-1 left-2 text-[8px] font-mono text-gray-700 uppercase tracking-widest pointer-events-none">
-                                {key.replace('Arm', '')}
-                            </span>
+                        <TechFrame 
+                            className="w-full aspect-square max-h-20 transition-all duration-200 cursor-help"
+                            isActive={shouldAnimateArm || (hoveredPart && hoveredPart.id === part?.id)}
+                            colorClass={part ? "text-gray-700" : "text-gray-900"}
+                        >
+                            <div className={cn(
+                                "absolute inset-0 flex flex-col items-center justify-center transition-colors duration-300",
+                                part ? "bg-[#111]" : "bg-[#080808]",
+                                shouldAnimateArm && "bg-[#1a1a1a]",
+                                hoveredPart && hoveredPart.id === part?.id && "bg-[#161616]"
+                            )}>
+                                <span className="absolute top-1 left-2 text-[8px] font-mono text-gray-700 uppercase tracking-widest pointer-events-none">
+                                    {key.replace('Arm', '')}
+                                </span>
 
-                            <Icon className={cn(
-                                "w-8 h-8 mb-1 transition-transform duration-300", 
-                                part ? colors.text : "text-gray-800",
-                                "group-hover:scale-110",
-                                shouldAnimateArm && "scale-110 text-white drop-shadow-[0_0_5px_rgba(255,255,255,0.5)]"
-                            )} />
-                            
-                            {part && (
-                                <RarityBadge tier={tier} className="rounded-none text-[8px] px-1.5 py-0 border border-white/10" />
-                            )}
-                        </div>
-                    </TechFrame>
-
-                    {/* Tooltip */}
-                    <div className="absolute left-1/2 -translate-x-1/2 bottom-[calc(100%+10px)] z-[60] w-56 hidden group-hover:block pointer-events-none">
-                        <div className="bg-gray-900 text-gray-100 text-xs p-2 border border-gray-700 shadow-2xl relative">
-                            <div className={cn("font-bold text-xs mb-1 font-mono uppercase border-b border-gray-800 pb-1", part ? colors.text : "text-gray-400")}>
-                                {part ? part.name : 'Empty Slot'}
+                                <Icon className={cn(
+                                    "w-8 h-8 mb-1 transition-transform duration-300", 
+                                    part ? colors.text : "text-gray-800",
+                                    (hoveredPart && hoveredPart.id === part?.id) ? "scale-110 brightness-125" : ""
+                                )} />
+                                
+                                {part && (
+                                    <RarityBadge tier={tier} className="rounded-none text-[8px] px-1.5 py-0 border border-white/10" />
+                                )}
                             </div>
-                            {part && (
-                                <div className="space-y-1 pt-1 font-mono text-[10px]">
-                                    <div className="flex justify-between"><span>DMG:</span> <span className="text-white">{part.stats.Damage}</span></div>
-                                    <div className="flex justify-between"><span>SPD:</span> <span className="text-white">{part.stats.Speed}</span></div>
-                                </div>
-                            )}
-                        </div>
+                        </TechFrame>
+                        {/* NO TOOLTIP DIV HERE ANYMORE */}
                     </div>
-                </div>
-            );
+                );
             })}
         </div>
       </div>
       
-      {/* Footer Stats */}
-      <div className="p-3 bg-[#080808] border-t-2 border-[var(--accent-color)] mt-auto relative z-20">
-        <div className="grid grid-cols-2 gap-2">
-            <div className="bg-[#111] border border-red-900/30 px-2 py-1.5 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                    <DmgIcon className="w-3 h-3 text-red-600" />
-                    <span className="text-[10px] font-mono text-gray-500 font-bold">DMG</span>
+      {/* DYNAMIC FOOTER - Switches between Total Stats and Part Stats */}
+      <div className="p-3 bg-[#080808] border-t-2 border-[var(--accent-color)] mt-auto relative z-20 min-h-[85px] flex flex-col justify-center">
+        
+        {hoveredPart ? (
+            // VIEW A: PART DETAILS (Contextual)
+            <div className="animate-in fade-in duration-200">
+                <div className="flex items-center justify-between mb-2 pb-1 border-b border-gray-800">
+                    <span className={`text-xs font-bold uppercase font-mono ${RARITY_COLORS[hoveredPart.tier].text}`}>
+                        {hoveredPart.name}
+                    </span>
+                    <span className="text-[9px] text-gray-500 uppercase tracking-widest">
+                        {hoveredPart.slotKey}
+                    </span>
                 </div>
-                <span className="text-sm font-bold text-red-500 font-mono tracking-tighter">{stats.Damage}</span>
-            </div>
-            
-            <div className="bg-[#111] border border-cyan-900/30 px-2 py-1.5 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                    <SpdIcon className="w-3 h-3 text-cyan-500" />
-                    <span className="text-[10px] font-mono text-gray-500 font-bold">SPD</span>
+                <div className="grid grid-cols-2 gap-2">
+                     <StatBox label="DMG" value={hoveredPart.stats.Damage || 0} icon={DmgIcon} colorClass="text-red-500" borderClass="border-red-900/30" />
+                     <StatBox label="SPD" value={hoveredPart.stats.Speed || 0} icon={SpdIcon} colorClass="text-cyan-400" borderClass="border-cyan-900/30" />
+                     <StatBox label="ARM" value={hoveredPart.stats.Armor || 0} icon={ArmIcon} colorClass="text-emerald-500" borderClass="border-emerald-900/30" />
+                     <StatBox label="WGT" value={hoveredPart.stats.Weight || 0} icon={WgtIcon} colorClass="text-amber-500" borderClass="border-amber-900/30" />
                 </div>
-                <span className="text-sm font-bold text-cyan-400 font-mono tracking-tighter">{stats.Speed}</span>
             </div>
+        ) : (
+            // VIEW B: TOTAL STATS (Default)
+            <div className="animate-in fade-in duration-200">
+                <div className="grid grid-cols-2 gap-2">
+                    <StatBox label="DMG" value={stats.Damage} icon={DmgIcon} colorClass="text-red-500" borderClass="border-red-900/30" />
+                    <StatBox label="SPD" value={stats.Speed} icon={SpdIcon} colorClass="text-cyan-400" borderClass="border-cyan-900/30" />
+                    <StatBox label="ARM" value={stats.Armor} icon={ArmIcon} colorClass="text-emerald-500" borderClass="border-emerald-900/30" />
+                    <StatBox label="WGT" value={stats.Weight} icon={WgtIcon} colorClass="text-amber-500" borderClass="border-amber-900/30" />
+                </div>
+            </div>
+        )}
 
-            <div className="bg-[#111] border border-emerald-900/30 px-2 py-1.5 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                    <ArmIcon className="w-3 h-3 text-emerald-600" />
-                    <span className="text-[10px] font-mono text-gray-500 font-bold">ARM</span>
-                </div>
-                <span className="text-sm font-bold text-emerald-500 font-mono tracking-tighter">{stats.Armor}</span>
-            </div>
-
-            <div className="bg-[#111] border border-amber-900/30 px-2 py-1.5 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                    <WgtIcon className="w-3 h-3 text-amber-600" />
-                    <span className="text-[10px] font-mono text-gray-500 font-bold">WGT</span>
-                </div>
-                <span className="text-sm font-bold text-amber-500 font-mono tracking-tighter">{stats.Weight}</span>
-            </div>
-        </div>
       </div>
     </div>
   );
