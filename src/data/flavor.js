@@ -1,4 +1,3 @@
-
 const FLAVOR_TEXTS = {
   INTRO: [
     'System initialized.', 
@@ -8,7 +7,17 @@ const FLAVOR_TEXTS = {
     'Combat subroutines loaded.',
     'Prepare for disassembly.',
     'Scanning for weaknesses...',
-    'Mercy.exe not found.'
+    'Mercy.exe not found.',
+    'Analyzing threat level: Minimal.',
+    'Weapons hot. Logic cold.',
+    'Deletion imminent.',
+    'Initiating violence.bat...',
+    'Your warranty expires now.',
+    'Uploading pain...',
+    'Target identification: Obsolete.',
+    'Recycling process started.',
+    'Do not resist.',
+    'Combat log opened.'
   ],
   VICTORY: [
     'Threat eliminated.', 
@@ -18,7 +27,17 @@ const FLAVOR_TEXTS = {
     'Scrap acquired.',
     'Performance exceeds parameters.',
     'Another one for the pile.',
-    'Superiority confirmed.'
+    'Superiority confirmed.',
+    'Combat efficiency: 100%.',
+    'Adding to collection.',
+    'Update complete. You have been archived.',
+    'Waste processing finished.',
+    'Glory to the machine.',
+    'Predictable outcome.',
+    'Looting subroutines engaged.',
+    'You have been reformatted.',
+    'Clean kill.',
+    'Next target required.'
   ],
   DEFEAT: [
     'Critical failure...', 
@@ -28,7 +47,17 @@ const FLAVOR_TEXTS = {
     'Error 404: Skill not found.',
     'My circuits...',
     'Temporary setback.',
-    'Malfunction detected.'
+    'Malfunction detected.',
+    'Blue screen of death...',
+    'Core temperature critical...',
+    'Leaking coolant...',
+    'I saw... the code...',
+    'Fatal exception occurred.',
+    'Disconnecting...',
+    'Hardware compromised.',
+    'Requesting backup... signal lost.',
+    'Power... fading...',
+    'Shutdown sequence initiated.'
   ],
   HIT: [
     'Ouch!', 
@@ -38,7 +67,17 @@ const FLAVOR_TEXTS = {
     'Warning: Integrity dropping.',
     'Taking fire!',
     'Components rattling!',
-    'Direct hit detected.'
+    'Direct hit detected.',
+    'Sparks detected!',
+    'My sensors!',
+    'Rerouting power!',
+    'Damage report pending...',
+    'External plating damaged.',
+    'Stabilizers failing!',
+    'Impact verified.',
+    'You will pay for that.',
+    'Oil pressure dropping.',
+    'Structural stress critical.'
   ]
 };
 
