@@ -26,8 +26,8 @@ body {
 }
 
 .animate-ken-burns {
-  /* 30s duration makes it feel cinematic, not dizzying */
-  animation: ken-burns 30s ease-in-out infinite alternate;
+  /* 60s duration makes it feel cinematic, not dizzying */
+  animation: ken-burns 60s ease-in-out infinite alternate;
   /* Ensures the image doesn't look pixelated when scaling up */
   will-change: transform;
 }
