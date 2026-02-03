@@ -271,17 +271,16 @@ const [enemyFloatingText, setEnemyFloatingText] = useState(null);
     const handleReturnToWorkshop = () => { setShowScavengeModal(false); navigate('/workshop'); };
 
     if (!enemy) return <div className="min-h-screen bg-gray-900 flex items-center justify-center text-white">Loading Arena...</div>;
-
-    return (
+return (
         <>
             <Helmet>
                 <title>Arena - Bot Battler</title>
             </Helmet>
 
-            <div className="h-screen max-h-screen bg-gray-900 flex flex-col overflow-hidden relative">
+            <div className="h-screen max-h-screen bg-black flex flex-col overflow-hidden relative">
                 {/* Background Image */}
                 <div 
-                    className="absolute inset-0 opacity-30 bg-cover bg-center"
+                    className="absolute inset-0 opacity-20 bg-cover bg-center"
                     style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1579803815615-1203fb5a2e9d)' }}
                 />
 
@@ -292,50 +291,48 @@ const [enemyFloatingText, setEnemyFloatingText] = useState(null);
                     round={currentRound}
                 />
 
-                {/* MAIN ARENA CONTAINER */}
+                {/* MAIN ARENA - Added pb-48 to ensure bots never touch the footer */}
                 <motion.div 
                     animate={controls}
-                    className="relative z-10 flex-1 flex flex-col max-w-7xl mx-auto w-full px-4"
+                    className="relative z-10 flex-1 flex flex-col w-full pb-48"
                 >
                     {/* Top Bar */}
-                    <div className="flex justify-between items-center py-4">
-                        <Button onClick={() => navigate('/hub')} variant="ghost" size="sm" className="text-gray-400">
+                    <div className="flex justify-between items-center py-4 px-6">
+                        <Button onClick={() => navigate('/hub')} variant="ghost" size="sm" className="text-gray-400 hover:text-white">
                             <ArrowLeft className="w-4 h-4 mr-2" /> Exit
                         </Button>
                         <BattleSpeedToggle speed={battleSpeed} setSpeed={setBattleSpeed} />
                     </div>
 
-                    {/* --- THE NEW LAYOUT: SIDE BY SIDE --- */}
+                    {/* BATTLE STAGE */}
                     <div className="flex-1 flex items-center justify-center gap-8 md:gap-24 min-h-[50vh]">
                         
                         {/* PLAYER SIDE */}
                         <div className="relative group">
                             <SpeechToast message={leftToast} position="left" />
-                            {/* The Overlay sits on top of the card */}
                             <CombatTextOverlay activeText={playerFloatingText} />
                             
                             <BotCard
                                 bot={gameState.playerBot}
                                 side="player"
                                 isAttacking={playerAttacking}
-                                isHit={enemyAttacking} // Recoil trigger
+                                isHit={enemyAttacking}
                                 slotLevels={gameState.slotLevels}
-                                className="shadow-[0_0_50px_-10px_rgba(var(--accent-rgb),0.3)] border-[var(--accent-color)] scale-110"
+                                className="scale-110 shadow-2xl"
                             />
                             
-                            {/* Protocol Indicator */}
                             {playerProtocol && (
-                                <div className="absolute -bottom-12 left-0 right-0 text-center">
-                                    <span className="text-xs font-bold px-3 py-1 rounded border border-[var(--accent-color)] text-[var(--accent-color)] bg-black/80">
-                                        {playerProtocol.name}
+                                <div className="absolute -top-8 left-0 right-0 text-center">
+                                    <span className="text-[10px] font-bold px-2 py-0.5 border border-[var(--accent-color)] text-[var(--accent-color)] bg-black/80 tracking-widest uppercase">
+                                        Active: {playerProtocol.name}
                                     </span>
                                 </div>
                             )}
                         </div>
 
-                        {/* VS DIVIDER / IMPACT ZONE */}
-                        <div className="hidden md:flex flex-col items-center justify-center opacity-50">
-                            <div className="h-24 w-px bg-gradient-to-b from-transparent via-white/50 to-transparent"></div>
+                        {/* VS DIVIDER */}
+                        <div className="hidden md:flex flex-col items-center justify-center opacity-30">
+                            <div className="h-32 w-px bg-gradient-to-b from-transparent via-white to-transparent"></div>
                         </div>
 
                         {/* ENEMY SIDE */}
@@ -347,75 +344,93 @@ const [enemyFloatingText, setEnemyFloatingText] = useState(null);
                                 bot={enemy}
                                 side="enemy"
                                 isAttacking={enemyAttacking}
-                                isHit={playerAttacking} // Recoil trigger
-                                className="shadow-[0_0_50px_-10px_rgba(220,38,38,0.3)] border-red-500/50 scale-110"
+                                isHit={playerAttacking}
+                                className="scale-110 shadow-2xl border-red-500/50"
                             />
 
                             {enemyProtocol && (
-                                <div className="absolute -bottom-12 left-0 right-0 text-center">
-                                    <span className="text-xs font-bold px-3 py-1 rounded border border-red-500 text-red-500 bg-black/80">
-                                        {enemyProtocol.name}
+                                <div className="absolute -top-8 left-0 right-0 text-center">
+                                    <span className="text-[10px] font-bold px-2 py-0.5 border border-red-500 text-red-500 bg-black/80 tracking-widest uppercase">
+                                        Detected: {enemyProtocol.name}
                                     </span>
                                 </div>
                             )}
                         </div>
-
                     </div>
+                </motion.div>
 
-                    {/* BOTTOM CONTROLS (Floating Deck) */}
-                    <div className="mt-auto pb-8 w-full max-w-2xl mx-auto">
-                        {/* Defeated Banner (In Flow) */}
+                {/* --- FIXED COMMAND FOOTER --- */}
+                <div className="fixed bottom-0 left-0 right-0 z-50 bg-[#0a0a0a] border-t border-gray-800 p-4 shadow-[0_-10px_40px_rgba(0,0,0,0.8)]">
+                    <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
+                        
+                        {/* DEFEATED MESSAGE (Overlays controls if active) */}
                         {battleResult && !battleResult.playerWon && (
-                            <motion.div
-                                initial={{ y: 20, opacity: 0 }}
-                                animate={{ y: 0, opacity: 1 }}
-                                className="mb-4 bg-red-900/90 border border-red-500 p-4 rounded text-center backdrop-blur"
-                            >
-                                <h2 className="text-2xl font-black text-white uppercase">Defeated</h2>
-                                <p className="text-red-200 text-sm">Earned {battleResult.reward} Scrap</p>
-                            </motion.div>
+                            <div className="absolute inset-0 bg-black/90 z-50 flex items-center justify-center gap-6">
+                                <div className="text-center">
+                                    <h2 className="text-3xl font-black text-red-500 uppercase tracking-tighter">System Failure</h2>
+                                    <p className="text-gray-500 text-sm">Earned {battleResult.reward} Scrap</p>
+                                </div>
+                                <div className="flex gap-2">
+                                    <Button onClick={generateNewEnemy} className="bg-red-600 hover:bg-red-500 text-white font-bold py-2 px-6">
+                                        Reboot (Retry)
+                                    </Button>
+                                    <Button onClick={() => navigate('/hub')} variant="outline" className="border-gray-700 text-gray-400">
+                                        Abort
+                                    </Button>
+                                </div>
+                            </div>
                         )}
 
-                        {/* Controls */}
-                        {!battleResult ? (
-                            <div className="bg-black/40 backdrop-blur-md p-4 rounded-xl border border-white/10 flex flex-col gap-4">
+                        {/* LEFT: PROTOCOLS (Compact) */}
+                        <div className={`flex-1 w-full md:w-auto transition-opacity duration-300 ${isBattling ? 'opacity-50 pointer-events-none grayscale' : ''}`}>
+                            <div className="text-[10px] text-gray-500 font-mono mb-1 tracking-widest uppercase">Select Strategy</div>
+                            {/* We wrap the selector in a scaled div to shrink it slightly */}
+                            <div className="origin-top-left scale-90 w-[110%]">
                                 <ProtocolSelector
                                     selectedProtocol={playerProtocol}
                                     onSelectProtocol={setPlayerProtocol}
                                     disabled={isBattling}
                                 />
-                                <div className="flex gap-3">
-                                    <Button 
-                                        onClick={handleReroll} 
-                                        disabled={isBattling || gameState.scrap < REROLL_COST}
-                                        className="bg-yellow-900/20 text-yellow-500 border border-yellow-600/30"
-                                    >
-                                        <Scan className="w-4 h-4 mr-2" /> Scout ({REROLL_COST})
-                                    </Button>
-                                    <Button 
-                                        onClick={startBattle} 
-                                        disabled={isBattling || !playerProtocol}
-                                        className="flex-1 bg-[var(--accent-color)] text-black font-bold text-lg hover:brightness-110 transition-all"
-                                    >
-                                        {isBattling ? <RefreshCw className="animate-spin" /> : "ENGAGE"}
-                                    </Button>
-                                </div>
                             </div>
-                        ) : (
-                            <div className="flex gap-4">
-                                <Button onClick={() => navigate('/hub')} className="flex-1 bg-gray-700 py-4">
-                                    Return to Hub
-                                </Button>
-                                {!battleResult.playerWon && (
-                                    <Button onClick={generateNewEnemy} className="flex-1 bg-[var(--accent-color)] text-black font-bold py-4">
-                                        Reboot System (Retry)
-                                    </Button>
-                                )}
-                            </div>
-                        )}
-                    </div>
+                        </div>
 
-                </motion.div>
+                        {/* RIGHT: ACTION BUTTONS */}
+                        <div className="flex items-end gap-3 shrink-0">
+                            {/* Scout Button */}
+                            <div className="flex flex-col">
+                                <Button 
+                                    onClick={handleReroll} 
+                                    disabled={isBattling || gameState.scrap < REROLL_COST}
+                                    size="lg"
+                                    className="h-14 bg-gray-900 border border-gray-700 text-gray-400 hover:text-white hover:border-gray-500"
+                                >
+                                    <div className="flex flex-col items-center gap-1">
+                                        <Scan className="w-4 h-4" />
+                                        <span className="text-[10px] font-mono">SCOUT ({REROLL_COST})</span>
+                                    </div>
+                                </Button>
+                            </div>
+
+                            {/* ENGAGE (Big Button) */}
+                            <Button 
+                                onClick={startBattle} 
+                                disabled={isBattling || !playerProtocol}
+                                size="lg"
+                                className="h-14 min-w-[200px] bg-[var(--accent-color)] text-black font-black text-xl hover:brightness-110 hover:scale-[1.02] active:scale-[0.98] transition-all shadow-[0_0_20px_rgba(var(--accent-rgb),0.4)]"
+                            >
+                                {isBattling ? (
+                                    <span className="flex items-center gap-2 text-base">
+                                        <RefreshCw className="animate-spin" /> SIMULATING...
+                                    </span>
+                                ) : (
+                                    <span className="flex items-center gap-2">
+                                        ENGAGE <Play className="w-5 h-5 fill-current" />
+                                    </span>
+                                )}
+                            </Button>
+                        </div>
+                    </div>
+                </div>
 
                 {/* Modals */}
                 <ScavengeModal
