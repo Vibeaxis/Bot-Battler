@@ -8,39 +8,52 @@ import {
   DAMAGE_VARIANCE 
 } from '@/constants/gameConstants';
 
+// SAFEGUARD 1: Fallback values prevent NaN if imports fail
+const STARTING_HP = BASE_HEALTH || 100; 
+
 const calculateDamage = (attackerDamage, defenderArmor) => {
-  const baseDamage = attackerDamage - (defenderArmor * 0.5);
-  const variance = 1 + (Math.random() * 2 - 1) * DAMAGE_VARIANCE;
+  // SAFEGUARD 2: Default to 0 if stats are missing
+  const dmg = attackerDamage || 0;
+  const arm = defenderArmor || 0;
+  
+  const baseDamage = dmg - (arm * 0.5);
+  // Ensure we don't multiply by undefined
+  const variance = 1 + (Math.random() * 2 - 1) * (DAMAGE_VARIANCE || 0.2);
+  
   return Math.max(1, Math.floor(baseDamage * variance));
 };
 
 const calculateHitChance = (attackerSpeed, defenderSpeed) => {
-  return Math.max(0.1, BASE_HIT_CHANCE - (defenderSpeed / 200));
+  const spd1 = attackerSpeed || 0;
+  const spd2 = defenderSpeed || 0;
+  return Math.max(0.1, (BASE_HIT_CHANCE || 0.8) - (spd2 / 200));
 };
 
 const calculateDodgeChance = (defenderSpeed) => {
-  return Math.min(0.4, defenderSpeed / 200);
+  const spd = defenderSpeed || 0;
+  return Math.min(0.4, spd / 200);
 };
 
 export const simulateBattle = (botA, botB, protocolA, protocolB) => {
-  // 1. Initial Setup (Moved Health UP so we can record it immediately)
-  let healthA = BASE_HEALTH;
-  let healthB = BASE_HEALTH;
+  // 1. Initial Setup
+  let healthA = STARTING_HP;
+  let healthB = STARTING_HP;
 
-  let statsA = calculateBotStats(botA);
-  let statsB = calculateBotStats(botB);
+  // SAFEGUARD 3: Ensure calculateBotStats returns an object
+  let statsA = calculateBotStats(botA) || { Damage: 10, Speed: 10, Armor: 0 };
+  let statsB = calculateBotStats(botB) || { Damage: 10, Speed: 10, Armor: 0 };
   
   const battleLog = [];
-  const healthTimeline = []; // <--- The Fix for NaN
+  const healthTimeline = []; 
   const criticalHits = [];
   
   // 2. The Recorder Helper
-  // Ensures battleLog and healthTimeline stay perfectly synced (1-to-1)
   const record = (message) => {
     battleLog.push(message);
     healthTimeline.push({ 
-      a: Math.max(0, healthA), 
-      b: Math.max(0, healthB) 
+      // SAFEGUARD 4: Force health to be a number, never NaN
+      a: isNaN(healthA) ? 0 : Math.max(0, healthA), 
+      b: isNaN(healthB) ? 0 : Math.max(0, healthB) 
     });
   };
 
@@ -48,26 +61,22 @@ export const simulateBattle = (botA, botB, protocolA, protocolB) => {
 
   // 3. Apply Protocol Bonuses
   if (protocolA && protocolB) {
-    const bonusA = calculateProtocolBonus(protocolA, protocolB.id);
-    const bonusB = calculateProtocolBonus(protocolB, protocolA.id);
+    const bonusA = calculateProtocolBonus(protocolA, protocolB.id) || 0;
+    const bonusB = calculateProtocolBonus(protocolB, protocolA.id) || 0;
 
     // Apply A's bonus
-    statsA = { ...statsA, [protocolA.statType]: Math.floor(statsA[protocolA.statType] * (1 + bonusA)) };
+    if (statsA[protocolA.statType]) {
+       statsA = { ...statsA, [protocolA.statType]: Math.floor(statsA[protocolA.statType] * (1 + bonusA)) };
+    }
     
     // Apply B's bonus
-    statsB = { ...statsB, [protocolB.statType]: Math.floor(statsB[protocolB.statType] * (1 + bonusB)) };
+    if (statsB[protocolB.statType]) {
+       statsB = { ...statsB, [protocolB.statType]: Math.floor(statsB[protocolB.statType] * (1 + bonusB)) };
+    }
     
     record(`📡 PROTOCOLS ACTIVE:`);
     record(`${botA.name}: [${protocolA.name}] -> +${Math.round(bonusA * 100)}% ${protocolA.statType}`);
     record(`${botB.name}: [${protocolB.name}] -> +${Math.round(bonusB * 100)}% ${protocolB.statType}`);
-    
-    if (bonusA > protocolA.baseBonus) {
-      record(`⚡ TACTICAL ADVANTAGE: ${botA.name} counters ${botB.name}!`);
-    } else if (bonusB > protocolB.baseBonus) {
-      record(`⚡ TACTICAL ADVANTAGE: ${botB.name} counters ${botA.name}!`);
-    } else {
-      record(`⚖️ NEUTRAL MATCHUP: Standard protocols engaged.`);
-    }
     record('---');
   }
 
@@ -84,7 +93,10 @@ export const simulateBattle = (botA, botB, protocolA, protocolB) => {
   while (healthA > 0 && healthB > 0 && round < 50) {
     round++;
     
-    const turns = statsA.Speed >= statsB.Speed 
+    const speedA = statsA.Speed || 0;
+    const speedB = statsB.Speed || 0;
+
+    const turns = speedA >= speedB
       ? [
           { attacker: botA, defender: botB, attStats: statsA, defStats: statsB, attRef: 'A', defRef: 'B' },
           { attacker: botB, defender: botA, attStats: statsB, defStats: statsA, attRef: 'B', defRef: 'A' }
@@ -110,17 +122,16 @@ export const simulateBattle = (botA, botB, protocolA, protocolB) => {
         if (Math.random() < effectiveHitChance) {
           if (attRef === 'A') missStreakA = 0; else missStreakB = 0;
 
-          const isCrit = Math.random() < CRIT_CHANCE;
+          const isCrit = Math.random() < (CRIT_CHANCE || 0.1);
           let damage = calculateDamage(attStats.Damage, defStats.Armor);
           
           if (isCrit) {
-            damage = Math.floor(damage * CRIT_MULTIPLIER);
+            damage = Math.floor(damage * (CRIT_MULTIPLIER || 1.5));
             criticalHits.push(round);
-            // Apply Damage BEFORE recording so timeline matches
+            
             if (defRef === 'A') healthA -= damage; else healthB -= damage;
             record(`💥 Round ${round}: ${attacker.name} lands a CRITICAL HIT for ${damage} damage!`);
           } else {
-            // Apply Damage BEFORE recording
             if (defRef === 'A') healthA -= damage; else healthB -= damage;
             record(`⚡ Round ${round}: ${attacker.name} attacks for ${damage} damage`);
           }
@@ -132,7 +143,6 @@ export const simulateBattle = (botA, botB, protocolA, protocolB) => {
             let damage = calculateDamage(attStats.Damage, defStats.Armor);
             damage = Math.max(1, Math.floor(damage * 0.3)); 
 
-            // Apply Damage BEFORE recording
             if (defRef === 'A') healthA -= damage; else healthB -= damage;
             record(`⚠️ Round ${round}: ${attacker.name} lands a glancing blow for ${damage} damage.`);
             
@@ -147,20 +157,25 @@ export const simulateBattle = (botA, botB, protocolA, protocolB) => {
     }
   }
   
-  const winner = healthA > 0 ? botA : botB;
-  const loser = healthA > 0 ? botB : botA;
+  // SAFEGUARD 5: Explicitly handle NaN in winner check
+  // If healthA is NaN (shouldn't happen now), treat it as 0
+  const cleanHealthA = isNaN(healthA) ? 0 : healthA;
+  const cleanHealthB = isNaN(healthB) ? 0 : healthB;
+
+  const winner = cleanHealthA > 0 ? botA : botB;
+  const loser = cleanHealthA > 0 ? botB : botA;
   
   record('---');
-  record(`🏆 ${winner.name} wins with ${healthA > 0 ? healthA : healthB} HP remaining!`);
+  record(`🏆 ${winner.name} wins with ${cleanHealthA > 0 ? cleanHealthA : cleanHealthB} HP remaining!`);
   
   return {
     winner,
     loser,
     rounds: round,
     battleLog,
-    healthTimeline, // <--- Returns populated timeline
+    healthTimeline, 
     criticalHits,
-    finalHealthA: Math.max(0, healthA),
-    finalHealthB: Math.max(0, healthB)
+    finalHealthA: Math.max(0, cleanHealthA),
+    finalHealthB: Math.max(0, cleanHealthB)
   };
 };
