@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { useGameContext } from '@/context/GameContext';
 import { useSoundContext } from '@/context/SoundContext';
 import { Button } from '@/components/ui/button';
-import { Wrench, ShoppingCart, Swords, Trophy, Flame, Coins, Hammer, Cpu, Skull, Zap, Shield, Bot, Trash2, FileText } from 'lucide-react';
+import { Wrench, ShoppingCart, Swords, Trophy, Flame, Coins, Hammer, Cpu, Skull, Zap, Shield, Bot, Trash2, FileText, ChevronRight } from 'lucide-react';
 import HangarModal from '@/components/HangarModal';
 import { cn } from '@/lib/utils';
 import CombatLogModal from '@/components/CombatLogModal'; // <-- IMPORT THIS
