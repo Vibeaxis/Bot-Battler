@@ -12,6 +12,10 @@
 }
 
 body {
-    @apply bg-gradient-to-br from-indigo-900 via-purple-900 to-slate-900 bg-slate-900 text-white;
-    font-family: 'DM Sans', sans-serif;
+  /* CHANGED: Removed the purple gradient. 
+     Now it defaults to the same dark color as your Hub. */
+  @apply bg-[#0a0a12] text-white;
+  
+  font-family: 'DM Sans', sans-serif;
+  margin: 0;
 }
