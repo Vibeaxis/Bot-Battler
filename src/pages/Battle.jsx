@@ -340,7 +340,7 @@ const [enemyFloatingText, setEnemyFloatingText] = useState(null);
 
         // Logic Updates
         updateScrap(reward);
-        recordBattle({ playerWon, enemyName: enemy.name, scrapEarned: reward, timestamp: Date.now() });
+        recordBattle({ playerWon, enemyName: enemy.name, scrapEarned: reward, battleLog: result.battleLog, timestamp: Date.now() });
         setBattleResult({ playerWon, reward });
         setIsBattling(false);
     };

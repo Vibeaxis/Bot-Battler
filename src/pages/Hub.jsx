@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Wrench, ShoppingCart, Swords, Trophy, Flame, Coins, Hammer, Cpu, Skull, Zap, Shield, Bot, Trash2 } from 'lucide-react';
 import HangarModal from '@/components/HangarModal';
 import { cn } from '@/lib/utils';
-
+import CombatLogModal from '@/components/CombatLogModal'; // <-- IMPORT THIS
 const ICON_COMPONENTS = {
   Cpu,
   Skull,
@@ -198,25 +198,33 @@ const Hub = () => {
                       <div className="text-[10px] text-gray-500 uppercase tracking-widest">Loss Streak</div>
                   </motion.div>
                   
-                  {/* Last Battle Log (Spans full width of the stats column) */}
+                {/* --- LATEST ENGAGEMENT (CLICKABLE) --- */}
                   {lastBattle && (
                     <motion.div
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       transition={{ delay: 0.7 }}
-                      className="md:col-span-3 bg-black/40 border border-gray-800 p-4 mt-2"
+                      // Added hover effects and onClick
+                      onClick={() => setIsLogOpen(true)}
+                      className="md:col-span-3 bg-black/40 border border-gray-800 p-4 mt-2 cursor-pointer group hover:border-[var(--accent-color)] hover:bg-[rgba(var(--accent-rgb),0.05)] transition-all"
                     >
-                        <div className="flex justify-between items-center mb-2 border-b border-gray-800 pb-2">
-                            <span className="text-xs text-gray-400 uppercase tracking-widest">Latest Engagement</span>
+                        <div className="flex justify-between items-center mb-2 border-b border-gray-800 pb-2 group-hover:border-gray-700">
+                            <div className="flex items-center gap-2">
+                                <FileText className="w-3 h-3 text-gray-500 group-hover:text-[var(--accent-color)]" />
+                                <span className="text-xs text-gray-400 uppercase tracking-widest group-hover:text-gray-300">Latest Engagement</span>
+                            </div>
                             <span className="text-[10px] text-gray-600">{new Date(lastBattle.timestamp).toLocaleTimeString()}</span>
                         </div>
                         <div className="flex justify-between items-center">
                             <span className="text-sm font-mono text-gray-300">
-                                VS <span className="text-white font-bold">{lastBattle.enemyName}</span>
+                                VS <span className="text-white font-bold group-hover:text-[var(--accent-color)] transition-colors">{lastBattle.enemyName}</span>
                             </span>
-                            <span className={`text-sm font-bold uppercase px-2 py-0.5 rounded-sm ${lastBattle.playerWon ? 'bg-green-900/20 text-green-500' : 'bg-red-900/20 text-red-500'}`}>
-                                {lastBattle.playerWon ? 'VICTORY' : 'DEFEAT'}
-                            </span>
+                            <div className="flex items-center gap-2">
+                                <span className={`text-sm font-bold uppercase px-2 py-0.5 rounded-sm ${lastBattle.playerWon ? 'bg-green-900/20 text-green-500' : 'bg-red-900/20 text-red-500'}`}>
+                                    {lastBattle.playerWon ? 'VICTORY' : 'DEFEAT'}
+                                </span>
+                                <ChevronRight className="w-4 h-4 text-gray-600 group-hover:text-[var(--accent-color)] group-hover:translate-x-1 transition-all" />
+                            </div>
                         </div>
                     </motion.div>
                   )}
