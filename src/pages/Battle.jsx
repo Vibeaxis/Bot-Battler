@@ -21,13 +21,25 @@ import SpeechToast from '@/components/SpeechToast';
 import { getRandomFlavor } from '@/data/flavor';
 import { PROTOCOLS, getRandomProtocol } from '@/data/tactics';
 import CombatTextOverlay from '@/components/CombatTextOverlay';
+import { ScreenFlash, ImpactParticles } from '@/components/CombatEffects'; // Import the new file
+
+
+
+
+
+
+
+
+
 const REROLL_COST = 10;
 
 const Battle = () => {
   const navigate = useNavigate();
   const { gameState, updateScrap, recordBattle } = useGameContext();
   const { playSound } = useSoundContext();
-  
+  const [flashType, setFlashType] = useState(null); // 'HIT' or 'CRIT'
+const [playerSparks, setPlayerSparks] = useState(false); // Sparks on Player
+const [enemySparks, setEnemySparks] = useState(false);   // Sparks on Enemy
   // State
   const [enemy, setEnemy] = useState(null);
   const [battleLog, setBattleLog] = useState([]);
@@ -184,26 +196,54 @@ const [enemyFloatingText, setEnemyFloatingText] = useState(null);
             const isPlayerAction = logEntry.includes(gameState.playerBot.name);
             const isEnemyAction = logEntry.includes(enemy.name);
 
-            // ACTION TRIGGER
+      // ACTION TRIGGER
             if (damageAmount || isMiss) {
                 if (isPlayerAction) {
                     // Player Attacks -> Enemy takes damage
                     setPlayerAttacking(true);
-                    if (damageAmount) setEnemyFloatingText({ id: i, content: `-${damageAmount}`, isCrit });
-                    else setEnemyFloatingText({ id: i, content: "MISS", type: 'miss' });
                     
-                    if (isCrit) setRightToast(getRandomFlavor('HIT')); // Enemy reacts
+                    if (damageAmount) {
+                        setEnemyFloatingText({ id: i, content: `-${damageAmount}`, isCrit });
+                        // NEW: Trigger Sparks on Enemy
+                        setEnemySparks(true);
+                        setTimeout(() => setEnemySparks(false), 200); 
+                    } else {
+                        setEnemyFloatingText({ id: i, content: "MISS", type: 'miss' });
+                    }
+                    
+                    if (isCrit) setRightToast(getRandomFlavor('HIT'));
 
                 } else if (isEnemyAction) {
                     // Enemy Attacks -> Player takes damage
                     setEnemyAttacking(true);
-                    if (damageAmount) setPlayerFloatingText({ id: i, content: `-${damageAmount}`, isCrit });
-                    else setPlayerFloatingText({ id: i, content: "MISS", type: 'miss' });
 
-                    if (isCrit) setLeftToast(getRandomFlavor('HIT')); // Player reacts
+                    if (damageAmount) {
+                        setPlayerFloatingText({ id: i, content: `-${damageAmount}`, isCrit });
+                        // NEW: Trigger Sparks on Player
+                        setPlayerSparks(true);
+                        setTimeout(() => setPlayerSparks(false), 200);
+                    } else {
+                        setPlayerFloatingText({ id: i, content: "MISS", type: 'miss' });
+                    }
+
+                    if (isCrit) setLeftToast(getRandomFlavor('HIT'));
                 }
 
-                if (damageAmount) playSound(isCrit ? 'CRIT' : 'HIT');
+                if (damageAmount) {
+                    playSound(isCrit ? 'CRIT' : 'HIT');
+
+                    // NEW: Screen Flash
+                    setFlashType(isCrit ? 'CRIT' : 'HIT');
+                    setTimeout(() => setFlashType(null), 100);
+
+                    // NEW: Screen Shake (More violent for crits)
+                    const shakeIntensity = isCrit ? 20 : 5;
+                    controls.start({
+                        x: [0, -shakeIntensity, shakeIntensity, -shakeIntensity, shakeIntensity, 0],
+                        y: [0, -shakeIntensity/2, shakeIntensity/2, 0], 
+                        transition: { duration: 0.2 }
+                    });
+                }
 
                 // IMPACT DELAY: Wait for animation to hit (Syncs visuals with health drop)
                 await new Promise(r => setTimeout(r, 200 / battleSpeedRef.current));
@@ -278,7 +318,8 @@ return (
             </Helmet>
 
             <div className="h-screen max-h-screen bg-black flex flex-col overflow-hidden relative">
-                
+                {/* NEW: Screen Flash Effect */}
+    <ScreenFlash type={flashType} />
                 {/* Tech Grid Background (Fixes Ghost Boxes) */}
                 <div className="absolute inset-0 bg-[#050505]">
                     <div 
@@ -318,7 +359,8 @@ return (
                         <div className="relative group">
                             <SpeechToast message={leftToast} position="left" />
                             <CombatTextOverlay activeText={playerFloatingText} />
-                            
+                            {/* NEW: Sparks when Player gets hit */}
+    <ImpactParticles active={playerSparks} color="#3b82f6" count={20} />
                           
                             <BotCard
                                 bot={gameState.playerBot}
@@ -348,7 +390,8 @@ return (
                         <div className="relative group">
                             <SpeechToast message={rightToast} position="right" />
                             <CombatTextOverlay activeText={enemyFloatingText} />
-                            
+                            {/* NEW: Sparks when Enemy gets hit */}
+    <ImpactParticles active={enemySparks} color="#ef4444" count={20} />
                          
 
                             <BotCard
