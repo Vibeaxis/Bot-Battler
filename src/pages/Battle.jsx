@@ -328,14 +328,14 @@ return (
                                 slotLevels={gameState.slotLevels}
                                 className="scale-110 shadow-2xl"
                             />
-                              {/* ACTIVE PROTOCOL TOAST - MOVED TOP & FIXED Z-INDEX */}
-                            {playerProtocol && (
-                                <div className="absolute -top-10 left-0 right-0 text-center z-20">
-                                    <span className="text-[10px] font-bold px-3 py-1 rounded-sm border border-[var(--accent-color)] text-[var(--accent-color)] bg-black shadow-[0_0_10px_rgba(var(--accent-rgb),0.3)] tracking-widest uppercase">
-                                        Active: {playerProtocol.name}
-                                    </span>
-                                </div>
-                            )}
+                        {/* PROTOCOL MOVED TO BOTTOM - Hanging off the card */}
+    {playerProtocol && (
+        <div className="absolute -bottom-8 left-0 right-0 text-center z-20">
+            <span className="text-[10px] font-bold px-3 py-1 rounded-b-md border-x border-b border-[var(--accent-color)] text-[var(--accent-color)] bg-black/90 shadow-[0_4px_10px_rgba(0,0,0,0.5)] tracking-widest uppercase">
+                Active: {playerProtocol.name}
+            </span>
+        </div>
+    )}
 
                         </div>
 
@@ -358,14 +358,14 @@ return (
                                 isHit={playerAttacking}
                                 className="scale-110 shadow-2xl border-red-500/50"
                             />
-                               {/* ENEMY PROTOCOL TOAST - MOVED TOP & FIXED Z-INDEX */}
-                            {enemyProtocol && (
-                                <div className="absolute -top-10 left-0 right-0 text-center z-20">
-                                    <span className="text-[10px] font-bold px-3 py-1 rounded-sm border border-red-500 text-red-500 bg-black shadow-[0_0_10px_rgba(220,38,38,0.3)] tracking-widest uppercase">
-                                        Detected: {enemyProtocol.name}
-                                    </span>
-                                </div>
-                            )}
+                      {/* PROTOCOL MOVED TO BOTTOM */}
+    {enemyProtocol && (
+        <div className="absolute -bottom-8 left-0 right-0 text-center z-20">
+            <span className="text-[10px] font-bold px-3 py-1 rounded-b-md border-x border-b border-red-500 text-red-500 bg-black/90 shadow-[0_4px_10px_rgba(0,0,0,0.5)] tracking-widest uppercase">
+                Detected: {enemyProtocol.name}
+            </span>
+        </div>
+    )}
                         </div>
                     </div>
                 </motion.div>
