@@ -88,8 +88,7 @@ export const SoundProvider = ({ children }) => {
     gain.connect(ctx.destination);
     noise.start();
   };
-
-  const playSound = useCallback((key) => {
+const playSound = useCallback((key) => {
     // If volume is 0, don't play
     if (masterVolumeRef.current <= 0.01) return;
 
@@ -119,6 +118,25 @@ export const SoundProvider = ({ children }) => {
           playTone('sine', 1200, 400, 0.2, 0.1);
           playNoise(0.1, 0.05);
           break;
+          
+        // --- NEW SYNTHESIZED SOUNDS ---
+        
+        case 'VICTORY':
+          // A Retro "Level Up" Arpeggio (Square waves for 8-bit feel)
+          // Note 1: 440Hz (A4)
+          playTone('square', 440, 440, 0.1, 0.1);
+          // Note 2: 554Hz (C#5) - 100ms delay
+          setTimeout(() => playTone('square', 554, 554, 0.1, 0.1), 100);
+          // Note 3: 659Hz (E5) - 200ms delay
+          setTimeout(() => playTone('square', 659, 659, 0.4, 0.1), 200);
+          break;
+
+        case 'DEFEAT':
+          // A "Power Down" Slide (Sawtooth dropping pitch + Static)
+          playTone('sawtooth', 150, 30, 0.8, 0.15); // Long groan
+          playNoise(0.5, 0.15); // Static hiss
+          break;
+
         default:
           break;
       }

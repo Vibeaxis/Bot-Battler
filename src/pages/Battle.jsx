@@ -279,32 +279,50 @@ const [enemyFloatingText, setEnemyFloatingText] = useState(null);
             setEnemyFloatingText(null);
         }
 
-        // 4. End Battle
+ // 4. End Battle
         const playerWon = result.winner.name === gameState.playerBot.name;
         const reward = playerWon ? WIN_REWARD : LOSS_REWARD;
 
+        // Snap health to final values immediately
         setPlayerHealth(result.finalHealthA);
         setEnemyHealth(result.finalHealthB);
         
         if (playerWon) {
+            // --- VICTORY SEQUENCE ---
+            playSound('VICTORY'); // 8-bit Arpeggio
+            setFlashType('VICTORY'); // Gold Screen Flash
+            setTimeout(() => setFlashType(null), 800); 
+
             setLeftToast(getRandomFlavor('VICTORY'));
             setRightToast(getRandomFlavor('DEFEAT'));
+            
+            setPendingRewards({ scrap: reward });
+            
+            // Wait slightly longer (2000ms) so the player can enjoy the "Victory Flash" before the modal covers it
+            setTimeout(() => setShowScavengeModal(true), 2000 / battleSpeedRef.current);
+
         } else {
+            // --- DEFEAT SEQUENCE ---
+            playSound('DEFEAT'); // Power-down Slide
+            setFlashType('DEFEAT'); // Dark Screen Fade
+            setTimeout(() => setFlashType(null), 800); 
+
             setLeftToast(getRandomFlavor('DEFEAT'));
             setRightToast(getRandomFlavor('VICTORY'));
+            
+            // Styled "System Failure" Toast
+            toast({ 
+                title: "💀 SYSTEM FAILURE", 
+                description: `Critical damage sustained. Salvaged ${reward} scrap as consolation.`, 
+                className: "bg-red-950 border border-red-600 text-red-100" 
+            });
         }
 
+        // Logic Updates
         updateScrap(reward);
         recordBattle({ playerWon, enemyName: enemy.name, scrapEarned: reward, timestamp: Date.now() });
         setBattleResult({ playerWon, reward });
         setIsBattling(false);
-
-        if (playerWon) {
-            setPendingRewards({ scrap: reward });
-            setTimeout(() => setShowScavengeModal(true), 1500 / battleSpeedRef.current);
-        } else {
-             toast({ title: "💀 Defeat", description: `You earned ${reward} scrap as consolation`, className: "bg-red-600 text-white" });
-        }
     };
 
     const handleNextBattle = () => generateNewEnemy();

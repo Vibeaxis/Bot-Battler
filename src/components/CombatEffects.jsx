@@ -6,6 +6,9 @@ export const ScreenFlash = ({ type }) => {
   const getColor = () => {
     if (type === 'CRIT') return 'bg-white mix-blend-overlay'; // Bright flash
     if (type === 'HIT') return 'bg-red-500 mix-blend-overlay'; // Red tint
+    // Add this line to the getColor function:
+if (type === 'VICTORY') return 'bg-yellow-500 mix-blend-overlay opacity-50';
+if (type === 'DEFEAT') return 'bg-gray-950 mix-blend-multiply opacity-90';
     return '';
   };
 
