@@ -180,7 +180,14 @@ const [enemyFloatingText, setEnemyFloatingText] = useState(null);
         
         setIsBattling(true);
         setBattleResult(null); // Clear previous results
+        // 1. SETUP DYNAMIC LOGGING
+        let dynamicBattleLog = []; // <--- THIS WILL BE YOUR OFFICIAL RECORD
+        const addToLog = (msg) => {
+            const timestamp = (Date.now() % 10000).toString().padStart(4, '0');
+            dynamicBattleLog.push(`[T-${timestamp}] ${msg}`);
+        };
         
+        addToLog(`ENGAGEMENT STARTED: ${gameState.playerBot.name} VS ${enemy.name}`);
         // 1. Setup Enemy Protocol
         // (Assuming you have a helper for this, or just pick random)
         const protocols = ['ASSAULT', 'BULWARK', 'TECH']; // Simplified for example
@@ -216,47 +223,58 @@ const [enemyFloatingText, setEnemyFloatingText] = useState(null);
             const isPlayerAction = logEntry.includes(gameState.playerBot.name);
             const isEnemyAction = logEntry.includes(enemy.name);
 
-      // ACTION TRIGGER
+     // ACTION TRIGGER
             if (damageAmount || isMiss) {
                 if (isPlayerAction) {
-                    // Player Attacks -> Enemy takes damage
+                    // --- PLAYER TURN ---
                     setPlayerAttacking(true);
                     
                     if (damageAmount) {
                         setEnemyFloatingText({ id: i, content: `-${damageAmount}`, isCrit });
-                        // NEW: Trigger Sparks on Enemy
+                        
+                        // LOG: Player Hit
+                        addToLog(`${gameState.playerBot.name} hits for ${damageAmount} DMG ${isCrit ? '(CRITICAL)' : ''}`);
+
                         setEnemySparks(true);
                         setTimeout(() => setEnemySparks(false), 200); 
                     } else {
                         setEnemyFloatingText({ id: i, content: "MISS", type: 'miss' });
+                        
+                        // LOG: Player Miss
+                        addToLog(`${gameState.playerBot.name} misses target.`);
                     }
                     
                     if (isCrit) setRightToast(getRandomFlavor('HIT'));
 
                 } else if (isEnemyAction) {
-                    // Enemy Attacks -> Player takes damage
+                    // --- ENEMY TURN ---
                     setEnemyAttacking(true);
 
                     if (damageAmount) {
                         setPlayerFloatingText({ id: i, content: `-${damageAmount}`, isCrit });
-                        // NEW: Trigger Sparks on Player
+                        
+                        // LOG: Enemy Hit
+                        addToLog(`${enemy.name} hits for ${damageAmount} DMG ${isCrit ? '(CRITICAL)' : ''}`);
+
                         setPlayerSparks(true);
                         setTimeout(() => setPlayerSparks(false), 200);
                     } else {
                         setPlayerFloatingText({ id: i, content: "MISS", type: 'miss' });
+                        
+                        // LOG: Enemy Miss
+                        addToLog(`${enemy.name} misses target.`);
                     }
 
                     if (isCrit) setLeftToast(getRandomFlavor('HIT'));
                 }
 
+                // --- GLOBAL EFFECTS (Sound, Shake, Flash) ---
                 if (damageAmount) {
                     playSound(isCrit ? 'CRIT' : 'HIT');
 
-                    // NEW: Screen Flash
                     setFlashType(isCrit ? 'CRIT' : 'HIT');
                     setTimeout(() => setFlashType(null), 100);
 
-                    // NEW: Screen Shake (More violent for crits)
                     const shakeIntensity = isCrit ? 20 : 5;
                     controls.start({
                         x: [0, -shakeIntensity, shakeIntensity, -shakeIntensity, shakeIntensity, 0],
@@ -265,10 +283,9 @@ const [enemyFloatingText, setEnemyFloatingText] = useState(null);
                     });
                 }
 
-                // IMPACT DELAY: Wait for animation to hit (Syncs visuals with health drop)
+                // IMPACT DELAY
                 await new Promise(r => setTimeout(r, 200 / battleSpeedRef.current));
             }
-
             // UPDATE HEALTH (After impact delay)
             // Fallback: If your sim doesn't return timeline yet, use the 'progress' math from before
             if (result.healthTimeline && result.healthTimeline[i]) {
@@ -301,6 +318,8 @@ const [enemyFloatingText, setEnemyFloatingText] = useState(null);
 
  // 4. End Battle
         const playerWon = result.winner.name === gameState.playerBot.name;
+        // LOG RESULT
+        addToLog(`ENGAGEMENT ENDED. WINNER: ${result.winner.name}`);
         const reward = playerWon ? WIN_REWARD : LOSS_REWARD;
 
         // Snap health to final values immediately
@@ -340,7 +359,7 @@ const [enemyFloatingText, setEnemyFloatingText] = useState(null);
 
         // Logic Updates
         updateScrap(reward);
-        recordBattle({ playerWon, enemyName: enemy.name, scrapEarned: reward, battleLog: result.battleLog, timestamp: Date.now() });
+        recordBattle({ playerWon, enemyName: enemy.name, scrapEarned: reward, battleLog: result.battleLog, battleLog: dynamicBattleLog, timestamp: Date.now() });
         setBattleResult({ playerWon, reward });
         setIsBattling(false);
     };
