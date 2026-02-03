@@ -16,7 +16,7 @@ const ICON_COMPONENTS = {
   Shield,
   Bot
 };
-
+import SystemTicker from '@/components/SystemTicker';
 const Hub = () => {
   const navigate = useNavigate();
   const { gameState, factoryReset } = useGameContext();
@@ -78,7 +78,7 @@ const Hub = () => {
         onClose={() => setIsLogOpen(false)} 
         battle={lastBattle} 
       />
-      <div className="min-h-screen bg-[#0a0a12] p-4 font-mono text-[#e0e0e0] selection:bg-[var(--accent-color)] selection:text-black">
+  <div className="min-h-screen bg-[#0a0a12] p-4 font-mono text-[#e0e0e0] selection:bg-[var(--accent-color)] selection:text-black flex flex-col">
         <div className="max-w-7xl mx-auto py-8 relative">
           
           {/* Header & Factory Reset */}
@@ -236,6 +236,10 @@ const Hub = () => {
               </div>
           </div>
 
+        </div>
+        {/* STEP 2: SLOT THE TICKER HERE (Before the final closing div) */}
+        <div className="mt-auto z-10 w-full -mx-4 md:mx-0">
+           <SystemTicker />
         </div>
       </div>
     </>
