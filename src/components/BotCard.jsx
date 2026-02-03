@@ -6,96 +6,54 @@ import RarityBadge from './RarityBadge';
 import { cn } from '@/lib/utils';
 import { calculateBotStats } from '@/utils/statCalculator';
 
-// --- VISUAL ASSETS ---
+// --- FIXED SVG COMPONENTS (No Percentages in Paths) ---
 
-// 1. The SVG Skeleton that connects the parts
 const SchematicSkeleton = () => (
-  <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-20" style={{ zIndex: 0 }}>
+  // 1. Added viewBox 0-100 and preserveAspectRatio to allow simple coords to stretch
+  <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-20" style={{ zIndex: 0 }} viewBox="0 0 100 100" preserveAspectRatio="none">
     <defs>
       <pattern id="grid-pattern" width="10" height="10" patternUnits="userSpaceOnUse">
         <path d="M 10 0 L 0 0 0 10" fill="none" stroke="currentColor" strokeWidth="0.5" />
       </pattern>
     </defs>
-    
-    {/* Central Spine */}
-    <path 
-      d="M 50% 15% L 50% 85%" 
-      stroke="currentColor" 
-      strokeWidth="2" 
-      fill="none" 
-      className="text-[var(--accent-color)]"
-    />
-    
-    {/* Shoulder Connections (Head to Arms) */}
-    <path 
-      d="M 50% 25% L 20% 25% L 20% 40%" 
-      stroke="currentColor" 
-      strokeWidth="1" 
-      fill="none" 
-      className="text-gray-500"
-    />
-    <path 
-      d="M 50% 25% L 80% 25% L 80% 40%" 
-      stroke="currentColor" 
-      strokeWidth="1" 
-      fill="none" 
-      className="text-gray-500"
-    />
-
-    {/* Chassis Connection */}
-    <circle cx="50%" cy="50%" r="3" fill="currentColor" className="text-[var(--accent-color)]" />
-    <rect x="45%" y="45%" width="10%" height="10%" fill="none" stroke="currentColor" className="text-gray-700" />
+    {/* 2. Converted 50% -> 50, etc. */}
+    <path d="M 50 15 L 50 85" stroke="currentColor" strokeWidth="2" fill="none" className="text-[var(--accent-color)]" vectorEffect="non-scaling-stroke" />
+    <path d="M 50 25 L 20 25 L 20 40" stroke="currentColor" strokeWidth="1" fill="none" className="text-gray-500" vectorEffect="non-scaling-stroke" />
+    <path d="M 50 25 L 80 25 L 80 40" stroke="currentColor" strokeWidth="1" fill="none" className="text-gray-500" vectorEffect="non-scaling-stroke" />
+    <circle cx="50" cy="50" r="3" fill="currentColor" className="text-[var(--accent-color)]" />
   </svg>
 );
 
-// 2. The Custom SVG Border for Slots (Chamfered Corners)
 const TechFrame = ({ children, className, isActive, colorClass = "text-gray-800" }) => (
   <div className={`relative ${className}`}>
-    {/* The SVG Frame */}
-    <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 0 }}>
+    <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 0 }} viewBox="0 0 100 100" preserveAspectRatio="none">
+      {/* Fixed Path: "M 0 10..." creates a chamfered box using 0-100 coordinates.
+         The corners are cut at 10% of the box size.
+      */}
       <path 
-        d="M 1 10 L 10 1 L calc(100% - 10px) 1 L calc(100% - 1px) 10 L calc(100% - 1px) calc(100% - 10px) L calc(100% - 10px) calc(100% - 1px) L 10 calc(100% - 1px) L 1 calc(100% - 10px) Z" 
+        d="M 0 10 L 10 0 L 90 0 L 100 10 L 100 90 L 90 100 L 10 100 L 0 90 Z" 
         fill="none" 
         stroke="currentColor" 
         strokeWidth="1.5"
+        vectorEffect="non-scaling-stroke" // Keeps border thin even when stretched
         className={isActive ? "text-[var(--accent-color)] drop-shadow-[0_0_5px_rgba(var(--accent-rgb),0.8)]" : colorClass}
       />
-      {/* Decorative Corners */}
-      <path d="M 1 10 L 10 1" stroke="currentColor" strokeWidth="3" className={isActive ? "text-[var(--accent-color)]" : "text-gray-700"} />
-      <path d="M calc(100% - 1px) calc(100% - 10px) L calc(100% - 10px) calc(100% - 1px)" stroke="currentColor" strokeWidth="3" className={isActive ? "text-[var(--accent-color)]" : "text-gray-700"} />
     </svg>
     
-    {/* Content Container with Clip Path to match Frame */}
+    {/* Clip Path matches the SVG shape above (using percentages is fine in CSS clip-path) */}
     <div 
         className="relative z-10 w-full h-full flex flex-col items-center justify-center overflow-hidden"
-        style={{ clipPath: 'polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px)' }}
+        style={{ clipPath: 'polygon(10% 0, 90% 0, 100% 10%, 100% 90%, 90% 100%, 10% 100%, 0 90%, 0 10%)' }}
     >
         {children}
     </div>
   </div>
 );
 
-// --- MAIN COMPONENT ---
-
-const injectStyles = () => {
-  if (typeof document === 'undefined') return;
-  const styleId = 'bot-card-animations';
-  if (document.getElementById(styleId)) return;
-  const style = document.createElement('style');
-  style.id = styleId;
-  style.innerHTML = `
-    @keyframes lunge-right { 0% { transform: translateX(0); } 20% { transform: translateX(-15px); } 40% { transform: translateX(40px); } 100% { transform: translateX(0); } }
-    @keyframes lunge-left { 0% { transform: translateX(0); } 20% { transform: translateX(15px); } 40% { transform: translateX(-40px); } 100% { transform: translateX(0); } }
-    .animate-attack-right { animation: lunge-right 0.3s ease-out !important; }
-    .animate-attack-left { animation: lunge-left 0.3s ease-out !important; }
-  `;
-  document.head.appendChild(style);
-};
-injectStyles();
-
 const IconMap = { ...LucideIcons };
+
 const BotCard = ({ bot, slotLevels, isAttacking, side = 'player', className = '' }) => {
-  // NEW STATE: Track what slot is being hovered
+  // State for Contextual Footer
   const [hoveredPart, setHoveredPart] = useState(null);
 
   const stats = calculateBotStats({ ...bot, slotLevels: slotLevels || bot.slotLevels });
@@ -113,7 +71,7 @@ const BotCard = ({ bot, slotLevels, isAttacking, side = 'player', className = ''
   const ArmIcon = IconMap.Shield;
   const WgtIcon = IconMap.Weight;
 
-  // Helper to render a stat box (Reused for both Total and Part view)
+  // Reusable Stat Row Component
   const StatBox = ({ label, value, icon: Icon, colorClass, borderClass }) => (
     <div className={`bg-[#111] border ${borderClass} px-2 py-1.5 flex items-center justify-between`}>
         <div className="flex items-center gap-2">
@@ -132,7 +90,7 @@ const BotCard = ({ bot, slotLevels, isAttacking, side = 'player', className = ''
       className
     )}>
       
-      {/* Decorative Top Line */}
+      {/* Top Line */}
       <div className="h-0.5 w-full bg-gradient-to-r from-transparent via-[var(--accent-color)] to-transparent opacity-70" />
 
       {/* Header */}
@@ -153,7 +111,7 @@ const BotCard = ({ bot, slotLevels, isAttacking, side = 'player', className = ''
         </div>
       </div>
       
-      {/* Schematic Grid */}
+      {/* Main Grid */}
       <div className="relative p-3 bg-[#050505] min-h-[220px]">
         <SchematicSkeleton />
 
@@ -176,7 +134,7 @@ const BotCard = ({ bot, slotLevels, isAttacking, side = 'player', className = ''
                             `relative group ${gridClass}`,
                             shouldAnimateArm && (side === 'player' ? 'animate-attack-right' : 'animate-attack-left')
                         )}
-                        // MOUSE EVENTS FOR CONTEXTUAL FOOTER
+                        // MOUSE EVENTS
                         onMouseEnter={() => part && setHoveredPart({ ...part, slotKey: key })}
                         onMouseLeave={() => setHoveredPart(null)}
                     >
@@ -206,18 +164,17 @@ const BotCard = ({ bot, slotLevels, isAttacking, side = 'player', className = ''
                                 )}
                             </div>
                         </TechFrame>
-                        {/* NO TOOLTIP DIV HERE ANYMORE */}
                     </div>
                 );
             })}
         </div>
       </div>
       
-      {/* DYNAMIC FOOTER - Switches between Total Stats and Part Stats */}
+      {/* Contextual Footer */}
       <div className="p-3 bg-[#080808] border-t-2 border-[var(--accent-color)] mt-auto relative z-20 min-h-[85px] flex flex-col justify-center">
         
         {hoveredPart ? (
-            // VIEW A: PART DETAILS (Contextual)
+            // MODE A: ITEM SCAN (Hover)
             <div className="animate-in fade-in duration-200">
                 <div className="flex items-center justify-between mb-2 pb-1 border-b border-gray-800">
                     <span className={`text-xs font-bold uppercase font-mono ${RARITY_COLORS[hoveredPart.tier].text}`}>
@@ -235,7 +192,7 @@ const BotCard = ({ bot, slotLevels, isAttacking, side = 'player', className = ''
                 </div>
             </div>
         ) : (
-            // VIEW B: TOTAL STATS (Default)
+            // MODE B: BOT TOTALS (Default)
             <div className="animate-in fade-in duration-200">
                 <div className="grid grid-cols-2 gap-2">
                     <StatBox label="DMG" value={stats.Damage} icon={DmgIcon} colorClass="text-red-500" borderClass="border-red-900/30" />
