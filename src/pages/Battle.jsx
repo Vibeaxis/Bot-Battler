@@ -348,9 +348,10 @@ return (
                                 className="scale-110 shadow-2xl border-red-500/50"
                             />
 
+                       {/* ENEMY PROTOCOL TOAST - MOVED TOP & FIXED Z-INDEX */}
                             {enemyProtocol && (
-                                <div className="absolute -top-8 left-0 right-0 text-center">
-                                    <span className="text-[10px] font-bold px-2 py-0.5 border border-red-500 text-red-500 bg-black/80 tracking-widest uppercase">
+                                <div className="absolute -top-10 left-0 right-0 text-center z-20">
+                                    <span className="text-[10px] font-bold px-3 py-1 rounded-sm border border-red-500 text-red-500 bg-black shadow-[0_0_10px_rgba(220,38,38,0.3)] tracking-widest uppercase">
                                         Detected: {enemyProtocol.name}
                                     </span>
                                 </div>
