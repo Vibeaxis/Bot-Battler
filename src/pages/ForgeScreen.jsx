@@ -4,31 +4,31 @@ import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Hammer, Plus, Coins, Zap } from 'lucide-react';
 import { useGameContext } from '@/context/GameContext';
-import { getPartById, parts } from '@/data/parts'; // Import parts to generate random ones
+import { getPartById, parts } from '@/data/parts'; 
 import { Button } from '@/components/ui/button';
 import { toast } from '@/components/ui/use-toast';
 import { RARITY_COLORS } from '@/constants/gameConstants';
 import RarityBadge from '@/components/RarityBadge';
 import FusionInterface from '@/components/FusionInterface';
-import { cn } from '@/lib/utils'; // Assuming this exists
+import { cn } from '@/lib/utils';
 
 const ForgeScreen = () => {
   const navigate = useNavigate();
-  // extracting setGameState to implement crafting locally if needed
   const { gameState, performFusion, setGameState } = useGameContext();
   const [selectedItemId, setSelectedItemId] = useState(null);
   const [isFusing, setIsFusing] = useState(false);
   const [fusionResult, setFusionResult] = useState(null);
 
-  // Crafting Costs
   const CRAFT_COSTS = {
     COMMON: 100,
     UNCOMMON: 300,
-    UNSTABLE: 50 // New gambling cost
+    UNSTABLE: 50 
   };
 
-  // ... (fusibleItems logic remains the same) ...
+  // --- SAFE MEMOIZATION ---
   const fusibleItems = useMemo(() => {
+    if (!gameState?.inventory) return [];
+    
     const counts = {};
     gameState.inventory.forEach(id => {
       counts[id] = (counts[id] || 0) + 1;
@@ -46,101 +46,136 @@ const ForgeScreen = () => {
 
   const selectedItem = selectedItemId ? getPartById(selectedItemId) : null;
 
-  // ... (handleFuse logic remains similar) ...
+  // --- HANDLERS ---
   const handleFuse = async () => {
     if (!selectedItemId) return;
     
     setIsFusing(true);
     
+    // Simulate delay
     setTimeout(() => {
-        const newItem = performFusion(selectedItemId);
-        
-        if (newItem) {
-            setFusionResult(newItem);
-            toast({
-                title: "Fusion Successful! 🎉",
-                description: `You crafted a ${newItem.name}!`,
-                className: "bg-green-600 text-white border-none"
-            });
-        } else {
+        try {
+            const newItem = performFusion(selectedItemId);
+            
+            if (newItem) {
+                setFusionResult(newItem);
+                toast({
+                    title: "Fusion Successful! 🎉",
+                    description: `You crafted a ${newItem.name}!`,
+                    className: "bg-green-600 text-white border-none"
+                });
+            } else {
+                 throw new Error("Fusion returned null");
+            }
+        } catch (error) {
+             console.error("Fusion Error:", error);
              toast({
                 title: "Fusion Failed",
-                description: "Something went wrong. Check your inventory.",
+                description: "Could not fuse items. Please try again.",
                 variant: "destructive"
              });
+        } finally {
+            setIsFusing(false);
         }
-        setIsFusing(false);
     }, 2000);
   };
 
-  // --- NEW CRAFTING LOGIC ---
   const handleCraft = (tier) => {
-    const cost = tier === 1 ? CRAFT_COSTS.COMMON : CRAFT_COSTS.UNCOMMON;
-    
-    if (gameState.scrap < cost) {
-      toast({
-        title: "Insufficient Scrap",
-        description: `You need ${cost} scrap to craft this.`,
-        variant: "destructive"
-      });
-      return;
+    try {
+        const cost = tier === 1 ? CRAFT_COSTS.COMMON : CRAFT_COSTS.UNCOMMON;
+        
+        if (gameState.scrap < cost) {
+          toast({
+            title: "Insufficient Scrap",
+            description: `You need ${cost} scrap to craft this.`,
+            variant: "destructive"
+          });
+          return;
+        }
+
+        // Safety check for parts array
+        if (!parts || !Array.isArray(parts)) {
+            console.error("Parts data is missing or invalid");
+            return;
+        }
+
+        const possibleParts = parts.filter(p => p.tier === tier);
+        
+        if (possibleParts.length === 0) {
+            console.error(`No parts found for tier ${tier}`);
+            return;
+        }
+
+        const randomPart = possibleParts[Math.floor(Math.random() * possibleParts.length)];
+
+        setGameState(prev => ({
+          ...prev,
+          scrap: prev.scrap - cost,
+          inventory: [...prev.inventory, randomPart.id]
+        }));
+
+        toast({
+          title: "Crafting Successful",
+          description: `Fabricated: ${randomPart.name}`,
+           className: cn("border-2", RARITY_COLORS[tier].border, "bg-black text-white")
+        });
+    } catch (err) {
+        console.error("Crafting Error:", err);
     }
-
-    // Deduct Scrap
-    // Add Item
-    const possibleParts = parts.filter(p => p.tier === tier);
-    const randomPart = possibleParts[Math.floor(Math.random() * possibleParts.length)];
-
-    setGameState(prev => ({
-      ...prev,
-      scrap: prev.scrap - cost,
-      inventory: [...prev.inventory, randomPart.id]
-    }));
-
-    toast({
-      title: "Crafting Successful",
-      description: `Fabricated: ${randomPart.name}`,
-       className: cn("border-2", RARITY_COLORS[tier].border, "bg-black text-white")
-    });
   };
 
-  // --- UNSTABLE FABRICATION LOGIC ---
   const handleUnstableCraft = () => {
-      if (gameState.scrap < CRAFT_COSTS.UNSTABLE) {
-          toast({ title: "Insufficient Scrap", variant: "destructive" });
-          return;
-      }
+      try {
+          if (gameState.scrap < CRAFT_COSTS.UNSTABLE) {
+              toast({ title: "Insufficient Scrap", variant: "destructive" });
+              return;
+          }
 
-      const roll = Math.random();
-      let tier = 1;
-      // Chances: 1% Epic, 9% Rare, 30% Uncommon, 60% Common
-      if (roll > 0.99) tier = 4; // Epic
-      else if (roll > 0.90) tier = 3; // Rare
-      else if (roll > 0.60) tier = 2; // Uncommon
-      // else Common
+          const roll = Math.random();
+          let tier = 1;
+          // Chances: 1% Epic, 9% Rare, 30% Uncommon, 60% Common
+          if (roll > 0.99) tier = 4; // Epic
+          else if (roll > 0.90) tier = 3; // Rare
+          else if (roll > 0.60) tier = 2; // Uncommon
+          // else Common
 
-      const possibleParts = parts.filter(p => p.tier === tier);
-      const randomPart = possibleParts[Math.floor(Math.random() * possibleParts.length)];
+          const possibleParts = parts.filter(p => p.tier === tier);
+           if (possibleParts.length === 0) {
+            // Fallback to common if something breaks
+             const common = parts.filter(p => p.tier === 1);
+             const fallback = common[Math.floor(Math.random() * common.length)];
+             
+             setGameState(prev => ({
+                  ...prev,
+                  scrap: prev.scrap - CRAFT_COSTS.UNSTABLE,
+                  inventory: [...prev.inventory, fallback.id]
+              }));
+              return;
+           }
 
-      setGameState(prev => ({
-          ...prev,
-          scrap: prev.scrap - CRAFT_COSTS.UNSTABLE,
-          inventory: [...prev.inventory, randomPart.id]
-      }));
+          const randomPart = possibleParts[Math.floor(Math.random() * possibleParts.length)];
 
-      // Different toast for big wins
-      if (tier >= 3) {
-           toast({
-              title: "CRITICAL SUCCESS! ⚡",
-              description: `Unstable fusion stabilized! Created ${randomPart.name} (${RARITY_COLORS[tier].name})`,
-              className: "bg-purple-600 text-white border-2 border-yellow-400"
-          });
-      } else {
-          toast({
-              title: "Fabrication Complete",
-              description: `Created: ${randomPart.name}`,
-              className: cn("border-2", RARITY_COLORS[tier].border, "bg-black text-white")
-          });
+          setGameState(prev => ({
+              ...prev,
+              scrap: prev.scrap - CRAFT_COSTS.UNSTABLE,
+              inventory: [...prev.inventory, randomPart.id]
+          }));
+
+          if (tier >= 3) {
+               toast({
+                  title: "CRITICAL SUCCESS! ⚡",
+                  description: `Unstable fusion stabilized! Created ${randomPart.name} (${RARITY_COLORS[tier].name})`,
+                  className: "bg-purple-600 text-white border-2 border-yellow-400"
+              });
+          } else {
+              toast({
+                  title: "Fabrication Complete",
+                  description: `Created: ${randomPart.name}`,
+                  className: cn("border-2", RARITY_COLORS[tier].border, "bg-black text-white")
+              });
+          }
+      } catch (err) {
+          console.error("Unstable Craft Error:", err);
       }
   };
 
@@ -182,7 +217,6 @@ const ForgeScreen = () => {
               </h1>
             </div>
             
-            {/* Scrap Display */}
             <div className="flex items-center gap-2 px-4 py-2 bg-black border border-gray-800">
                <Coins className="w-4 h-4 text-yellow-500" />
                <span className="text-yellow-500 font-bold">{gameState.scrap}</span>
@@ -192,7 +226,7 @@ const ForgeScreen = () => {
 
         <div className="flex-1 max-w-7xl mx-auto w-full p-4 grid grid-cols-1 lg:grid-cols-3 gap-6">
             
-            {/* Left Panel: Inventory List */}
+            {/* Left Panel: Inventory */}
             <div className="lg:col-span-1 bg-black/40 rounded-none border border-gray-800 p-4 h-[calc(100vh-140px)] flex flex-col">
                 <h2 className="text-sm font-bold mb-4 text-[var(--accent-color)] uppercase tracking-widest border-b border-gray-800 pb-2">
                     Fusion Candidates
@@ -207,9 +241,7 @@ const ForgeScreen = () => {
                         </div>
                     ) : (
                         fusibleItems.map((item) => {
-                            const colors = RARITY_COLORS[item.tier];
                             const isSelected = selectedItemId === item.id;
-                            
                             return (
                                 <motion.div
                                     key={item.id}
@@ -241,10 +273,25 @@ const ForgeScreen = () => {
                 </div>
             </div>
 
-            {/* Right Panel: Crafting & Fusion */}
+            {/* Right Panel: Reordered Fusion First */}
             <div className="lg:col-span-2 flex flex-col gap-6">
                 
-                {/* 1. Crafting Station */}
+                {/* 1. Fusion Interface (Moved to TOP) */}
+                <div className="bg-black/40 border border-gray-800 p-6 relative flex flex-col items-center justify-center min-h-[400px]">
+                      <h2 className="absolute top-6 left-6 text-sm font-bold text-[var(--accent-color)] uppercase tracking-widest flex items-center gap-2">
+                        <Hammer className="w-4 h-4" /> Fusion Chamber
+                    </h2>
+
+                    <FusionInterface 
+                        selectedItem={selectedItem}
+                        onFuse={handleFuse}
+                        isFusing={isFusing}
+                        fusionResult={fusionResult}
+                        onReset={handleReset}
+                    />
+                </div>
+
+                {/* 2. Crafting Station (Moved to BOTTOM) */}
                 <div className="bg-black/40 border border-gray-800 p-6 relative overflow-hidden">
                     <div className="absolute top-0 right-0 p-4 opacity-10">
                         <Zap className="w-32 h-32 text-[var(--accent-color)]" />
@@ -255,7 +302,7 @@ const ForgeScreen = () => {
                     </h2>
                     
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 relative z-10">
-                        {/* Craft Common */}
+                        
                         <Button 
                             onClick={() => handleCraft(1)}
                             className="h-auto py-6 flex flex-col items-center bg-black border border-gray-700 hover:border-gray-400 hover:bg-gray-900 rounded-none group transition-all"
@@ -267,7 +314,6 @@ const ForgeScreen = () => {
                             <div className="mt-2 text-[10px] text-gray-500 group-hover:text-gray-400">Generates Random Tier 1 Part</div>
                         </Button>
 
-                        {/* Craft Uncommon */}
                         <Button 
                             onClick={() => handleCraft(2)}
                             className="h-auto py-6 flex flex-col items-center bg-black border border-green-900/50 hover:border-green-500 hover:bg-green-900/10 rounded-none group transition-all"
@@ -279,7 +325,6 @@ const ForgeScreen = () => {
                             <div className="mt-2 text-[10px] text-gray-500 group-hover:text-green-400/70">Generates Random Tier 2 Part</div>
                         </Button>
 
-                        {/* Unstable Fabrication (Gambling) */}
                         <Button 
                             onClick={handleUnstableCraft}
                             className="sm:col-span-2 h-auto py-6 flex flex-col items-center bg-black border border-red-900/50 hover:border-red-500 hover:bg-red-900/10 rounded-none group transition-all relative overflow-hidden"
@@ -297,21 +342,6 @@ const ForgeScreen = () => {
                             </div>
                         </Button>
                     </div>
-                </div>
-
-                {/* 2. Fusion Interface (Existing) */}
-                <div className="flex-1 bg-black/40 border border-gray-800 p-6 relative flex flex-col items-center justify-center min-h-[400px]">
-                      <h2 className="absolute top-6 left-6 text-sm font-bold text-[var(--accent-color)] uppercase tracking-widest flex items-center gap-2">
-                        <Hammer className="w-4 h-4" /> Fusion Chamber
-                    </h2>
-
-                    <FusionInterface 
-                        selectedItem={selectedItem}
-                        onFuse={handleFuse}
-                        isFusing={isFusing}
-                        fusionResult={fusionResult}
-                        onReset={handleReset}
-                    />
                 </div>
 
             </div>
