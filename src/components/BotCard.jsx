@@ -1,37 +1,39 @@
 import React, { useState } from 'react';
 import { getPartById } from '@/data/parts';
 import * as LucideIcons from 'lucide-react';
-// Import the full Rarity Object so we can look up colors by ID
 import { RARITY_COLORS } from '@/constants/gameConstants'; 
 import RarityBadge from './RarityBadge';
 import { cn } from '@/lib/utils';
 import { calculateBotStats } from '@/utils/statCalculator';
+import { useToast } from '@/components/ui/use-toast'; // Import Toast Hook
 
-// --- FIXED SVG COMPONENTS (No Changes Needed Here) ---
+// --- FIXED SVG COMPONENTS ---
+// Made lines thinner (strokeWidth="0.5") and less opaque
 const SchematicSkeleton = () => (
-  <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-20" style={{ zIndex: 0 }} viewBox="0 0 100 100" preserveAspectRatio="none">
+  <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-10" style={{ zIndex: 0 }} viewBox="0 0 100 100" preserveAspectRatio="none">
     <defs>
       <pattern id="grid-pattern" width="10" height="10" patternUnits="userSpaceOnUse">
-        <path d="M 10 0 L 0 0 0 10" fill="none" stroke="currentColor" strokeWidth="0.5" />
+        <path d="M 10 0 L 0 0 0 10" fill="none" stroke="currentColor" strokeWidth="0.2" />
       </pattern>
     </defs>
-    <path d="M 50 15 L 50 85" stroke="currentColor" strokeWidth="2" fill="none" className="text-[var(--accent-color)]" vectorEffect="non-scaling-stroke" />
-    <path d="M 50 25 L 20 25 L 20 40" stroke="currentColor" strokeWidth="1" fill="none" className="text-gray-500" vectorEffect="non-scaling-stroke" />
-    <path d="M 50 25 L 80 25 L 80 40" stroke="currentColor" strokeWidth="1" fill="none" className="text-gray-500" vectorEffect="non-scaling-stroke" />
-    <circle cx="50" cy="50" r="3" fill="currentColor" className="text-[var(--accent-color)]" />
+    <path d="M 50 15 L 50 85" stroke="currentColor" strokeWidth="1" fill="none" className="text-[var(--accent-color)]" vectorEffect="non-scaling-stroke" />
+    <path d="M 50 25 L 20 25 L 20 40" stroke="currentColor" strokeWidth="0.5" fill="none" className="text-gray-500" vectorEffect="non-scaling-stroke" />
+    <path d="M 50 25 L 80 25 L 80 40" stroke="currentColor" strokeWidth="0.5" fill="none" className="text-gray-500" vectorEffect="non-scaling-stroke" />
+    <circle cx="50" cy="50" r="2" fill="currentColor" className="text-[var(--accent-color)]" />
   </svg>
 );
 
+// Made the frame subtler
 const TechFrame = ({ children, className, isActive, colorClass = "text-gray-800" }) => (
   <div className={`relative ${className}`}>
-    <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 0 }} viewBox="0 0 100 100" preserveAspectRatio="none">
+    <svg className="absolute inset-0 w-full h-full pointer-events-none transition-all duration-300" style={{ zIndex: 0 }} viewBox="0 0 100 100" preserveAspectRatio="none">
       <path 
         d="M 0 10 L 10 0 L 90 0 L 100 10 L 100 90 L 90 100 L 10 100 L 0 90 Z" 
         fill="none" 
         stroke="currentColor" 
-        strokeWidth="1.5"
+        strokeWidth={isActive ? "1.5" : "0.5"} // Thinner inactive lines
         vectorEffect="non-scaling-stroke"
-        className={isActive ? "text-[var(--accent-color)] drop-shadow-[0_0_5px_rgba(var(--accent-rgb),0.8)]" : colorClass}
+        className={isActive ? "text-[var(--accent-color)] drop-shadow-[0_0_8px_var(--accent-color)]" : "text-gray-800 opacity-50"}
       />
     </svg>
     <div 
@@ -52,8 +54,8 @@ const injectStyles = () => {
   const style = document.createElement('style');
   style.id = styleId;
   style.innerHTML = `
-    @keyframes lunge-right { 0% { transform: translateX(0); } 20% { transform: translateX(-15px); } 40% { transform: translateX(40px); } 100% { transform: translateX(0); } }
-    @keyframes lunge-left { 0% { transform: translateX(0); } 20% { transform: translateX(15px); } 40% { transform: translateX(-40px); } 100% { transform: translateX(0); } }
+    @keyframes lunge-right { 0% { transform: translateX(0); } 20% { transform: translateX(-10px); } 40% { transform: translateX(30px); } 100% { transform: translateX(0); } }
+    @keyframes lunge-left { 0% { transform: translateX(0); } 20% { transform: translateX(10px); } 40% { transform: translateX(-30px); } 100% { transform: translateX(0); } }
     .animate-attack-right { animation: lunge-right 0.3s ease-out !important; }
     .animate-attack-left { animation: lunge-left 0.3s ease-out !important; }
   `;
@@ -63,7 +65,6 @@ injectStyles();
 
 const IconMap = { ...LucideIcons };
 
-// Helper map to convert string IDs (common, rare) to integer Tiers (1, 3) for color lookup
 const RARITY_MAP = {
     'common': 1,
     'uncommon': 2,
@@ -76,6 +77,7 @@ const RARITY_MAP = {
 
 const BotCard = ({ bot, slotLevels, isAttacking, side = 'player', className = '' }) => {
   const [hoveredPart, setHoveredPart] = useState(null);
+  const { toast } = useToast(); // Use toast for item details
 
   const stats = calculateBotStats({ ...bot, slotLevels: slotLevels || bot.slotLevels });
   
@@ -92,11 +94,7 @@ const BotCard = ({ bot, slotLevels, isAttacking, side = 'player', className = ''
   const ArmIcon = IconMap.Shield;
   const WgtIcon = IconMap.Weight;
 
-  // Determine Bot Rarity Color
-  // 1. If it has a rarityId (from enemy generator), use that.
-  // 2. Otherwise default to 'text-white'
   let nameColorClass = 'text-white';
-  
   if (bot.rarityId && RARITY_MAP[bot.rarityId]) {
       const tier = RARITY_MAP[bot.rarityId];
       if (RARITY_COLORS[tier]) {
@@ -104,59 +102,75 @@ const BotCard = ({ bot, slotLevels, isAttacking, side = 'player', className = ''
       }
   }
 
-  const StatBox = ({ label, value, icon: Icon, colorClass, borderClass }) => (
-    <div className={`bg-[#111] border ${borderClass} px-2 py-1.5 flex items-center justify-between`}>
-        <div className="flex items-center gap-2">
-            <Icon className={`w-3 h-3 ${colorClass}`} />
-            <span className="text-[10px] font-mono text-gray-500 font-bold">{label}</span>
+  const StatBox = ({ label, value, icon: Icon, colorClass }) => (
+    <div className="flex items-center justify-between px-2 py-1 border-b border-gray-900 group-hover:border-gray-800 transition-colors">
+        <div className="flex items-center gap-2 text-gray-500">
+            <Icon className="w-3 h-3" />
+            <span className="text-[10px] font-mono font-bold uppercase">{label}</span>
         </div>
-        <span className={`text-sm font-bold ${colorClass.replace('text-', 'text-opacity-80 ')} font-mono tracking-tighter`}>
+        <span className={`text-sm font-bold ${colorClass} font-mono tracking-tighter`}>
             {value}
         </span>
     </div>
   );
 
+  // New Handler: Click to Inspect
+  const handlePartClick = (part) => {
+      if (!part) return;
+      
+      const colors = RARITY_COLORS[part.tier];
+      
+      toast({
+          title: part.name.toUpperCase(),
+          description: (
+              <div className="mt-2 space-y-1">
+                  <div className="flex justify-between text-xs"><span className="text-gray-500">DMG</span> <span className="text-red-400 font-mono">{part.stats.Damage || 0}</span></div>
+                  <div className="flex justify-between text-xs"><span className="text-gray-500">SPD</span> <span className="text-cyan-400 font-mono">{part.stats.Speed || 0}</span></div>
+                  <div className="flex justify-between text-xs"><span className="text-gray-500">ARM</span> <span className="text-emerald-400 font-mono">{part.stats.Armor || 0}</span></div>
+                  <div className="flex justify-between text-xs"><span className="text-gray-500">WGT</span> <span className="text-amber-400 font-mono">{part.stats.Weight || 0}</span></div>
+              </div>
+          ),
+          className: `border-l-4 ${colors.border} bg-black/95`
+      });
+  };
+
   return (
     <div className={cn(
-      "flex flex-col shrink-0 w-72 md:w-80 h-auto bg-[#09090b] rounded-none border-2 border-[var(--accent-color)] shadow-[0_20px_50px_-12px_rgba(0,0,0,1)] relative z-10",
+      // CHANGED: Removed border-2, made shadow softer, background darker/blurred
+      "flex flex-col shrink-0 w-72 md:w-80 h-auto bg-black/40 backdrop-blur-sm border border-[var(--accent-color)] shadow-[0_10px_40px_-20px_rgba(0,0,0,0.8)] relative z-10 transition-all duration-300",
       className
     )}>
       
-      {/* Top Line */}
-      <div className="h-0.5 w-full bg-gradient-to-r from-transparent via-[var(--accent-color)] to-transparent opacity-70" />
+      {/* Subtle Top Glow */}
+      <div className="absolute top-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-[var(--accent-color)] to-transparent opacity-50" />
 
       {/* Header */}
-      <div className="p-3 bg-[#0a0a0a] border-b-2 border-[var(--accent-color)] flex items-center gap-3 relative overflow-hidden">
-        <div className="absolute inset-0 bg-[var(--accent-color)] opacity-5" />
-        <div className="p-1.5 shrink-0 bg-black border border-[var(--accent-color)] shadow-[0_0_10px_rgba(var(--accent-rgb),0.2)]">
-          <BotIcon className="w-5 h-5 text-[var(--accent-color)]" />
+      <div className="p-4 flex items-center gap-4 relative overflow-hidden">
+        {/* Background gradient instead of solid color */}
+        <div className="absolute inset-0 bg-gradient-to-b from-[var(--accent-color)]/5 to-transparent pointer-events-none" />
+        
+        <div className="p-2 shrink-0 bg-black/50 border border-[var(--accent-color)]/30 rounded-sm">
+          <BotIcon className="w-6 h-6 text-[var(--accent-color)]" />
         </div>
-        <div className="flex-1 min-w-0">
-          {/* CHANGED: Added nameColorClass to h3 */}
+        <div className="flex-1 min-w-0 z-10">
           <h3 className={cn(
-             "text-lg font-black truncate font-mono uppercase tracking-widest drop-shadow-md",
-             nameColorClass // Applies the rarity color (e.g., text-blue-400)
+             "text-base font-black truncate font-mono uppercase tracking-widest leading-none mb-1",
+             nameColorClass
           )}>
             {bot.name}
           </h3>
-          <div className="text-[9px] text-gray-500 font-mono tracking-widest flex items-center gap-2">
-            <span>LVL {bot.level || 1}</span>
-            <span className="w-1 h-1 rounded-full bg-gray-500" />
-            {/* Added Bot Rarity text if available */}
-            {bot.rarity ? (
-                <span className={nameColorClass}>{bot.rarity.toUpperCase()}</span>
-            ) : (
-                <span>{side === 'player' ? 'OPERATOR' : 'TARGET'}</span>
-            )}
+          <div className="text-[10px] text-gray-500 font-mono font-bold flex items-center gap-2">
+            <span className="bg-white/10 px-1 rounded-sm text-white/70">LVL {bot.level || 1}</span>
+            <span>{bot.rarity ? bot.rarity.toUpperCase() : (side === 'player' ? 'OPERATOR' : 'TARGET')}</span>
           </div>
         </div>
       </div>
       
       {/* Main Grid */}
-      <div className="relative p-3 bg-[#050505] min-h-[220px]">
+      <div className="relative p-4 flex-1">
         <SchematicSkeleton />
 
-        <div className="grid grid-cols-2 gap-3 relative z-10">
+        <div className="grid grid-cols-2 gap-4 relative z-10">
             {slots.map(({ key, partId, gridClass }, index) => {
                 const part = partId ? getPartById(partId) : null;
                 const Icon = (part ? IconMap[part.icon] : null) || IconMap.Box;
@@ -177,30 +191,31 @@ const BotCard = ({ bot, slotLevels, isAttacking, side = 'player', className = ''
                         )}
                         onMouseEnter={() => part && setHoveredPart({ ...part, slotKey: key })}
                         onMouseLeave={() => setHoveredPart(null)}
+                        onClick={() => handlePartClick(part)} // New Click Handler
                     >
                         <TechFrame 
-                            className="w-full aspect-square max-h-20 transition-all duration-200 cursor-help"
+                            className="w-full aspect-square max-h-20 transition-all duration-300 cursor-pointer"
                             isActive={shouldAnimateArm || (hoveredPart && hoveredPart.id === part?.id)}
-                            colorClass={part ? "text-gray-700" : "text-gray-900"}
+                            colorClass={part ? "text-gray-800" : "text-gray-900"}
                         >
                             <div className={cn(
-                                "absolute inset-0 flex flex-col items-center justify-center transition-colors duration-300",
-                                part ? "bg-[#111]" : "bg-[#080808]",
-                                shouldAnimateArm && "bg-[#1a1a1a]",
-                                hoveredPart && hoveredPart.id === part?.id && "bg-[#161616]"
+                                "absolute inset-0 flex flex-col items-center justify-center transition-all duration-300",
+                                part ? "bg-black/40" : "bg-black/20",
+                                // Highlight effect on hover
+                                (hoveredPart && hoveredPart.id === part?.id) && "bg-[var(--accent-color)]/10"
                             )}>
-                                <span className="absolute top-1 left-2 text-[8px] font-mono text-gray-700 uppercase tracking-widest pointer-events-none">
+                                <span className="absolute top-1 left-2 text-[7px] font-mono text-gray-600 uppercase tracking-widest pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity">
                                     {key.replace('Arm', '')}
                                 </span>
 
                                 <Icon className={cn(
-                                    "w-8 h-8 mb-1 transition-transform duration-300", 
+                                    "w-8 h-8 mb-1 transition-transform duration-300 drop-shadow-md", 
                                     part ? colors.text : "text-gray-800",
-                                    (hoveredPart && hoveredPart.id === part?.id) ? "scale-110 brightness-125" : ""
+                                    (hoveredPart && hoveredPart.id === part?.id) ? "scale-110 brightness-150" : "opacity-80"
                                 )} />
                                 
                                 {part && (
-                                    <RarityBadge tier={tier} className="rounded-none text-[8px] px-1.5 py-0 border border-white/10" />
+                                    <RarityBadge tier={tier} className="scale-75 origin-center border border-white/5 bg-black/50 backdrop-blur-md" />
                                 )}
                             </div>
                         </TechFrame>
@@ -210,39 +225,19 @@ const BotCard = ({ bot, slotLevels, isAttacking, side = 'player', className = ''
         </div>
       </div>
       
-      {/* Contextual Footer */}
-      <div className="p-3 bg-[#080808] border-t-2 border-[var(--accent-color)] mt-auto relative z-20 min-h-[85px] flex flex-col justify-center">
-        
-        {hoveredPart ? (
-            // MODE A: ITEM SCAN (Hover)
-            <div className="animate-in fade-in duration-200">
-                <div className="flex items-center justify-between mb-2 pb-1 border-b border-gray-800">
-                    <span className={`text-xs font-bold uppercase font-mono ${RARITY_COLORS[hoveredPart.tier].text}`}>
-                        {hoveredPart.name}
-                    </span>
-                    <span className="text-[9px] text-gray-500 uppercase tracking-widest">
-                        {hoveredPart.slotKey}
-                    </span>
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                      <StatBox label="DMG" value={hoveredPart.stats.Damage || 0} icon={DmgIcon} colorClass="text-red-500" borderClass="border-red-900/30" />
-                      <StatBox label="SPD" value={hoveredPart.stats.Speed || 0} icon={SpdIcon} colorClass="text-cyan-400" borderClass="border-cyan-900/30" />
-                      <StatBox label="ARM" value={hoveredPart.stats.Armor || 0} icon={ArmIcon} colorClass="text-emerald-500" borderClass="border-emerald-900/30" />
-                      <StatBox label="WGT" value={hoveredPart.stats.Weight || 0} icon={WgtIcon} colorClass="text-amber-500" borderClass="border-amber-900/30" />
-                </div>
-            </div>
-        ) : (
-            // MODE B: BOT TOTALS (Default)
-            <div className="animate-in fade-in duration-200">
-                <div className="grid grid-cols-2 gap-2">
-                    <StatBox label="DMG" value={stats.Damage} icon={DmgIcon} colorClass="text-red-500" borderClass="border-red-900/30" />
-                    <StatBox label="SPD" value={stats.Speed} icon={SpdIcon} colorClass="text-cyan-400" borderClass="border-cyan-900/30" />
-                    <StatBox label="ARM" value={stats.Armor} icon={ArmIcon} colorClass="text-emerald-500" borderClass="border-emerald-900/30" />
-                    <StatBox label="WGT" value={stats.Weight} icon={WgtIcon} colorClass="text-amber-500" borderClass="border-amber-900/30" />
-                </div>
-            </div>
-        )}
-
+      {/* Footer - STATIC (No Swapping) */}
+      <div className="bg-black/60 border-t border-white/5 p-4 backdrop-blur-md">
+         {/* Always show Bot Totals here to prevent layout shift */}
+         <div className="grid grid-cols-2 gap-x-6 gap-y-2">
+              <StatBox label="DMG" value={stats.Damage} icon={DmgIcon} colorClass="text-red-500" />
+              <StatBox label="SPD" value={stats.Speed} icon={SpdIcon} colorClass="text-cyan-400" />
+              <StatBox label="ARM" value={stats.Armor} icon={ArmIcon} colorClass="text-emerald-500" />
+              <StatBox label="WGT" value={stats.Weight} icon={WgtIcon} colorClass="text-amber-500" />
+         </div>
+         {/* Subtle Hint */}
+         <div className="text-[9px] text-center text-gray-600 mt-3 font-mono uppercase tracking-widest">
+            {hoveredPart ? `[ CLICK TO INSPECT ${hoveredPart.name} ]` : "SYSTEM READY"}
+         </div>
       </div>
     </div>
   );
