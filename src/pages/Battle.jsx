@@ -187,208 +187,219 @@ const [enemyFloatingText, setEnemyFloatingText] = useState(null);
       className: "bg-yellow-600/90 border-yellow-500 text-white font-mono"
     });
   };
-// --- THE FIXED BATTLE LOOP ---
-const startBattle = async () => {
-    // Safety Checks
-    if (isBattling || !enemy || !playerProtocol) return;
-    
-    setIsBattling(true);
-    setBattleResult(null); 
-    
-    // 1. SETUP DYNAMIC LOGGING
-    let dynamicBattleLog = []; 
-    const addToLog = (msg) => {
-        const timestamp = (Date.now() % 10000).toString().padStart(4, '0');
-        dynamicBattleLog.push(`[T-${timestamp}] ${msg}`);
-    };
-    
-    addToLog(`ENGAGEMENT STARTED: ${gameState.playerBot.name} VS ${enemy.name}`);
+const Battle = () => {
+    // 1. MOVE HOOKS TO TOP LEVEL
+    const location = useLocation();
+    const { 
+        gameState, 
+        setGameState, 
+        updateScrap, 
+        recordBattle, 
+        advanceGauntlet, // Get these from context
+        exitGauntlet 
+    } = useGameContext();
+    const { toast } = useToast();
 
-    // 2. SETUP ENEMY PROTOCOL (Smart AI)
-    // Define the available tactics locally
-    const ENEMY_PROTOCOLS = [
-        { name: 'Assault Protocol', id: 'ASSAULT', statType: 'Damage' },
-        { name: 'Bulwark Protocol', id: 'BULWARK', statType: 'Armor' },
-        { name: 'Tech Protocol', id: 'TECH', statType: 'Speed' }
-    ];
+    // 2. CHECK MODE AT TOP LEVEL
+    const isGauntlet = location.state?.mode === 'gauntlet';
 
-    // Determine best protocol based on stats
-    let selectedEnemyProto = ENEMY_PROTOCOLS[0]; // Default
-    
-    if (enemy) {
-        // Chaos Factor: 20% chance to pick random
-        if (Math.random() < 0.2) {
-            selectedEnemyProto = ENEMY_PROTOCOLS[Math.floor(Math.random() * ENEMY_PROTOCOLS.length)];
-        } else {
-            // Smart Factor: Pick protocol matching highest stat
-            // Note: Ensure calculateBotStats is imported!
-            const stats = calculateBotStats(enemy); 
-            const highestStat = Object.keys(stats).reduce((a, b) => stats[a] > stats[b] ? a : b);
-            selectedEnemyProto = ENEMY_PROTOCOLS.find(p => p.statType === highestStat) || ENEMY_PROTOCOLS[0];
-        }
-    }
-    setEnemyProtocol(selectedEnemyProto);
+    // ... other refs/states ...
 
-    // 3. RUN SIMULATION
-    const result = simulateBattle(
-        { ...gameState.playerBot, slotLevels: gameState.slotLevels }, 
-        enemy, 
-        playerProtocol, 
-        selectedEnemyProto
-    );
-    
-    // 4. THE VISUAL LOOP
-    for (let i = 0; i < result.battleLog.length; i++) {
-        const logEntry = result.battleLog[i];
+    // --- THE FIXED BATTLE LOOP ---
+    const startBattle = async () => {
+        // Safety Checks
+        if (isBattling || !enemy || !playerProtocol) return;
         
-        // Round Tracking
-        if (logEntry.includes('Round')) {
-            const roundMatch = logEntry.match(/Round (\d+)/);
-            if (roundMatch) setCurrentRound(parseInt(roundMatch[1]));
-        }
-
-        // Parse Action Flags
-        const isCrit = logEntry.includes('CRITICAL');
-        const isGlancing = logEntry.includes('GLANCING');
-        const isDampened = logEntry.includes('DAMPENED');
-        const isDodge = logEntry.includes('DODGED');
+        setIsBattling(true);
+        setBattleResult(null); 
         
-        // Determine Hit Type for visuals
-        let hitType = 'normal';
-        if (isCrit) hitType = 'crit';
-        else if (isGlancing) hitType = 'glancing';
-        else if (isDampened) hitType = 'dampened';
+        // 1. SETUP DYNAMIC LOGGING
+        let dynamicBattleLog = []; 
+        const addToLog = (msg) => {
+            const timestamp = (Date.now() % 10000).toString().padStart(4, '0');
+            dynamicBattleLog.push(`[T-${timestamp}] ${msg}`);
+        };
+        
+        addToLog(`ENGAGEMENT STARTED: ${gameState.playerBot.name} VS ${enemy.name}`);
 
-        // Check for Damage or Miss
-        // We look for "misses" OR "DODGED" now
-        const isMiss = logEntry.includes('misses') || isDodge;
-        const damageMatch = logEntry.match(/for (\d+) damage/);
-        const damageAmount = damageMatch ? damageMatch[1] : null;
+        // 2. SETUP ENEMY PROTOCOL (Smart AI)
+        const ENEMY_PROTOCOLS = [
+            { name: 'Assault Protocol', id: 'ASSAULT', statType: 'Damage' },
+            { name: 'Bulwark Protocol', id: 'BULWARK', statType: 'Armor' },
+            { name: 'Tech Protocol', id: 'TECH', statType: 'Speed' }
+        ];
 
-        // Identify Attacker
-        const isPlayerAction = logEntry.includes(gameState.playerBot.name);
-        const isEnemyAction = logEntry.includes(enemy.name);
+        let selectedEnemyProto = ENEMY_PROTOCOLS[0]; 
+        
+        if (enemy) {
+            if (Math.random() < 0.2) {
+                selectedEnemyProto = ENEMY_PROTOCOLS[Math.floor(Math.random() * ENEMY_PROTOCOLS.length)];
+            } else {
+                const stats = calculateBotStats(enemy); 
+                const highestStat = Object.keys(stats).reduce((a, b) => stats[a] > stats[b] ? a : b);
+                selectedEnemyProto = ENEMY_PROTOCOLS.find(p => p.statType === highestStat) || ENEMY_PROTOCOLS[0];
+            }
+        }
+        setEnemyProtocol(selectedEnemyProto);
 
-        // --- VISUAL TRIGGER ---
-        if (damageAmount || isMiss) {
+        // 3. RUN SIMULATION
+        const result = simulateBattle(
+            { ...gameState.playerBot, slotLevels: gameState.slotLevels }, 
+            enemy, 
+            playerProtocol, 
+            selectedEnemyProto
+        );
+        
+        // 4. THE VISUAL LOOP
+        for (let i = 0; i < result.battleLog.length; i++) {
+            const logEntry = result.battleLog[i];
             
-            // Handle Floating Text & Logs
-            if (isPlayerAction) {
-                // PLAYER ATTACKS
-                setPlayerAttacking(true);
+            // Round Tracking
+            if (logEntry.includes('Round')) {
+                const roundMatch = logEntry.match(/Round (\d+)/);
+                if (roundMatch) setCurrentRound(parseInt(roundMatch[1]));
+            }
+
+            // Parse Action Flags
+            const isCrit = logEntry.includes('CRITICAL');
+            const isGlancing = logEntry.includes('GLANCING');
+            const isDampened = logEntry.includes('DAMPENED');
+            const isDodge = logEntry.includes('DODGED');
+            
+            let hitType = 'normal';
+            if (isCrit) hitType = 'crit';
+            else if (isGlancing) hitType = 'glancing';
+            else if (isDampened) hitType = 'dampened';
+
+            const isMiss = logEntry.includes('misses') || isDodge;
+            const damageMatch = logEntry.match(/for (\d+) damage/);
+            const damageAmount = damageMatch ? damageMatch[1] : null;
+
+            const isPlayerAction = logEntry.includes(gameState.playerBot.name);
+            const isEnemyAction = logEntry.includes(enemy.name);
+
+            // --- VISUAL TRIGGER ---
+            if (damageAmount || isMiss) {
                 
-                if (damageAmount) {
-                    setEnemyFloatingText({ id: i, content: `-${damageAmount}`, type: hitType });
-                    addToLog(`${gameState.playerBot.name} hits for ${damageAmount} DMG${isCrit ? ' (CRIT)' : ''}`);
+                if (isPlayerAction) {
+                    setPlayerAttacking(true);
                     
-                    setEnemySparks(true);
-                    setTimeout(() => setEnemySparks(false), 200); 
-                } else {
-                    const missText = isDodge ? "DODGED" : "MISS";
-                    setEnemyFloatingText({ id: i, content: missText, type: isDodge ? 'dodge' : 'miss' });
-                    addToLog(`${gameState.playerBot.name} misses.`);
-                }
-                
-                if (isCrit) setRightToast(getRandomFlavor('HIT'));
+                    if (damageAmount) {
+                        setEnemyFloatingText({ id: i, content: `-${damageAmount}`, type: hitType });
+                        addToLog(`${gameState.playerBot.name} hits for ${damageAmount} DMG${isCrit ? ' (CRIT)' : ''}`);
+                        setEnemySparks(true);
+                        setTimeout(() => setEnemySparks(false), 200); 
+                    } else {
+                        const missText = isDodge ? "DODGED" : "MISS";
+                        setEnemyFloatingText({ id: i, content: missText, type: isDodge ? 'dodge' : 'miss' });
+                        addToLog(`${gameState.playerBot.name} misses.`);
+                    }
+                    if (isCrit) setRightToast(getRandomFlavor('HIT'));
 
-            } else if (isEnemyAction) {
-                // ENEMY ATTACKS
-                setEnemyAttacking(true);
+                } else if (isEnemyAction) {
+                    setEnemyAttacking(true);
+
+                    if (damageAmount) {
+                        setPlayerFloatingText({ id: i, content: `-${damageAmount}`, type: hitType });
+                        addToLog(`${enemy.name} hits for ${damageAmount} DMG${isCrit ? ' (CRIT)' : ''}`);
+                        setPlayerSparks(true);
+                        setTimeout(() => setPlayerSparks(false), 200);
+                    } else {
+                        const missText = isDodge ? "DODGED" : "MISS";
+                        setPlayerFloatingText({ id: i, content: missText, type: isDodge ? 'dodge' : 'miss' });
+                        addToLog(`${enemy.name} misses.`);
+                    }
+                    if (isCrit) setLeftToast(getRandomFlavor('HIT'));
+                }
 
                 if (damageAmount) {
-                    setPlayerFloatingText({ id: i, content: `-${damageAmount}`, type: hitType });
-                    addToLog(`${enemy.name} hits for ${damageAmount} DMG${isCrit ? ' (CRIT)' : ''}`);
+                    playSound(isCrit ? 'CRIT' : 'HIT');
+                    setFlashType(isCrit ? 'CRIT' : 'HIT');
+                    setTimeout(() => setFlashType(null), 100);
 
-                    setPlayerSparks(true);
-                    setTimeout(() => setPlayerSparks(false), 200);
-                } else {
-                    const missText = isDodge ? "DODGED" : "MISS";
-                    setPlayerFloatingText({ id: i, content: missText, type: isDodge ? 'dodge' : 'miss' });
-                    addToLog(`${enemy.name} misses.`);
+                    const shakeIntensity = isCrit ? 20 : 5;
+                    controls.start({
+                        x: [0, -shakeIntensity, shakeIntensity, -shakeIntensity, shakeIntensity, 0],
+                        y: [0, -shakeIntensity/2, shakeIntensity/2, 0], 
+                        transition: { duration: 0.2 }
+                    });
                 }
-
-                if (isCrit) setLeftToast(getRandomFlavor('HIT'));
+                await new Promise(r => setTimeout(r, 200 / battleSpeedRef.current));
             }
 
-            // Global Effects (Sound/Shake)
-            if (damageAmount) {
-                playSound(isCrit ? 'CRIT' : 'HIT');
-                setFlashType(isCrit ? 'CRIT' : 'HIT');
-                setTimeout(() => setFlashType(null), 100);
-
-                const shakeIntensity = isCrit ? 20 : 5;
-                controls.start({
-                    x: [0, -shakeIntensity, shakeIntensity, -shakeIntensity, shakeIntensity, 0],
-                    y: [0, -shakeIntensity/2, shakeIntensity/2, 0], 
-                    transition: { duration: 0.2 }
-                });
+            if (result.healthTimeline && result.healthTimeline[i]) {
+                setPlayerHealth(result.healthTimeline[i].a);
+                setEnemyHealth(result.healthTimeline[i].b);
             }
 
-            // Turn Delay (Speed based)
-            await new Promise(r => setTimeout(r, 200 / battleSpeedRef.current));
+            const delay = (damageAmount || isMiss) ? 600 : 50; 
+            await new Promise(r => setTimeout(r, delay / battleSpeedRef.current));
+
+            setPlayerAttacking(false);
+            setEnemyAttacking(false);
+            setPlayerFloatingText(null);
+            setEnemyFloatingText(null);
         }
 
-        // UPDATE HEALTH BARS
-        if (result.healthTimeline && result.healthTimeline[i]) {
-            setPlayerHealth(result.healthTimeline[i].a);
-            setEnemyHealth(result.healthTimeline[i].b);
+        // 5. END BATTLE LOGIC
+        const playerWon = result.winner.name === gameState.playerBot.name;
+        addToLog(`ENGAGEMENT ENDED. WINNER: ${result.winner.name}`);
+        
+        const reward = playerWon ? WIN_REWARD : LOSS_REWARD;
+
+        setPlayerHealth(result.finalHealthA);
+        setEnemyHealth(result.finalHealthB);
+        
+        if (playerWon) {
+            playSound('VICTORY');
+            setFlashType('VICTORY');
+            setTimeout(() => setFlashType(null), 800); 
+            setLeftToast(getRandomFlavor('VICTORY'));
+            setRightToast(getRandomFlavor('DEFEAT'));
+            
+            // --- GAUNTLET VICTORY ---
+            if (isGauntlet) {
+                advanceGauntlet();
+                // Delay slightly longer so they hear the victory sound, then auto-route
+                setTimeout(() => navigate('/gauntlet'), 2500);
+            } else {
+                // Standard Scavenge Mode
+                setPendingRewards({ scrap: reward });
+                setTimeout(() => setShowScavengeModal(true), 2000 / battleSpeedRef.current);
+            }
+
+        } else {
+            playSound('DEFEAT');
+            setFlashType('DEFEAT');
+            setTimeout(() => setFlashType(null), 800); 
+            setLeftToast(getRandomFlavor('DEFEAT'));
+            setRightToast(getRandomFlavor('VICTORY'));
+            
+            toast({ 
+                title: "💀 SYSTEM FAILURE", 
+                description: `Critical damage sustained. Salvaged ${reward} scrap as consolation.`, 
+                className: "bg-red-950 border border-red-600 text-red-100" 
+            });
+
+            // --- GAUNTLET DEFEAT ---
+            if (isGauntlet) {
+                exitGauntlet();
+                // Route back to hub after a moment of shame
+                setTimeout(() => navigate('/hub'), 3000);
+            }
         }
 
-        // TURN RECOVERY DELAY
-        const delay = (damageAmount || isMiss) ? 600 : 50; 
-        await new Promise(r => setTimeout(r, delay / battleSpeedRef.current));
-
-        // Reset Turn States
-        setPlayerAttacking(false);
-        setEnemyAttacking(false);
-        setPlayerFloatingText(null);
-        setEnemyFloatingText(null);
-    }
-
-    // 5. END BATTLE LOGIC
-    const playerWon = result.winner.name === gameState.playerBot.name;
-    addToLog(`ENGAGEMENT ENDED. WINNER: ${result.winner.name}`);
-    
-    const reward = playerWon ? WIN_REWARD : LOSS_REWARD;
-
-    // Snap to final health
-    setPlayerHealth(result.finalHealthA);
-    setEnemyHealth(result.finalHealthB);
-    
-    if (playerWon) {
-        playSound('VICTORY');
-        setFlashType('VICTORY');
-        setTimeout(() => setFlashType(null), 800); 
-        setLeftToast(getRandomFlavor('VICTORY'));
-        setRightToast(getRandomFlavor('DEFEAT'));
-        
-        setPendingRewards({ scrap: reward });
-        setTimeout(() => setShowScavengeModal(true), 2000 / battleSpeedRef.current);
-    } else {
-        playSound('DEFEAT');
-        setFlashType('DEFEAT');
-        setTimeout(() => setFlashType(null), 800); 
-        setLeftToast(getRandomFlavor('DEFEAT'));
-        setRightToast(getRandomFlavor('VICTORY'));
-        
-        toast({ 
-            title: "💀 SYSTEM FAILURE", 
-            description: `Critical damage sustained. Salvaged ${reward} scrap as consolation.`, 
-            className: "bg-red-950 border border-red-600 text-red-100" 
+        updateScrap(reward);
+        recordBattle({ 
+            playerWon, 
+            enemyName: enemy.name, 
+            scrapEarned: reward, 
+            battleLog: dynamicBattleLog, 
+            timestamp: Date.now() 
         });
-    }
-
-    updateScrap(reward);
-    recordBattle({ 
-        playerWon, 
-        enemyName: enemy.name, 
-        scrapEarned: reward, 
-        battleLog: dynamicBattleLog, 
-        timestamp: Date.now() 
-    });
-    setBattleResult({ playerWon, reward });
-    setIsBattling(false);
-};
+        setBattleResult({ playerWon, reward });
+        setIsBattling(false);
+    };
 
     const handleNextBattle = () => generateNewEnemy();
     const handleReturnToWorkshop = () => { setShowScavengeModal(false); navigate('/workshop'); };
