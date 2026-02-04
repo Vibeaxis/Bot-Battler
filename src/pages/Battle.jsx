@@ -57,11 +57,18 @@ const REROLL_COST = 10;
 
 const Battle = () => {
   const navigate = useNavigate();
-  const { gameState, updateScrap, recordBattle } = useGameContext();
+ const { 
+    gameState, 
+    updateScrap, 
+    recordBattle,
+    advanceGauntlet, // <--- ADD THIS (Needed for victory)
+    exitGauntlet     // <--- ADD THIS (Needed for defeat)
+  } = useGameContext();
   const { playSound } = useSoundContext();
   const [flashType, setFlashType] = useState(null); // 'HIT' or 'CRIT'
 const [playerSparks, setPlayerSparks] = useState(false); // Sparks on Player
 const [enemySparks, setEnemySparks] = useState(false);   // Sparks on Enemy
+const location = useLocation(); // <--- ADD THIS (Fixes the crash)
   // State
   const [enemy, setEnemy] = useState(null);
   const [battleLog, setBattleLog] = useState([]);
@@ -94,7 +101,8 @@ const [enemyFloatingText, setEnemyFloatingText] = useState(null);
   // Refs
   const timersRef = useRef([]);
   const battleSpeedRef = useRef(1);
-
+// 2. CHECK MODE AT TOP LEVEL
+    const isGauntlet = location.state?.mode === 'gauntlet';
   // Sync ref with state
   useEffect(() => {
     battleSpeedRef.current = battleSpeed;
@@ -187,25 +195,7 @@ const [enemyFloatingText, setEnemyFloatingText] = useState(null);
       className: "bg-yellow-600/90 border-yellow-500 text-white font-mono"
     });
   };
-const Battle = () => {
-    // 1. MOVE HOOKS TO TOP LEVEL
-    const location = useLocation();
-    const { 
-        gameState, 
-        setGameState, 
-        updateScrap, 
-        recordBattle, 
-        advanceGauntlet, // Get these from context
-        exitGauntlet 
-    } = useGameContext();
-    const { toast } = useToast();
-
-    // 2. CHECK MODE AT TOP LEVEL
-    const isGauntlet = location.state?.mode === 'gauntlet';
-
-    // ... other refs/states ...
-
-    // --- THE FIXED BATTLE LOOP ---
+// --- THE FIXED BATTLE LOOP ---
     const startBattle = async () => {
         // Safety Checks
         if (isBattling || !enemy || !playerProtocol) return;
