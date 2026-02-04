@@ -48,6 +48,8 @@ const AppContent = () => {
             <Route path="/shop" element={<Shop />} />
             <Route path="/battle" element={<Battle />} />
             <Route path="/forge" element={<ForgeScreen />} />
+            {/* <--- ADD THIS ROUTE */}
+              <Route path="/gauntlet" element={<GauntletScreen />} />
           </Routes>
           <Toaster />
         </Router>
