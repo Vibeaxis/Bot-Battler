@@ -45,14 +45,20 @@ const calculateDodgeChance = (defenderSpeed) => {
 };
 
 export const simulateBattle = (botA, botB, protocolA, protocolB) => {
-  const MAX_HP_A = STARTING_HP;
-  const MAX_HP_B = STARTING_HP;
+// 1. Calculate Stats FIRST so we get the custom MaxHealth
+  let statsA = calculateBotStats(botA);
+  let statsB = calculateBotStats(botB);
 
-  let healthA = STARTING_HP;
-  let healthB = STARTING_HP;
+  // Fallback safeguards
+  if (!statsA) statsA = { Damage: 10, Speed: 10, Armor: 0, Weight: 0, MaxHealth: 100 };
+  if (!statsB) statsB = { Damage: 10, Speed: 10, Armor: 0, Weight: 0, MaxHealth: 100 };
 
-  let statsA = calculateBotStats(botA) || { Damage: 10, Speed: 10, Armor: 0 };
-  let statsB = calculateBotStats(botB) || { Damage: 10, Speed: 10, Armor: 0 };
+  // 2. Use the CALCULATED MaxHealth (Base + Weight Bonus)
+  const MAX_HP_A = statsA.MaxHealth;
+  const MAX_HP_B = statsB.MaxHealth;
+
+  let healthA = MAX_HP_A;
+  let healthB = MAX_HP_B;
   
   const battleLog = [];
   const healthTimeline = []; 
