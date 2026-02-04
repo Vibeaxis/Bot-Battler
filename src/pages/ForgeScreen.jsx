@@ -6,7 +6,7 @@ import { ArrowLeft, Hammer, Plus, Coins, Zap } from 'lucide-react';
 import { useGameContext } from '@/context/GameContext';
 import { getPartById, parts } from '@/data/parts'; 
 import { Button } from '@/components/ui/button';
-import { toast } from '@/components/ui/use-toast';
+import { useToast } from '@/components/ui/use-toast'; // CHANGED: Import the hook
 import { RARITY_COLORS } from '@/constants/gameConstants';
 import RarityBadge from '@/components/RarityBadge';
 import FusionInterface from '@/components/FusionInterface';
@@ -14,6 +14,7 @@ import { cn } from '@/lib/utils';
 
 const ForgeScreen = () => {
   const navigate = useNavigate();
+  const { toast } = useToast(); // CHANGED: Initialize the hook
   const { gameState, performFusion, setGameState } = useGameContext();
   const [selectedItemId, setSelectedItemId] = useState(null);
   const [isFusing, setIsFusing] = useState(false);
@@ -108,6 +109,11 @@ const ForgeScreen = () => {
 
         const randomPart = possibleParts[Math.floor(Math.random() * possibleParts.length)];
 
+        // Safety check for setGameState
+        if (typeof setGameState !== 'function') {
+            throw new Error("Game Context Error: setGameState is missing");
+        }
+
         setGameState(prev => ({
           ...prev,
           scrap: prev.scrap - cost,
@@ -121,6 +127,8 @@ const ForgeScreen = () => {
         });
     } catch (err) {
         console.error("Crafting Error:", err);
+        // Fallback alert if toast fails
+        if (typeof toast !== 'function') alert("Crafting Failed: " + err.message);
     }
   };
 
@@ -141,7 +149,7 @@ const ForgeScreen = () => {
 
           const possibleParts = parts.filter(p => p.tier === tier);
            if (possibleParts.length === 0) {
-            // Fallback to common if something breaks
+             // Fallback to common if something breaks
              const common = parts.filter(p => p.tier === 1);
              const fallback = common[Math.floor(Math.random() * common.length)];
              
@@ -277,7 +285,8 @@ const ForgeScreen = () => {
             <div className="lg:col-span-2 flex flex-col gap-6">
                 
                 {/* 1. Fusion Interface (Moved to TOP) */}
-                <div className="bg-black/40 border border-gray-800 p-6 relative flex flex-col items-center justify-center min-h-[400px]">
+                {/* FIXED: Added h-[600px] to prevent layout shift when card appears */}
+                <div className="bg-black/40 border border-gray-800 p-6 relative flex flex-col items-center justify-center h-[600px]">
                       <h2 className="absolute top-6 left-6 text-sm font-bold text-[var(--accent-color)] uppercase tracking-widest flex items-center gap-2">
                         <Hammer className="w-4 h-4" /> Fusion Chamber
                     </h2>
