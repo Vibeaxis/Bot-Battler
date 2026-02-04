@@ -1,28 +1,59 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Helmet } from 'react-helmet';
 import { motion, useAnimation } from 'framer-motion';
-import { useNavigate, useLocation } from 'react-router-dom'; // Added useLocation
-import { ArrowLeft, Zap, Shield, Crosshair, Swords } from 'lucide-react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useGameContext } from '@/context/GameContext';
 import { useSoundContext } from '@/context/SoundContext';
 import { Button } from '@/components/ui/button';
-import { toast } from '@/components/ui/use-toast';
+import { ArrowLeft, Play, RefreshCw, Scan } from 'lucide-react';
 import { generateBalancedEnemy } from '@/utils/enemyGenerator';
-import { simulateBattle } from '@/utils/battleLogic';
-import { calculateBotStats } from '@/utils/statCalculator'; // Ensure this is imported
+import { simulateBattle } from '@/utils/combatEngine';
+import { WIN_REWARD, LOSS_REWARD, BASE_HEALTH } from '@/constants/gameConstants';
 import BotCard from '@/components/BotCard';
+import CombatLog from '@/components/CombatLog';
+import BattleHeader from '@/components/BattleHeader';
 import ScavengeModal from '@/components/ScavengeModal';
-import { cn } from '@/lib/utils';
-import { BATTLE_ARENAS } from '@/data/arenas';
-import { getRandomFlavor } from '@/data/flavorText';
+import ProtocolSelector from '@/components/ProtocolSelector';
+import BattleSpeedToggle from '@/components/BattleSpeedToggle';
+import { toast } from '@/components/ui/use-toast';
 import SpeechToast from '@/components/SpeechToast';
+import { getRandomFlavor } from '@/data/flavor';
+import { PROTOCOLS, getRandomProtocol } from '@/data/tactics';
+import CombatTextOverlay from '@/components/CombatTextOverlay';
+import { ScreenFlash, ImpactParticles } from '@/components/CombatEffects'; // Import the new file
+import { calculateBotStats } from '@/utils/statCalculator';
 
-// --- CONSTANTS ---
-const BASE_HEALTH = 100;
-const WIN_REWARD = 50;
-const LOSS_REWARD = 10;
+
+import electricGrid from '@/assets/electric_grid.jpg';
+import rooftopRain from '@/assets/rooftop_rain.jpg';
+import spaceStation from '@/assets/space_station.jpg';
+
+// --- NEW IMPORTS ---
+import downFactory from '@/assets/down_factory.jpg';
+import iceShelf from '@/assets/ice_shelf.jpg';
+import illumCenter from '@/assets/illum_center.jpg';
+import volcObs from '@/assets/volc_obs.jpg';
+import weapDepot from '@/assets/weap_depot.jpg';
+import arcadeGrave from '@/assets/arcade_grave.jpg';
+import rainBow from '@/assets/rain_bow.jpg';
+
+// --- 2. DEFINE THE ARENA POOL ---
+const BATTLE_ARENAS = [
+  rooftopRain,
+  electricGrid,
+  spaceStation,
+  downFactory,
+  iceShelf,
+  illumCenter,
+  volcObs,
+  weapDepot,
+  arcadeGrave,
+  rainBow
+];
+
+
 const REROLL_COST = 10;
-
 const Battle = () => {
   const navigate = useNavigate();
   const location = useLocation(); // Hook for accessing state passed via navigation
