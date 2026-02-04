@@ -183,7 +183,7 @@ export const simulateBattle = (botA, botB, protocolA, protocolB) => {
         // --- FIXED LOG MESSAGE ---
         // Changed from "${defender} dodges" to "${attacker}'s attack was dodged"
         // This ensures the UI knows WHOSE turn it was (the Attacker's).
-        record(`🌀 Round ${round}: ${attacker.name}'s attack was dodged by ${defender.name}!`);
+       record(`🌀 Round ${round}: ${attacker.name}'s attack was dodged!`);
       }
     }
   }
