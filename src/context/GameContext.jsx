@@ -59,6 +59,7 @@ export const GameProvider = ({ children }) => {
     if (saved) {
       const parsed = JSON.parse(saved);
       
+
       // MIGRATION: Ensure slotLevels exists
       if (!parsed.slotLevels) {
         parsed.slotLevels = { head: 0, rightArm: 0, leftArm: 0, chassis: 0 };
@@ -478,6 +479,7 @@ const recordBattle = (result) => {
   
   const value = {
     gameState,
+    setGameState,
     getSellValue,
     sellItem,
     sellAllCommonItems,
