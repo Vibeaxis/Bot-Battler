@@ -13,7 +13,7 @@ import Battle from './pages/Battle';
 import ForgeScreen from './pages/ForgeScreen';
 import SettingsButton from './components/SettingsButton';
 import SettingsPanel from './components/SettingsPanel';
-
+import GauntletScreen from '@/pages/GauntletScreen'; // <--- IMPORT THIS
 // Wrapper component to apply settings styles
 const AppContent = () => {
   const { settings } = useSettingsContext();
