@@ -5,25 +5,46 @@ import { RARITY_COLORS } from '@/constants/gameConstants';
 import RarityBadge from './RarityBadge';
 import { cn } from '@/lib/utils';
 import { calculateBotStats } from '@/utils/statCalculator';
-import { useToast } from '@/components/ui/use-toast'; // Import Toast Hook
+import { useToast } from '@/components/ui/use-toast'; 
 
-// --- FIXED SVG COMPONENTS ---
-// Made lines thinner (strokeWidth="0.5") and less opaque
+// --- UPGRADED SKELETON: CIRCUIT TRACES ---
 const SchematicSkeleton = () => (
-  <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-10" style={{ zIndex: 0 }} viewBox="0 0 100 100" preserveAspectRatio="none">
-    <defs>
-      <pattern id="grid-pattern" width="10" height="10" patternUnits="userSpaceOnUse">
-        <path d="M 10 0 L 0 0 0 10" fill="none" stroke="currentColor" strokeWidth="0.2" />
-      </pattern>
-    </defs>
-    <path d="M 50 15 L 50 85" stroke="currentColor" strokeWidth="1" fill="none" className="text-[var(--accent-color)]" vectorEffect="non-scaling-stroke" />
-    <path d="M 50 25 L 20 25 L 20 40" stroke="currentColor" strokeWidth="0.5" fill="none" className="text-gray-500" vectorEffect="non-scaling-stroke" />
-    <path d="M 50 25 L 80 25 L 80 40" stroke="currentColor" strokeWidth="0.5" fill="none" className="text-gray-500" vectorEffect="non-scaling-stroke" />
-    <circle cx="50" cy="50" r="2" fill="currentColor" className="text-[var(--accent-color)]" />
+  <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 0 }} viewBox="0 0 100 100" preserveAspectRatio="none">
+    {/* 1. Circuit Paths (Connecting the slots) */}
+    {/* Central Spine */}
+    <path d="M 50 15 L 50 85" stroke="currentColor" strokeWidth="1" fill="none" className="text-gray-800 opacity-50" vectorEffect="non-scaling-stroke" />
+    
+    {/* Horizontal Bus (Arms) */}
+    <path d="M 25 40 L 75 40" stroke="currentColor" strokeWidth="1" fill="none" className="text-gray-800 opacity-50" vectorEffect="non-scaling-stroke" />
+    
+    {/* 2. Connection Nodes (The "Soldered" joints) */}
+    {/* Head Node */}
+    <circle cx="50" cy="20" r="2" className="fill-gray-800" />
+    {/* Core Junction */}
+    <circle cx="50" cy="40" r="4" className="fill-black stroke-gray-700 stroke-2" />
+    <circle cx="50" cy="40" r="1.5" className="fill-[var(--accent-color)] animate-pulse" />
+    {/* Arm Nodes */}
+    <circle cx="25" cy="40" r="2" className="fill-gray-800" />
+    <circle cx="75" cy="40" r="2" className="fill-gray-800" />
+    {/* Chassis Node */}
+    <circle cx="50" cy="75" r="2" className="fill-gray-800" />
   </svg>
 );
 
-// Made the frame subtler
+// --- BLUEPRINT GRID PATTERN ---
+const BlueprintGrid = () => (
+    <div 
+        className="absolute inset-0 pointer-events-none opacity-5"
+        style={{
+            backgroundImage: `
+                linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)
+            `,
+            backgroundSize: '20px 20px'
+        }}
+    />
+);
+
 const TechFrame = ({ children, className, isActive, colorClass = "text-gray-800" }) => (
   <div className={`relative ${className}`}>
     <svg className="absolute inset-0 w-full h-full pointer-events-none transition-all duration-300" style={{ zIndex: 0 }} viewBox="0 0 100 100" preserveAspectRatio="none">
@@ -31,9 +52,9 @@ const TechFrame = ({ children, className, isActive, colorClass = "text-gray-800"
         d="M 0 10 L 10 0 L 90 0 L 100 10 L 100 90 L 90 100 L 10 100 L 0 90 Z" 
         fill="none" 
         stroke="currentColor" 
-        strokeWidth={isActive ? "1.5" : "0.5"} // Thinner inactive lines
+        strokeWidth={isActive ? "2" : "1"} 
         vectorEffect="non-scaling-stroke"
-        className={isActive ? "text-[var(--accent-color)] drop-shadow-[0_0_8px_var(--accent-color)]" : "text-gray-800 opacity-50"}
+        className={isActive ? "text-[var(--accent-color)] drop-shadow-[0_0_5px_var(--accent-color)]" : "text-gray-800"}
       />
     </svg>
     <div 
@@ -77,7 +98,7 @@ const RARITY_MAP = {
 
 const BotCard = ({ bot, slotLevels, isAttacking, side = 'player', className = '' }) => {
   const [hoveredPart, setHoveredPart] = useState(null);
-  const { toast } = useToast(); // Use toast for item details
+  const { toast } = useToast();
 
   const stats = calculateBotStats({ ...bot, slotLevels: slotLevels || bot.slotLevels });
   
@@ -103,7 +124,7 @@ const BotCard = ({ bot, slotLevels, isAttacking, side = 'player', className = ''
   }
 
   const StatBox = ({ label, value, icon: Icon, colorClass }) => (
-    <div className="flex items-center justify-between px-2 py-1 border-b border-gray-900 group-hover:border-gray-800 transition-colors">
+    <div className="flex items-center justify-between px-3 py-1.5 border-b border-gray-800 bg-[#0a0a0a]/50">
         <div className="flex items-center gap-2 text-gray-500">
             <Icon className="w-3 h-3" />
             <span className="text-[10px] font-mono font-bold uppercase">{label}</span>
@@ -114,12 +135,9 @@ const BotCard = ({ bot, slotLevels, isAttacking, side = 'player', className = ''
     </div>
   );
 
-  // New Handler: Click to Inspect
   const handlePartClick = (part) => {
       if (!part) return;
-      
       const colors = RARITY_COLORS[part.tier];
-      
       toast({
           title: part.name.toUpperCase(),
           description: (
@@ -136,20 +154,17 @@ const BotCard = ({ bot, slotLevels, isAttacking, side = 'player', className = ''
 
   return (
     <div className={cn(
-      // CHANGED: Removed border-2, made shadow softer, background darker/blurred
-      "flex flex-col shrink-0 w-72 md:w-80 h-auto bg-black/40 backdrop-blur-sm border border-[var(--accent-color)] shadow-[0_10px_40px_-20px_rgba(0,0,0,0.8)] relative z-10 transition-all duration-300",
+      // CHANGED: Solid background + subtle border
+      "flex flex-col shrink-0 w-72 md:w-80 h-auto bg-[#030303] border border-gray-800 shadow-[0_0_30px_-5px_rgba(0,0,0,0.7)] relative z-10 transition-all duration-300",
       className
     )}>
       
-      {/* Subtle Top Glow */}
-      <div className="absolute top-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-[var(--accent-color)] to-transparent opacity-50" />
+      {/* Blueprint Grid Overlay */}
+      <BlueprintGrid />
 
-      {/* Header */}
-      <div className="p-4 flex items-center gap-4 relative overflow-hidden">
-        {/* Background gradient instead of solid color */}
-        <div className="absolute inset-0 bg-gradient-to-b from-[var(--accent-color)]/5 to-transparent pointer-events-none" />
-        
-        <div className="p-2 shrink-0 bg-black/50 border border-[var(--accent-color)]/30 rounded-sm">
+      {/* Header (Solid Block) */}
+      <div className="p-4 flex items-center gap-4 relative bg-[#080808] border-b border-gray-800">
+        <div className="p-2 shrink-0 bg-black border border-gray-700 rounded-sm shadow-inner">
           <BotIcon className="w-6 h-6 text-[var(--accent-color)]" />
         </div>
         <div className="flex-1 min-w-0 z-10">
@@ -160,14 +175,15 @@ const BotCard = ({ bot, slotLevels, isAttacking, side = 'player', className = ''
             {bot.name}
           </h3>
           <div className="text-[10px] text-gray-500 font-mono font-bold flex items-center gap-2">
-            <span className="bg-white/10 px-1 rounded-sm text-white/70">LVL {bot.level || 1}</span>
-            <span>{bot.rarity ? bot.rarity.toUpperCase() : (side === 'player' ? 'OPERATOR' : 'TARGET')}</span>
+            <span className="bg-gray-800 px-1.5 py-0.5 text-gray-300">LVL {bot.level || 1}</span>
+            <span className="text-gray-600">{bot.rarity ? bot.rarity.toUpperCase() : (side === 'player' ? 'OPERATOR' : 'TARGET')}</span>
           </div>
         </div>
       </div>
       
-      {/* Main Grid */}
-      <div className="relative p-4 flex-1">
+      {/* Main Schematic Area */}
+      <div className="relative p-5 flex-1">
+        {/* The Circuit Wires */}
         <SchematicSkeleton />
 
         <div className="grid grid-cols-2 gap-4 relative z-10">
@@ -191,20 +207,20 @@ const BotCard = ({ bot, slotLevels, isAttacking, side = 'player', className = ''
                         )}
                         onMouseEnter={() => part && setHoveredPart({ ...part, slotKey: key })}
                         onMouseLeave={() => setHoveredPart(null)}
-                        onClick={() => handlePartClick(part)} // New Click Handler
+                        onClick={() => handlePartClick(part)}
                     >
                         <TechFrame 
                             className="w-full aspect-square max-h-20 transition-all duration-300 cursor-pointer"
                             isActive={shouldAnimateArm || (hoveredPart && hoveredPart.id === part?.id)}
-                            colorClass={part ? "text-gray-800" : "text-gray-900"}
+                            colorClass={part ? "text-gray-700" : "text-gray-800"} // Darker inactive lines
                         >
                             <div className={cn(
                                 "absolute inset-0 flex flex-col items-center justify-center transition-all duration-300",
-                                part ? "bg-black/40" : "bg-black/20",
-                                // Highlight effect on hover
+                                // Darker internal backgrounds for solidity
+                                part ? "bg-[#0a0a0a]" : "bg-[#050505]",
                                 (hoveredPart && hoveredPart.id === part?.id) && "bg-[var(--accent-color)]/10"
                             )}>
-                                <span className="absolute top-1 left-2 text-[7px] font-mono text-gray-600 uppercase tracking-widest pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity">
+                                <span className="absolute top-1 left-2 text-[7px] font-mono text-gray-700 uppercase tracking-widest pointer-events-none opacity-50 group-hover:opacity-100 transition-opacity">
                                     {key.replace('Arm', '')}
                                 </span>
 
@@ -215,7 +231,7 @@ const BotCard = ({ bot, slotLevels, isAttacking, side = 'player', className = ''
                                 )} />
                                 
                                 {part && (
-                                    <RarityBadge tier={tier} className="scale-75 origin-center border border-white/5 bg-black/50 backdrop-blur-md" />
+                                    <RarityBadge tier={tier} className="scale-75 origin-center border border-white/5 bg-black" />
                                 )}
                             </div>
                         </TechFrame>
@@ -225,17 +241,15 @@ const BotCard = ({ bot, slotLevels, isAttacking, side = 'player', className = ''
         </div>
       </div>
       
-      {/* Footer - STATIC (No Swapping) */}
-      <div className="bg-black/60 border-t border-white/5 p-4 backdrop-blur-md">
-         {/* Always show Bot Totals here to prevent layout shift */}
-         <div className="grid grid-cols-2 gap-x-6 gap-y-2">
+      {/* Footer Stats - Solid Block */}
+      <div className="bg-[#050505] border-t border-gray-800 p-4 relative z-20">
+         <div className="grid grid-cols-2 gap-x-4 gap-y-2">
               <StatBox label="DMG" value={stats.Damage} icon={DmgIcon} colorClass="text-red-500" />
               <StatBox label="SPD" value={stats.Speed} icon={SpdIcon} colorClass="text-cyan-400" />
               <StatBox label="ARM" value={stats.Armor} icon={ArmIcon} colorClass="text-emerald-500" />
               <StatBox label="WGT" value={stats.Weight} icon={WgtIcon} colorClass="text-amber-500" />
          </div>
-         {/* Subtle Hint */}
-         <div className="text-[9px] text-center text-gray-600 mt-3 font-mono uppercase tracking-widest">
+         <div className="text-[9px] text-center text-gray-700 mt-3 font-mono uppercase tracking-widest">
             {hoveredPart ? `[ CLICK TO INSPECT ${hoveredPart.name} ]` : "SYSTEM READY"}
          </div>
       </div>
