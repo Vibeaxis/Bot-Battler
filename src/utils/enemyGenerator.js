@@ -27,9 +27,19 @@ const enemyNames = [
 // Common (Gray), Uncommon (Green), Rare (Blue), Epic (Purple), Legendary (Orange)
 const ENEMY_RARITIES = [
   { id: 'common', chance: 0.60, prefix: '', tierOffset: 0, rarityName: 'Common' },
-  { id: 'uncommon', chance: 0.25, prefix: 'Reinforced', tierOffset: 0, rarityName: 'Uncommon' },
-  { id: 'rare', chance: 0.10, prefix: 'Elite', tierOffset: 1, rarityName: 'Rare' }, // Tries to use slightly better gear
-  { id: 'epic', chance: 0.04, prefix: 'Commander', tierOffset: 1, rarityName: 'Epic' },
+  
+  // CHANGED: 'Reinforced' -> 'Heavy' (50% shorter)
+  // Alternatives: 'Plated', 'Solid', 'Mk.II'
+  { id: 'uncommon', chance: 0.25, prefix: 'Heavy', tierOffset: 0, rarityName: 'Uncommon' },
+  
+  // 'Elite' is already short and good (5 chars)
+  { id: 'rare', chance: 0.10, prefix: 'Elite', tierOffset: 1, rarityName: 'Rare' }, 
+  
+  // CHANGED: 'Commander' -> 'Prime' (45% shorter)
+  // Alternatives: 'Alpha', 'Major', 'Ace', 'Core'
+  { id: 'epic', chance: 0.04, prefix: 'Prime', tierOffset: 1, rarityName: 'Epic' },
+  
+  // 'APEX' is perfect (4 chars)
   { id: 'legendary', chance: 0.01, prefix: 'APEX', tierOffset: 2, rarityName: 'Legendary' }
 ];
 
