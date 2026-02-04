@@ -11,14 +11,16 @@ import {
 // SAFEGUARD 1: Fallback values prevent NaN if imports fail
 const STARTING_HP = BASE_HEALTH || 100; 
 
-// --- NEW: DAMAGE SOFT CAP LOGIC ---
+// --- NEW HELPER: DAMAGE SOFT CAP ---
 // Prevents one-shots by dampening damage that exceeds 35% of max HP
 const applySoftCap = (damage, maxHealth) => {
   const cap = maxHealth * 0.35; 
+  // If damage is under the cap, let it through
   if (damage <= cap) return damage;
   
+  // If over cap, dampen the excess by 50%
   const excess = damage - cap;
-  return Math.floor(cap + (excess * 0.5)); // Only 50% of the overkill gets through
+  return Math.floor(cap + (excess * 0.5));
 };
 
 const calculateDamage = (attackerDamage, defenderArmor) => {
@@ -110,6 +112,7 @@ export const simulateBattle = (botA, botB, protocolA, protocolB) => {
     const speedA = statsA.Speed || 0;
     const speedB = statsB.Speed || 0;
 
+    // Determine turn order based on Speed
     const turns = speedA >= speedB
       ? [
           { attacker: botA, defender: botB, attStats: statsA, defStats: statsB, attRef: 'A', defRef: 'B', targetMaxHp: MAX_HP_B },
@@ -134,6 +137,7 @@ export const simulateBattle = (botA, botB, protocolA, protocolB) => {
 
       if (Math.random() > dodgeChance) {
         if (Math.random() < effectiveHitChance) {
+          // HIT LANDED
           if (attRef === 'A') missStreakA = 0; else missStreakB = 0;
 
           const isCrit = Math.random() < (CRIT_CHANCE || 0.1);
@@ -157,13 +161,12 @@ export const simulateBattle = (botA, botB, protocolA, protocolB) => {
           }
           
         } else {
-          // --- GRAZE MECHANIC ---
+          // HIT MISSED (Graze Check)
           if (attRef === 'A') missStreakA++; else missStreakB++;
 
           if (Math.random() < 0.5) {
             let damage = calculateDamage(attStats.Damage, defStats.Armor);
-            // Glancing blow is already heavily reduced (30%), so we usually don't need to Soft Cap it, 
-            // but the math is safe if you wanted to.
+            // Glancing blow is already reduced (30%), so Soft Cap is rarely needed, but safe to include
             damage = Math.max(1, Math.floor(damage * 0.3)); 
 
             if (defRef === 'A') healthA -= damage; else healthB -= damage;
@@ -174,14 +177,18 @@ export const simulateBattle = (botA, botB, protocolA, protocolB) => {
           }
         }
       } else {
+        // DODGE
         if (attRef === 'A') missStreakA++; else missStreakB++;
-        record(`🌀 Round ${round}: ${defender.name} dodges ${attacker.name}'s attack!`);
+        
+        // --- FIXED LOG MESSAGE ---
+        // Changed from "${defender} dodges" to "${attacker}'s attack was dodged"
+        // This ensures the UI knows WHOSE turn it was (the Attacker's).
+        record(`🌀 Round ${round}: ${attacker.name}'s attack was dodged by ${defender.name}!`);
       }
     }
   }
   
   // SAFEGUARD 5: Explicitly handle NaN in winner check
-  // If healthA is NaN (shouldn't happen now), treat it as 0
   const cleanHealthA = isNaN(healthA) ? 0 : healthA;
   const cleanHealthB = isNaN(healthB) ? 0 : healthB;
 
