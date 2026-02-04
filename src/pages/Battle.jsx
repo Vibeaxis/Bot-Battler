@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Helmet } from 'react-helmet';
 import { motion, useAnimation } from 'framer-motion';
@@ -11,7 +10,6 @@ import { generateBalancedEnemy } from '@/utils/enemyGenerator';
 import { simulateBattle } from '@/utils/combatEngine';
 import { WIN_REWARD, LOSS_REWARD, BASE_HEALTH } from '@/constants/gameConstants';
 import BotCard from '@/components/BotCard';
-import CombatLog from '@/components/CombatLog';
 import BattleHeader from '@/components/BattleHeader';
 import ScavengeModal from '@/components/ScavengeModal';
 import ProtocolSelector from '@/components/ProtocolSelector';
@@ -19,17 +17,14 @@ import BattleSpeedToggle from '@/components/BattleSpeedToggle';
 import { toast } from '@/components/ui/use-toast';
 import SpeechToast from '@/components/SpeechToast';
 import { getRandomFlavor } from '@/data/flavor';
-import { PROTOCOLS, getRandomProtocol } from '@/data/tactics';
 import CombatTextOverlay from '@/components/CombatTextOverlay';
-import { ScreenFlash, ImpactParticles } from '@/components/CombatEffects'; // Import the new file
+import { ScreenFlash, ImpactParticles } from '@/components/CombatEffects';
 import { calculateBotStats } from '@/utils/statCalculator';
 
-
+// --- ASSETS ---
 import electricGrid from '@/assets/electric_grid.jpg';
 import rooftopRain from '@/assets/rooftop_rain.jpg';
 import spaceStation from '@/assets/space_station.jpg';
-
-// --- NEW IMPORTS ---
 import downFactory from '@/assets/down_factory.jpg';
 import iceShelf from '@/assets/ice_shelf.jpg';
 import illumCenter from '@/assets/illum_center.jpg';
@@ -38,41 +33,32 @@ import weapDepot from '@/assets/weap_depot.jpg';
 import arcadeGrave from '@/assets/arcade_grave.jpg';
 import rainBow from '@/assets/rain_bow.jpg';
 
-// --- 2. DEFINE THE ARENA POOL ---
 const BATTLE_ARENAS = [
-  rooftopRain,
-  electricGrid,
-  spaceStation,
-  downFactory,
-  iceShelf,
-  illumCenter,
-  volcObs,
-  weapDepot,
-  arcadeGrave,
-  rainBow
+  rooftopRain, electricGrid, spaceStation, downFactory, iceShelf,
+  illumCenter, volcObs, weapDepot, arcadeGrave, rainBow
 ];
 
-
 const REROLL_COST = 10;
+
 const Battle = () => {
   const navigate = useNavigate();
-  const location = useLocation(); // Hook for accessing state passed via navigation
+  const location = useLocation(); // Hook must be at top level
   
   const { 
     gameState, 
     updateScrap, 
     recordBattle,
-    advanceGauntlet, // From Context
-    exitGauntlet     // From Context
+    advanceGauntlet, 
+    exitGauntlet 
   } = useGameContext();
 
   const { playSound } = useSoundContext();
   
   // Visual States
-  const [flashType, setFlashType] = useState(null); // 'HIT' or 'CRIT'
-  const [playerSparks, setPlayerSparks] = useState(false);
-  const [enemySparks, setEnemySparks] = useState(false);
-  
+  const [flashType, setFlashType] = useState(null); 
+  const [playerSparks, setPlayerSparks] = useState(false); 
+  const [enemySparks, setEnemySparks] = useState(false);   
+
   // Game State
   const [enemy, setEnemy] = useState(null);
   const [isBattling, setIsBattling] = useState(false);
@@ -116,14 +102,17 @@ const Battle = () => {
     battleSpeedRef.current = battleSpeed;
   }, [battleSpeed]);
 
-  // Helper for Toasts
+  // Helper to set toast with auto-clear
   const setLeftToast = (msg) => {
-    setLeftToastState(null);
-    setTimeout(() => setLeftToastState(msg), 50);
+    setLeftToastState(msg);
+    const id = setTimeout(() => setLeftToastState(null), 3000);
+    timersRef.current.push(id);
   };
+
   const setRightToast = (msg) => {
-    setRightToastState(null);
-    setTimeout(() => setRightToastState(msg), 50);
+    setRightToastState(msg);
+    const id = setTimeout(() => setRightToastState(null), 3000);
+    timersRef.current.push(id);
   };
 
   // --- INITIALIZATION ---
@@ -138,6 +127,8 @@ const Battle = () => {
         if (!targetEnemy.icon) targetEnemy.icon = 'Skull';
     } else {
         // SCAVENGE MODE: Generate a fresh random enemy
+        // Only generate if we don't already have one (to prevent refresh loops)
+        // But since we want to init correctly, we can generate here if null
         targetEnemy = generateBalancedEnemy(gameState.playerBot, gameState.winStreak);
         targetEnemy.slotLevels = { head: 0, rightArm: 0, leftArm: 0, chassis: 0 };
         targetEnemy.icon = targetEnemy.icon || 'Skull';
@@ -198,7 +189,7 @@ const Battle = () => {
   // --- HANDLERS ---
 
   const generateNewEnemy = () => {
-    // Only used for "Reroll" in Scavenge mode
+    // Only used for "Reroll" in Scavenge mode or Replay
     const newEnemy = generateBalancedEnemy(gameState.playerBot, gameState.winStreak);
     newEnemy.slotLevels = { head: 0, rightArm: 0, leftArm: 0, chassis: 0 };
     newEnemy.icon = newEnemy.icon || 'Skull';
@@ -440,288 +431,208 @@ const Battle = () => {
     setIsBattling(false);
   };
 
-  const handleLeaveBattle = () => {
-    if (isGauntlet && isBattling) {
-        // Forfeit Gauntlet
-        exitGauntlet();
-        navigate('/hub');
-    } else {
-        navigate('/hub');
-    }
-  };
+  const handleNextBattle = () => generateNewEnemy();
+  const handleReturnToWorkshop = () => { setShowScavengeModal(false); navigate('/workshop'); };
 
   // --- DYNAMIC MAX HEALTH ---
   const playerMaxHealth = calculateBotStats({ ...gameState.playerBot, slotLevels: gameState.slotLevels }).MaxHealth || BASE_HEALTH;
   const enemyMaxHealth = calculateBotStats(enemy || {}).MaxHealth || BASE_HEALTH;
 
+  if (!enemy) return <div className="min-h-screen bg-gray-900 flex items-center justify-center text-white">Loading Arena...</div>;
+
   return (
     <>
       <Helmet>
-        <title>Battle Arena - Combat Engaged</title>
+        <title>Arena - Bot Battler</title>
       </Helmet>
 
-      <ScavengeModal 
-        isOpen={showScavengeModal} 
-        onClose={() => {
-            setShowScavengeModal(false);
-            navigate('/hub');
-        }}
-        onReplay={() => generateNewEnemy()}
-        rewards={pendingRewards}
-      />
+      <div className="h-screen max-h-screen bg-black flex flex-col overflow-hidden relative">
+        <ScreenFlash type={flashType} />
+        
+        {/* --- BATTLE STAGE BACKGROUND --- */}
+        <div className="absolute inset-0 bg-black z-0">
+            <motion.div 
+                key={currentArena} 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 0.4 }} 
+                transition={{ duration: 1 }}
+                className="absolute inset-0 bg-cover bg-center animate-ken-burns"
+                style={{ backgroundImage: `url(${currentArena})` }}
+            />
 
-      <motion.div 
-        animate={controls}
-        className="min-h-screen bg-black text-[#e0e0e0] font-mono relative overflow-hidden"
-        style={{
-            backgroundImage: `
-              linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)),
-              url(${currentArena.image})
-            `,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-        }}
-      >
-        {/* CRT Overlay Effect */}
-        <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] z-50 bg-[length:100%_4px,6px_100%] opacity-20" />
-        <div className="absolute inset-0 pointer-events-none bg-gradient-to-b from-black/20 via-transparent to-black/20 z-10" />
-
-        {/* --- HEADER --- */}
-        <div className="relative z-20 p-4 flex justify-between items-start bg-gradient-to-b from-black/80 to-transparent">
-            <Button 
-                onClick={handleLeaveBattle}
-                variant="ghost" 
-                className="text-gray-400 hover:text-white hover:bg-white/10 uppercase tracking-widest text-xs"
-            >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                {isGauntlet ? "Surrender Run" : "Emergency Exit"}
-            </Button>
-
-            {/* Speed Controls */}
-            <div className="flex gap-1 bg-black/60 border border-gray-800 p-1 rounded-sm backdrop-blur-sm">
-                <div className="px-2 py-1 text-[10px] text-gray-500 font-bold flex items-center gap-1 uppercase">
-                    <Zap className="w-3 h-3" /> Speed
-                </div>
-                {[1, 2, 4].map(speed => (
-                    <button
-                        key={speed}
-                        onClick={() => setBattleSpeed(speed)}
-                        className={cn(
-                            "px-3 py-1 text-xs font-bold transition-all rounded-sm",
-                            battleSpeed === speed 
-                                ? "bg-[var(--accent-color)] text-black shadow-[0_0_10px_var(--accent-color)]" 
-                                : "text-gray-500 hover:text-white"
-                        )}
-                    >
-                        {speed}x
-                    </button>
-                ))}
-            </div>
+            <div 
+                className="absolute inset-0 opacity-20" 
+                style={{ 
+                    backgroundImage: `radial-gradient(circle at 2px 2px, var(--accent-color) 1px, transparent 0)`,
+                    backgroundSize: '40px 40px' 
+                }} 
+            />
+            
+            <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black/90" />
+            <div className="absolute inset-0 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] bg-[length:100%_4px,6px_100%] opacity-20" />
         </div>
 
-        {/* --- BATTLE ARENA --- */}
-        <div className="relative z-10 max-w-6xl mx-auto flex flex-col items-center justify-center min-h-[60vh] gap-12 md:gap-24 p-8">
-            
-            {/* Health Bars Container */}
-            <div className="w-full flex justify-between items-center absolute top-20 left-0 right-0 px-8 md:px-20">
-                {/* Player HP */}
-                <div className="w-1/3">
-                    <div className="flex justify-between text-xs font-bold mb-1">
-                        <span className="text-[var(--accent-color)]">OPERATOR</span>
-                        <span className="text-white">{playerHealth} / {playerMaxHealth}</span>
-                    </div>
-                    <div className="h-2 bg-gray-900 border border-gray-700 w-full overflow-hidden skew-x-[-15deg]">
-                        <motion.div 
-                            className="h-full bg-[var(--accent-color)]"
-                            initial={{ width: '100%' }}
-                            animate={{ width: `${(playerHealth / playerMaxHealth) * 100}%` }}
-                            transition={{ type: "spring", stiffness: 50 }}
-                        />
-                    </div>
-                </div>
+        <BattleHeader
+            playerHealth={playerHealth}
+            enemyHealth={enemyHealth}
+            // Use the calculated max health for the bar display
+            playerMax={playerMaxHealth}
+            enemyMax={enemyMaxHealth}
+            round={currentRound}
+        />
 
-                {/* VS Badge */}
-                <div className="text-2xl font-black italic text-white/20">VS</div>
-
-                {/* Enemy HP */}
-                <div className="w-1/3">
-                    <div className="flex justify-between text-xs font-bold mb-1">
-                        <span className="text-white">{enemyHealth} / {enemyMaxHealth}</span>
-                        <span className="text-red-500">TARGET</span>
-                    </div>
-                    <div className="h-2 bg-gray-900 border border-gray-700 w-full overflow-hidden skew-x-[15deg]">
-                        <motion.div 
-                            className="h-full bg-red-600"
-                            initial={{ width: '100%' }}
-                            animate={{ width: `${(enemyHealth / enemyMaxHealth) * 100}%` }}
-                            transition={{ type: "spring", stiffness: 50 }}
-                        />
-                    </div>
-                </div>
+        {/* MAIN ARENA */}
+        <motion.div 
+            animate={controls}
+            className="relative z-10 flex-1 flex flex-col w-full pb-48"
+        >
+            {/* Top Bar */}
+            <div className="flex justify-between items-center py-4 px-6">
+                <Button onClick={() => navigate('/hub')} variant="ghost" size="sm" className="text-gray-400 hover:text-white">
+                    <ArrowLeft className="w-4 h-4 mr-2" /> Exit
+                </Button>
+                <BattleSpeedToggle speed={battleSpeed} setSpeed={setBattleSpeed} />
             </div>
 
-            {/* Combatants */}
-            <div className="flex justify-center items-center gap-12 md:gap-32 w-full mt-10">
+            {/* BATTLE STAGE */}
+            <div className="flex-1 flex items-center justify-center gap-8 md:gap-24 min-h-[50vh]">
                 
-                {/* Player Card */}
-                <div className="relative">
-                    <BotCard 
-                        bot={gameState.playerBot} 
-                        slotLevels={gameState.slotLevels}
-                        isAttacking={playerAttacking}
+                {/* PLAYER SIDE */}
+                <div className="relative group">
+                    <SpeechToast message={leftToast} position="left" />
+                    <CombatTextOverlay activeText={playerFloatingText} />
+                    <ImpactParticles active={playerSparks} color="#3b82f6" count={20} />
+                    
+                    <BotCard
+                        bot={gameState.playerBot}
                         side="player"
-                        className={cn(
-                            "transform transition-all duration-100", 
-                            playerAttacking && "translate-x-20 z-20 scale-105",
-                            !playerAttacking && !enemyAttacking && "hover:scale-105"
-                        )}
+                        isAttacking={playerAttacking}
+                        isHit={enemyAttacking}
+                        slotLevels={gameState.slotLevels}
+                        className="scale-110 shadow-2xl"
                     />
                     
-                    {/* Speech Bubble */}
-                    <SpeechToast message={leftToast} position="left" />
-
-                    {/* Floating Combat Text */}
-                    <div className="absolute top-10 right-0 pointer-events-none z-50">
-                        {playerFloatingText && (
-                            <motion.div
-                                key={playerFloatingText.id}
-                                initial={{ opacity: 1, y: 0, scale: 0.5 }}
-                                animate={{ opacity: 0, y: -100, scale: 1.5 }}
-                                transition={{ duration: 0.8 }}
-                                className={cn(
-                                    "text-4xl font-black italic drop-shadow-[0_4px_4px_rgba(0,0,0,0.8)]",
-                                    playerFloatingText.type === 'crit' ? "text-yellow-400 text-6xl" : "text-red-500",
-                                    playerFloatingText.type === 'miss' && "text-gray-400 text-2xl"
-                                )}
-                            >
-                                {playerFloatingText.content}
-                            </motion.div>
-                        )}
-                    </div>
-                    
-                    {playerSparks && <div className="absolute inset-0 bg-yellow-500/20 mix-blend-overlay animate-pulse" />}
+                    {playerProtocol && (
+                        <div className="absolute -bottom-8 left-0 right-0 text-center z-20">
+                            <span className="text-[10px] font-bold px-3 py-1 rounded-b-md border-x border-b border-[var(--accent-color)] text-[var(--accent-color)] bg-black/90 shadow-[0_4px_10px_rgba(0,0,0,0.5)] tracking-widest uppercase">
+                                Active: {playerProtocol.name}
+                            </span>
+                        </div>
+                    )}
                 </div>
 
-                {/* Enemy Card */}
-                <div className="relative">
-                    {enemy && (
-                        <BotCard 
-                            bot={enemy} 
-                            isAttacking={enemyAttacking}
-                            side="enemy"
-                            className={cn(
-                                "transform transition-all duration-100 border-red-500/50",
-                                enemyAttacking && "-translate-x-20 z-20 scale-105"
-                            )}
-                        />
-                    )}
+                {/* VS DIVIDER */}
+                <div className="hidden md:flex flex-col items-center justify-center opacity-30">
+                    <div className="h-32 w-px bg-gradient-to-b from-transparent via-white to-transparent"></div>
+                </div>
 
+                {/* ENEMY SIDE */}
+                <div className="relative group">
                     <SpeechToast message={rightToast} position="right" />
-
-                    <div className="absolute top-10 left-0 pointer-events-none z-50">
-                        {enemyFloatingText && (
-                            <motion.div
-                                key={enemyFloatingText.id}
-                                initial={{ opacity: 1, y: 0, scale: 0.5 }}
-                                animate={{ opacity: 0, y: -100, scale: 1.5 }}
-                                transition={{ duration: 0.8 }}
-                                className={cn(
-                                    "text-4xl font-black italic drop-shadow-[0_4px_4px_rgba(0,0,0,0.8)]",
-                                    enemyFloatingText.type === 'crit' ? "text-yellow-400 text-6xl" : "text-red-500",
-                                    enemyFloatingText.type === 'miss' && "text-gray-400 text-2xl"
-                                )}
-                            >
-                                {enemyFloatingText.content}
-                            </motion.div>
-                        )}
-                    </div>
-
-                    {enemySparks && <div className="absolute inset-0 bg-yellow-500/20 mix-blend-overlay animate-pulse" />}
+                    <CombatTextOverlay activeText={enemyFloatingText} />
+                    <ImpactParticles active={enemySparks} color="#ef4444" count={20} />
+                    
+                    <BotCard
+                        bot={enemy}
+                        side="enemy"
+                        isAttacking={enemyAttacking}
+                        isHit={playerAttacking}
+                        className="scale-110 shadow-2xl border-red-500/50"
+                    />
+                    
+                    {enemyProtocol && (
+                        <div className="absolute -bottom-8 left-0 right-0 text-center z-20">
+                            <span className="text-[10px] font-bold px-3 py-1 rounded-b-md border-x border-b border-red-500 text-red-500 bg-black/90 shadow-[0_4px_10px_rgba(0,0,0,0.5)] tracking-widest uppercase">
+                                Detected: {enemyProtocol.name}
+                            </span>
+                        </div>
+                    )}
                 </div>
             </div>
-        </div>
+        </motion.div>
 
-        {/* --- CONTROL DECK --- */}
-        <div className="absolute bottom-0 left-0 right-0 bg-black/90 border-t border-[var(--accent-color)] p-6 backdrop-blur-xl z-30">
-            <div className="max-w-5xl mx-auto">
+        {/* --- FIXED COMMAND FOOTER --- */}
+        <div className="fixed bottom-0 left-0 right-0 z-50 bg-[#0a0a0a] border-t border-gray-800 p-4 shadow-[0_-10px_40px_rgba(0,0,0,0.8)]">
+            <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
                 
-                {/* Protocol Selection */}
-                <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-                    
-                    {/* Strategy Buttons */}
-                    <div className="flex-1 w-full">
-                        <div className="text-[10px] text-gray-500 uppercase tracking-widest mb-2 font-bold">Select Combat Protocol</div>
-                        <div className="grid grid-cols-3 gap-3">
-                            {[
-                                { id: 'ASSAULT', label: 'Assault', icon: Swords },
-                                { id: 'BULWARK', label: 'Bulwark', icon: Shield },
-                                { id: 'TECH', label: 'Tech', icon: Zap }
-                            ].map((proto) => {
-                                const Icon = proto.icon;
-                                const isSelected = playerProtocol?.id === proto.id;
-                                
-                                return (
-                                    <button
-                                        key={proto.id}
-                                        onClick={() => !isBattling && setPlayerProtocol(proto)}
-                                        disabled={isBattling}
-                                        className={cn(
-                                            "relative h-16 border flex flex-col items-center justify-center transition-all overflow-hidden group",
-                                            isSelected 
-                                                ? "bg-[var(--accent-color)]/10 border-[var(--accent-color)] text-[var(--accent-color)]" 
-                                                : "bg-black/50 border-gray-800 text-gray-500 hover:border-gray-600 hover:text-gray-300",
-                                            isBattling && "opacity-50 cursor-not-allowed"
-                                        )}
-                                    >
-                                        <Icon className="w-5 h-5 mb-1" />
-                                        <span className="text-[10px] font-bold uppercase tracking-wider">{proto.label}</span>
-                                        {isSelected && <div className="absolute inset-0 border-2 border-[var(--accent-color)] animate-pulse" />}
-                                    </button>
-                                );
-                            })}
+                {/* DEFEATED MESSAGE */}
+                {battleResult && !battleResult.playerWon && (
+                    <div className="absolute inset-0 bg-black/90 z-50 flex items-center justify-center gap-6">
+                        <div className="text-center">
+                            <h2 className="text-3xl font-black text-red-500 uppercase tracking-tighter">System Failure</h2>
+                            <p className="text-gray-500 text-sm">Earned {battleResult.reward} Scrap</p>
+                        </div>
+                        <div className="flex gap-2">
+                            {/* In Gauntlet, Retry isn't an option normally, but keeping it for Scavenge */}
+                            {!isGauntlet && (
+                                <Button onClick={generateNewEnemy} className="bg-red-600 hover:bg-red-500 text-white font-bold py-2 px-6">
+                                    Reboot (Retry)
+                                </Button>
+                            )}
+                            <Button onClick={() => navigate('/hub')} variant="outline" className="border-gray-700 text-gray-400">
+                                Abort
+                            </Button>
                         </div>
                     </div>
+                )}
 
-                    {/* Actions */}
-                    <div className="flex items-end gap-3">
-                        {!isGauntlet && (
-                            <button 
-                                onClick={handleReroll}
-                                disabled={isBattling}
-                                className="h-16 px-4 border border-gray-800 bg-black/50 text-gray-500 hover:text-white hover:border-gray-600 flex flex-col items-center justify-center transition-all disabled:opacity-50"
-                            >
-                                <Crosshair className="w-4 h-4 mb-1" />
-                                <span className="text-[10px] font-bold">SCOUT ({REROLL_COST})</span>
-                            </button>
-                        )}
+                {/* LEFT: PROTOCOLS */}
+                <div className={`flex-1 w-full md:w-auto transition-opacity duration-300 ${isBattling ? 'opacity-50 pointer-events-none grayscale' : ''}`}>
+                    <div className="text-[10px] text-gray-500 font-mono mb-1 tracking-widest uppercase">Select Strategy</div>
+                    <div className="origin-top-left scale-90 w-[110%]">
+                        <ProtocolSelector
+                            selectedProtocol={playerProtocol}
+                            onSelectProtocol={setPlayerProtocol}
+                            disabled={isBattling}
+                        />
+                    </div>
+                </div>
 
+                {/* RIGHT: ACTION BUTTONS */}
+                <div className="flex items-end gap-3 shrink-0">
+                    <div className="flex flex-col">
                         <Button 
-                            onClick={startBattle}
-                            disabled={!playerProtocol || isBattling}
-                            className={cn(
-                                "h-16 px-8 text-lg font-black italic tracking-widest uppercase transition-all rounded-none",
-                                isBattling 
-                                    ? "bg-gray-800 text-gray-500 border-gray-700" 
-                                    : "bg-[var(--accent-color)] text-black hover:bg-[var(--accent-color)] hover:brightness-110 shadow-[0_0_20px_rgba(var(--accent-rgb),0.4)]"
-                            )}
+                            onClick={handleReroll} 
+                            disabled={isBattling || isGauntlet || gameState.scrap < REROLL_COST} // Disable reroll in Gauntlet
+                            size="lg"
+                            className="h-14 bg-gray-900 border border-gray-700 text-gray-400 hover:text-white hover:border-gray-500 disabled:opacity-30"
                         >
-                            {isBattling ? "ENGAGING..." : "ENGAGE ►"}
+                            <div className="flex flex-col items-center gap-1">
+                                <Scan className="w-4 h-4" />
+                                <span className="text-[10px] font-mono">SCOUT ({REROLL_COST})</span>
+                            </div>
                         </Button>
                     </div>
+
+                    <Button 
+                        onClick={startBattle} 
+                        disabled={isBattling || !playerProtocol}
+                        size="lg"
+                        className="h-14 min-w-[200px] bg-[var(--accent-color)] text-black font-black text-xl hover:brightness-110 hover:scale-[1.02] active:scale-[0.98] transition-all shadow-[0_0_20px_rgba(var(--accent-rgb),0.4)]"
+                    >
+                        {isBattling ? (
+                            <span className="flex items-center gap-2 text-base">
+                                <RefreshCw className="animate-spin" /> SIMULATING...
+                            </span>
+                        ) : (
+                            <span className="flex items-center gap-2">
+                                ENGAGE <Play className="w-5 h-5 fill-current" />
+                            </span>
+                        )}
+                    </Button>
                 </div>
             </div>
         </div>
 
-        {/* Global Flash Overlay */}
-        {flashType && (
-            <div className={cn(
-                "absolute inset-0 pointer-events-none z-[100] mix-blend-overlay transition-opacity duration-75",
-                flashType === 'CRIT' ? "bg-white opacity-30" : "bg-white opacity-10",
-                flashType === 'VICTORY' ? "bg-green-500 opacity-20" : "",
-                flashType === 'DEFEAT' ? "bg-red-500 opacity-20" : ""
-            )} />
-        )}
-      </motion.div>
+        {/* Modals */}
+        <ScavengeModal
+            isOpen={showScavengeModal}
+            onNextBattle={handleNextBattle}
+            onReturn={handleReturnToWorkshop}
+            enemy={enemy}
+            rewards={pendingRewards}
+        />
+      </div>
     </>
   );
 };
