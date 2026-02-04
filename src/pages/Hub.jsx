@@ -5,58 +5,28 @@ import { useNavigate } from 'react-router-dom';
 import { useGameContext } from '@/context/GameContext';
 import { useSoundContext } from '@/context/SoundContext';
 import { Button } from '@/components/ui/button';
-import { Wrench, ShoppingCart, Swords, Trophy, Flame, Coins, Hammer, Cpu, Skull, Zap, Shield, Bot, Trash2, FileText, ChevronRight } from 'lucide-react';
+import { 
+  Wrench, ShoppingCart, Swords, Trophy, Flame, Coins, Hammer, 
+  Cpu, Skull, Zap, Shield, Bot, Trash2, FileText, ChevronRight,
+  Crosshair
+} from 'lucide-react';
 import ProfileModal from '@/components/ProfileModal';
-import { cn } from '@/lib/utils';
-import CombatLogModal from '@/components/CombatLogModal'; // <-- IMPORT THIS
-const ICON_COMPONENTS = {
-  Cpu,
-  Skull,
-  Zap,
-  Shield,
-  Bot
-};
+import CombatLogModal from '@/components/CombatLogModal';
 import SystemTicker from '@/components/SystemTicker';
+import { cn } from '@/lib/utils';
+
+const ICON_COMPONENTS = { Cpu, Skull, Zap, Shield, Bot };
+
 const Hub = () => {
   const navigate = useNavigate();
-  const { gameState, factoryReset } = useGameContext();
+  const { gameState, factoryReset, startGauntlet } = useGameContext();
   const { playSound } = useSoundContext();
   const [isHangarOpen, setIsHangarOpen] = useState(false);
+  const [isLogOpen, setIsLogOpen] = useState(false);
   const lastBattle = gameState.battleHistory[0];
-  const [isLogOpen, setIsLogOpen] = useState(false); // <--- ADD THIS LINE
-  const menuItems = [
-    {
-      title: 'Battle Arena',
-      description: 'Combat Zone',
-      icon: Swords,
-      path: '/battle',
-      borderColor: 'border-green-500' // Keep as fallback or use theme
-    },
-    {
-      title: 'Workshop',
-      description: 'System Config',
-      icon: Wrench,
-      path: '/workshop',
-      borderColor: 'border-blue-500'
-    },
-    {
-      title: 'The Forge',
-      description: 'Part Fusion',
-      icon: Hammer,
-      path: '/forge',
-      borderColor: 'border-red-500'
-    },
-    {
-      title: 'Shop',
-      description: 'Acquisition',
-      icon: ShoppingCart,
-      path: '/shop',
-      borderColor: 'border-purple-500'
-    }
-  ];
 
   const BotIcon = ICON_COMPONENTS[gameState.playerBot.icon] || ICON_COMPONENTS.Cpu;
-  
+
   const handleFactoryReset = () => {
     if (window.confirm("WARNING: This will wipe your save file permanently. Are you sure?")) {
       playSound('FUSE');
@@ -64,185 +34,223 @@ const Hub = () => {
     }
   };
 
+  const handleEnterGauntlet = () => {
+      playSound('CLICK');
+      startGauntlet();
+      navigate('/gauntlet');
+  };
+
   return (
     <>
       <Helmet>
         <title>Hub - Robot Battle Arena</title>
-        <meta name="description" content="Main hub for Robot Battle Arena. Customize your bot, buy parts, and enter battles." />
       </Helmet>
       
       <ProfileModal isOpen={isHangarOpen} onClose={() => setIsHangarOpen(false)} />
-{/* <--- YOU WERE MISSING THIS BLOCK ---> */}
-      <CombatLogModal 
-        isOpen={isLogOpen} 
-        onClose={() => setIsLogOpen(false)} 
-        battle={lastBattle} 
-      />
- <div className="min-h-screen bg-[#0a0a12] p-4 font-mono text-[#e0e0e0] selection:bg-[var(--accent-color)] selection:text-black">
-        <div className="max-w-7xl mx-auto py-8 relative">
-          
-          {/* Header & Factory Reset */}
-          <div className="flex justify-between items-start mb-8">
-             <div className="text-left">
-                <h1 className="text-4xl md:text-5xl font-bold text-[var(--accent-color)] uppercase tracking-widest [text-shadow:0_0_10px_var(--accent-color)] leading-none">
-                  Command Center
-                </h1>
-                <p className="text-sm md:text-xl text-gray-500 uppercase tracking-[0.4em] mt-2">
-                  Robot Battle Arena
-                </p>
-             </div>
+      <CombatLogModal isOpen={isLogOpen} onClose={() => setIsLogOpen(false)} battle={lastBattle} />
 
-             <Button 
-                onClick={handleFactoryReset}
-                variant="ghost" 
-                className="text-red-900 hover:text-red-500 hover:bg-red-900/20 transition-all p-2 h-auto rounded-none border border-transparent hover:border-red-500"
-                title="Factory Reset Data"
-             >
-                <Trash2 className="w-5 h-5" />
-             </Button>
-          </div>
+      <div className="min-h-screen bg-[#0a0a12] font-mono text-[#e0e0e0] flex flex-col pb-12">
+        
+        {/* HEADER SECTION */}
+        <div className="bg-black/80 border-b border-[var(--accent-color)] backdrop-blur-md sticky top-0 z-40">
+            <div className="max-w-7xl mx-auto p-4 flex flex-col md:flex-row justify-between items-center gap-4">
+                
+                {/* Title */}
+                <div className="text-center md:text-left">
+                    <h1 className="text-3xl font-black text-[var(--accent-color)] uppercase tracking-widest [text-shadow:0_0_15px_rgba(var(--accent-rgb),0.5)] leading-none">
+                        Command Center
+                    </h1>
+                    <div className="flex items-center gap-2 mt-1 justify-center md:justify-start">
+                        <span className="w-2 h-2 bg-green-500 animate-pulse rounded-full" />
+                        <p className="text-[10px] text-gray-500 uppercase tracking-[0.3em]">System Online</p>
+                    </div>
+                </div>
 
-          {/* SECTION 1: MAIN ACTION BUTTONS (Moved to Top) */}
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-            {menuItems.map((item, index) => {
-              const Icon = item.icon;
-              return (
-                <motion.div
-                  key={item.title}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.1 * index }}
+                {/* COMPACT STATS BAR */}
+                <div className="flex items-center gap-4 md:gap-8 bg-[#050505] border border-gray-800 rounded-sm px-6 py-2">
+                    <div className="flex items-center gap-3">
+                        <Coins className="w-4 h-4 text-yellow-500" />
+                        <div className="flex flex-col">
+                            <span className="text-xs text-gray-500 uppercase tracking-wider">Scrap</span>
+                            <span className="text-lg font-bold text-yellow-500 leading-none">{gameState.scrap}</span>
+                        </div>
+                    </div>
+                    <div className="w-[1px] h-8 bg-gray-800" />
+                    <div className="flex items-center gap-3">
+                        <Trophy className="w-4 h-4 text-green-500" />
+                        <div className="flex flex-col">
+                            <span className="text-xs text-gray-500 uppercase tracking-wider">Wins</span>
+                            <span className="text-lg font-bold text-green-500 leading-none">{gameState.winStreak}</span>
+                        </div>
+                    </div>
+                    <div className="w-[1px] h-8 bg-gray-800" />
+                    <div className="flex items-center gap-3">
+                        <Flame className="w-4 h-4 text-red-500" />
+                        <div className="flex flex-col">
+                            <span className="text-xs text-gray-500 uppercase tracking-wider">Losses</span>
+                            <span className="text-lg font-bold text-red-500 leading-none">{gameState.lossStreak}</span>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Factory Reset (Small) */}
+                <Button 
+                    onClick={handleFactoryReset}
+                    variant="ghost" 
+                    size="sm"
+                    className="absolute top-4 right-4 md:static text-red-900 hover:text-red-500 hover:bg-red-900/10"
+                    title="Factory Reset"
                 >
-                  <Button
-                    onClick={() => navigate(item.path)}
-                    className="w-full h-32 p-0 overflow-hidden group bg-black/80 border border-[var(--accent-color)] hover:bg-[rgba(var(--accent-rgb),0.1)] transition-all rounded-none relative"
-                  >
-                    <div className="absolute top-0 right-0 p-2 opacity-50">
-                        <Icon className="w-16 h-16 text-[var(--accent-color)] opacity-10 group-hover:opacity-20 group-hover:scale-110 transition-all duration-500" />
+                    <Trash2 className="w-4 h-4" />
+                </Button>
+            </div>
+        </div>
+
+        <div className="flex-1 max-w-7xl mx-auto w-full p-4 md:p-8 space-y-12">
+            
+            {/* SECTION 1: ACTIVE UNIT & COMBAT LOG */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                
+                {/* Active Bot Card */}
+                <motion.div 
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    onClick={() => setIsHangarOpen(true)}
+                    className="lg:col-span-1 bg-black border border-[var(--accent-color)] relative cursor-pointer group hover:bg-[rgba(var(--accent-rgb),0.05)] transition-all min-h-[180px] flex items-center p-6 gap-6"
+                >
+                    <div className="absolute top-0 left-0 bg-[var(--accent-color)] text-black text-[9px] font-bold px-2 py-0.5 uppercase tracking-widest">
+                        Active Unit
                     </div>
                     
-                    <div className="w-full h-full flex flex-col items-center justify-center relative z-10">
-                      <Icon className="w-8 h-8 mb-3 text-[var(--accent-color)] group-hover:drop-shadow-[0_0_8px_var(--accent-color)] transition-all" />
-                      <h3 className="text-xl font-bold text-[#e0e0e0] font-mono uppercase tracking-wider group-hover:text-[var(--accent-color)] transition-colors">
-                        {item.title}
-                      </h3>
-                      <div className="h-[1px] w-8 bg-gray-700 my-1 group-hover:w-16 group-hover:bg-[var(--accent-color)] transition-all" />
-                      <p className="text-gray-500 text-[10px] font-mono uppercase tracking-widest">
-                        {item.description}
-                      </p>
+                    <div className="p-3 border-2 border-[var(--accent-color)] bg-black shadow-[0_0_15px_rgba(var(--accent-rgb),0.3)] group-hover:scale-105 transition-transform">
+                        <BotIcon className="w-10 h-10 text-[var(--accent-color)]" />
                     </div>
-                  </Button>
+                    
+                    <div>
+                        <h2 className="text-2xl font-black text-white uppercase tracking-widest group-hover:text-[var(--accent-color)] transition-colors">
+                            {gameState.playerBot.name}
+                        </h2>
+                        <div className="flex items-center gap-2 mt-1 text-xs text-gray-500 font-mono">
+                            <span>LVL {gameState.playerBot.level || 1}</span>
+                            <span className="text-[var(--accent-color)]">OPERATOR</span>
+                        </div>
+                        <p className="text-[10px] text-gray-600 mt-2 uppercase tracking-widest group-hover:text-white transition-colors">
+                            [ CLICK TO CONFIGURE ]
+                        </p>
+                    </div>
                 </motion.div>
-              );
-            })}
-          </div>
 
-          {/* SECTION 2: STATUS DASHBOARD (Active Bot + Stats) */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-8">
-              
-              {/* Left Column: Active Unit (Takes 4/12 columns on large screens) */}
-              <div className="lg:col-span-4 flex flex-col">
-                  <motion.div
-                     initial={{ opacity: 0, x: -20 }}
-                     animate={{ opacity: 1, x: 0 }}
-                     transition={{ delay: 0.3 }}
-                     onClick={() => setIsHangarOpen(true)}
-                     className="flex-1 bg-black/40 border border-[var(--accent-color)] p-6 relative cursor-pointer group hover:bg-[rgba(var(--accent-rgb),0.05)] transition-all flex flex-col items-center justify-center min-h-[200px]"
-                  >
-                     <div className="absolute top-0 left-0 bg-[var(--accent-color)] text-black text-[10px] font-bold px-2 py-0.5 uppercase">
-                        Active Unit
-                     </div>
-                     <div className="absolute top-2 right-2 text-[var(--accent-color)] opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Wrench className="w-4 h-4" />
-                     </div>
+                {/* Latest Engagement Log */}
+                <div className="lg:col-span-2">
+                    {lastBattle ? (
+                        <motion.div 
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            onClick={() => setIsLogOpen(true)}
+                            className="h-full bg-black/40 border border-gray-800 p-6 cursor-pointer group hover:border-[var(--accent-color)] transition-all flex flex-col justify-center"
+                        >
+                            <div className="flex justify-between items-center mb-4 border-b border-gray-800 pb-2">
+                                <div className="flex items-center gap-2 text-gray-500 group-hover:text-[var(--accent-color)] transition-colors">
+                                    <FileText className="w-4 h-4" />
+                                    <span className="text-xs uppercase tracking-widest">Latest Engagement Log</span>
+                                </div>
+                                <span className="text-[10px] text-gray-600 font-mono">{new Date(lastBattle.timestamp).toLocaleTimeString()}</span>
+                            </div>
+                            
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-4">
+                                    <span className={`text-3xl font-black italic tracking-tighter ${lastBattle.playerWon ? 'text-green-500' : 'text-red-500'}`}>
+                                        {lastBattle.playerWon ? 'VICTORY' : 'DEFEAT'}
+                                    </span>
+                                    <div className="h-8 w-[1px] bg-gray-800" />
+                                    <div>
+                                        <p className="text-[10px] text-gray-500 uppercase tracking-wider">Opponent</p>
+                                        <p className="text-lg font-bold text-white group-hover:text-[var(--accent-color)] transition-colors">{lastBattle.enemyName}</p>
+                                    </div>
+                                </div>
+                                <ChevronRight className="w-6 h-6 text-gray-700 group-hover:text-white group-hover:translate-x-1 transition-all" />
+                            </div>
+                        </motion.div>
+                    ) : (
+                        <div className="h-full bg-black/40 border border-gray-800 border-dashed p-6 flex flex-col items-center justify-center text-gray-600">
+                            <p className="uppercase tracking-widest text-sm">No Combat Data Logged</p>
+                        </div>
+                    )}
+                </div>
+            </div>
 
-                     <div className="mb-4 p-4 rounded-full border-2 border-[var(--accent-color)] bg-black shadow-[0_0_20px_rgba(var(--accent-rgb),0.2)] group-hover:shadow-[0_0_30px_rgba(var(--accent-rgb),0.4)] transition-all">
-                        <BotIcon className="w-12 h-12 text-[var(--accent-color)]" />
-                     </div>
-                     
-                     <h2 className="text-2xl font-bold text-white uppercase tracking-widest text-center group-hover:text-[var(--accent-color)] transition-colors">
-                        {gameState.playerBot.name}
-                     </h2>
-                     <p className="text-xs text-gray-500 mt-2 uppercase tracking-widest">[ CLICK TO SWAP ]</p>
-                  </motion.div>
-              </div>
-
-              {/* Right Column: Stats Grid (Takes 8/12 columns) */}
-              <div className="lg:col-span-8 grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.4 }}
-                    className="bg-black/40 border border-gray-800 p-4 flex flex-col justify-center items-center hover:border-yellow-500/50 transition-colors"
-                  >
-                      <Coins className="w-6 h-6 text-yellow-500 mb-2" />
-                      <div className="text-3xl font-bold text-yellow-500">{gameState.scrap}</div>
-                      <div className="text-[10px] text-gray-500 uppercase tracking-widest">Scrap Reserves</div>
-                      <div className="text-[9px] text-gray-700 mt-1">Total: {gameState.totalScrapEarned}</div>
-                  </motion.div>
-
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.5 }}
-                    className="bg-black/40 border border-gray-800 p-4 flex flex-col justify-center items-center hover:border-green-500/50 transition-colors"
-                  >
-                      <Trophy className="w-6 h-6 text-green-500 mb-2" />
-                      <div className="text-3xl font-bold text-green-500">{gameState.winStreak}</div>
-                      <div className="text-[10px] text-gray-500 uppercase tracking-widest">Win Streak</div>
-                  </motion.div>
-
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.6 }}
-                    className="bg-black/40 border border-gray-800 p-4 flex flex-col justify-center items-center hover:border-red-500/50 transition-colors"
-                  >
-                      <Flame className="w-6 h-6 text-red-500 mb-2" />
-                      <div className="text-3xl font-bold text-red-500">{gameState.lossStreak}</div>
-                      <div className="text-[10px] text-gray-500 uppercase tracking-widest">Loss Streak</div>
-                  </motion.div>
-                  
-                {/* --- LATEST ENGAGEMENT (CLICKABLE) --- */}
-                  {lastBattle && (
-                    <motion.div
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ delay: 0.7 }}
-                      // Added hover effects and onClick
-                      onClick={() => setIsLogOpen(true)}
-                      className="md:col-span-3 bg-black/40 border border-gray-800 p-4 mt-2 cursor-pointer group hover:border-[var(--accent-color)] hover:bg-[rgba(var(--accent-rgb),0.05)] transition-all"
+            {/* SECTION 2: COMBAT OPERATIONS */}
+            <div>
+                <h3 className="text-sm font-bold text-gray-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+                    <Crosshair className="w-4 h-4" /> Combat Operations
+                </h3>
+                <div className="grid md:grid-cols-2 gap-4">
+                    
+                    {/* STANDARD BATTLE */}
+                    <button 
+                        onClick={() => navigate('/battle')}
+                        className="relative h-32 bg-black border border-gray-800 hover:border-green-500 group transition-all flex items-center px-8 overflow-hidden"
                     >
-                        <div className="flex justify-between items-center mb-2 border-b border-gray-800 pb-2 group-hover:border-gray-700">
-                            <div className="flex items-center gap-2">
-                                <FileText className="w-3 h-3 text-gray-500 group-hover:text-[var(--accent-color)]" />
-                                <span className="text-xs text-gray-400 uppercase tracking-widest group-hover:text-gray-300">Latest Engagement</span>
-                            </div>
-                            <span className="text-[10px] text-gray-600">{new Date(lastBattle.timestamp).toLocaleTimeString()}</span>
+                        <div className="absolute inset-0 bg-green-500/5 translate-x-[-100%] group-hover:translate-x-0 transition-transform duration-500" />
+                        <Swords className="w-12 h-12 text-gray-700 group-hover:text-green-500 transition-colors mr-6" />
+                        <div className="text-left relative z-10">
+                            <h4 className="text-2xl font-black text-white italic tracking-tighter uppercase group-hover:text-green-500 transition-colors">Battle Arena</h4>
+                            <p className="text-xs text-gray-500 font-mono mt-1">Standard Scavenge Operations</p>
                         </div>
-                        <div className="flex justify-between items-center">
-                            <span className="text-sm font-mono text-gray-300">
-                                VS <span className="text-white font-bold group-hover:text-[var(--accent-color)] transition-colors">{lastBattle.enemyName}</span>
-                            </span>
-                            <div className="flex items-center gap-2">
-                                <span className={`text-sm font-bold uppercase px-2 py-0.5 rounded-sm ${lastBattle.playerWon ? 'bg-green-900/20 text-green-500' : 'bg-red-900/20 text-red-500'}`}>
-                                    {lastBattle.playerWon ? 'VICTORY' : 'DEFEAT'}
-                                </span>
-                                <ChevronRight className="w-4 h-4 text-gray-600 group-hover:text-[var(--accent-color)] group-hover:translate-x-1 transition-all" />
-                            </div>
+                    </button>
+
+                    {/* GAUNTLET MODE */}
+                    <button 
+                        onClick={handleEnterGauntlet}
+                        className="relative h-32 bg-black border border-red-900/50 hover:border-red-500 group transition-all flex items-center px-8 overflow-hidden"
+                    >
+                         <div className="absolute inset-0 bg-red-600/10 translate-x-[-100%] group-hover:translate-x-0 transition-transform duration-500" />
+                         <div className="p-3 bg-red-900/20 border border-red-500/30 mr-6 group-hover:scale-110 transition-transform">
+                            <Trophy className="w-8 h-8 text-red-600 group-hover:text-red-400 transition-colors" />
+                         </div>
+                         <div className="text-left relative z-10">
+                            <h4 className="text-2xl font-black text-red-600 italic tracking-tighter uppercase group-hover:text-red-400 transition-colors">The Gauntlet</h4>
+                            <p className="text-xs text-red-800 font-mono mt-1 group-hover:text-red-400/70">High Stakes Tournament // 10 Floors</p>
                         </div>
-                    </motion.div>
-                  )}
-              </div>
-          </div>
+                    </button>
+                </div>
+            </div>
+
+            {/* SECTION 3: ENGINEERING & LOGISTICS */}
+            <div>
+                <h3 className="text-sm font-bold text-gray-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+                    <Wrench className="w-4 h-4" /> Engineering & Logistics
+                </h3>
+                <div className="grid md:grid-cols-3 gap-4">
+                    
+                    {[
+                        { title: 'Workshop', desc: 'Config & Loadout', icon: Wrench, path: '/workshop', color: 'text-blue-500', border: 'hover:border-blue-500' },
+                        { title: 'The Forge', desc: 'Part Fusion', icon: Hammer, path: '/forge', color: 'text-orange-500', border: 'hover:border-orange-500' },
+                        { title: 'Supply Depot', desc: 'Acquisition', icon: ShoppingCart, path: '/shop', color: 'text-purple-500', border: 'hover:border-purple-500' }
+                    ].map((item) => {
+                        const Icon = item.icon;
+                        return (
+                            <button 
+                                key={item.title}
+                                onClick={() => navigate(item.path)}
+                                className={`h-24 bg-black border border-gray-800 ${item.border} group transition-all flex items-center justify-center gap-4`}
+                            >
+                                <Icon className={`w-6 h-6 text-gray-600 group-hover:${item.color} transition-colors`} />
+                                <div className="text-left">
+                                    <h4 className={`text-lg font-bold text-gray-300 uppercase tracking-wide group-hover:text-white`}>{item.title}</h4>
+                                    <p className="text-[10px] text-gray-600 font-mono">{item.desc}</p>
+                                </div>
+                            </button>
+                        );
+                    })}
+                </div>
+            </div>
 
         </div>
-       {/* FIXED POSITION TICKER:
-            This sits OUTSIDE the main flow. It won't shrink your UI.
-            "fixed bottom-0" glues it to the screen edge.
-        */}
+
+        {/* FIXED TICKER */}
         <div className="fixed bottom-0 left-0 right-0 z-50">
-           <SystemTicker />
+            <SystemTicker />
         </div>
       </div>
     </>
