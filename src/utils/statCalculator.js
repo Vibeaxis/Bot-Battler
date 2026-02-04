@@ -2,8 +2,21 @@ import { getPartById } from '@/data/parts';
 import { BASE_HEALTH } from '@/constants/gameConstants';
 
 export const calculateBotStats = (bot) => {
+  // --- CRASH FIX: SAFEGUARD ---
+  // If bot is undefined, null, or has no equipment (loading state), return zeroes.
+  if (!bot || !bot.equipment) {
+    return {
+        Damage: 0,
+        Speed: 0,
+        Armor: 0,
+        Weight: 0,
+        MaxHealth: BASE_HEALTH || 100
+    };
+  }
+
   const stats = { Damage: 0, Speed: 0, Armor: 0, Weight: 0 };
   
+  // Handle slot levels - support both structure types
   const levels = bot.slotLevels || { head: 0, rightArm: 0, leftArm: 0, chassis: 0 };
 
   const slotMap = {
@@ -29,17 +42,12 @@ export const calculateBotStats = (bot) => {
     }
   });
 
-  // --- NEW MECHANIC: HEAVY BUILD SCALING ---
+  // --- WEIGHT BONUSES ---
   
-  // 1. Kinetic Mass (Momentum)
-  // Heavier bots hit harder. Add 5% of Weight to Damage.
-  // Example: 200 Weight = +10 Damage.
+  // 1. Kinetic Mass (5% of Weight added to Damage)
   stats.Damage += (stats.Weight * 0.05);
 
-  // 2. Hull Integrity (Density)
-  // Weight adds to Max HP, but we CAP it to prevent "Raid Bosses".
-  // Ratio: 10 Weight = 1 HP.
-  // Max Bonus: 50 HP.
+  // 2. Hull Integrity (1 HP per 10 Weight, Capped at +50)
   const hpBonus = Math.min(50, Math.floor(stats.Weight * 0.1));
   const maxHealth = (BASE_HEALTH || 100) + hpBonus;
 
@@ -48,6 +56,6 @@ export const calculateBotStats = (bot) => {
     Speed: Math.round(stats.Speed),
     Armor: Math.round(stats.Armor),
     Weight: Math.round(stats.Weight),
-    MaxHealth: Math.round(maxHealth) // Exporting the new calculated Max HP
+    MaxHealth: Math.round(maxHealth)
   };
 };
