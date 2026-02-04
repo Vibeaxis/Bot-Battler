@@ -5,7 +5,7 @@ import { STARTING_SCRAP } from '@/constants/gameConstants';
 import { getRandomPart, PART_TIERS, getPartById } from '@/data/parts';
 import { PART_SLOTS } from '@/data/parts';
 import { useToast } from '@/components/ui/use-toast';
-
+import { calculateBotStats } from '@/utils/statCalculator';
 export const THEMES = {
   // --- CLASSICS ---
   'Green': { hex: '#00ff9d', rgb: '0, 255, 157' },
@@ -50,10 +50,49 @@ export const useGameContext = () => {
 
 // Simple ID generator
 const generateId = () => Math.random().toString(36).substr(2, 9);
+// --- HELPER: Generate Enemy for Gauntlet ---
+// This is a simplified version. You can import your main enemy generator if you have one.
+const generateGauntletEnemy = (rarity, floor) => {
+    const tierMap = {
+        'common': PART_TIERS.TIER_1,
+        'uncommon': PART_TIERS.TIER_2,
+        'rare': PART_TIERS.TIER_3,
+        'epic': PART_TIERS.TIER_4,
+        'legendary': PART_TIERS.TIER_4 // Or Tier 5 if you have it
+    };
+    
+    const tier = tierMap[rarity] || PART_TIERS.TIER_1;
+    
+    // Create a random bot
+    const enemy = {
+        id: generateId(),
+        name: `Unit-${Math.floor(Math.random() * 1000)}`,
+        icon: 'Cpu', // Default, or randomize
+        level: floor,
+        rarityId: rarity, // Important for the "rarity" display on cards
+        equipment: {
+            [PART_SLOTS.HEAD]: getRandomPart(tier).id,
+            [PART_SLOTS.RIGHT_ARM]: getRandomPart(tier).id,
+            [PART_SLOTS.LEFT_ARM]: getRandomPart(tier).id,
+            [PART_SLOTS.CHASSIS]: getRandomPart(tier).id
+        }
+    };
+    
+    // Add flavorful names based on floor
+    const names = ["Scout", "Grunt", "Sentinel", "Guardian", "Striker", "Destroyer", "Warlord", "Titan", "Gatekeeper", "APEX"];
+    enemy.name = `${names[Math.min(floor - 1, 9)]} (Lvl ${floor})`;
 
+    return enemy;
+};
 export const GameProvider = ({ children }) => {
   const { toast } = useToast();
-  
+  // --- GAUNTLET STATE ---
+  const [gauntletState, setGauntletState] = useState({
+    active: false,
+    currentFloor: 0,
+    ladder: [], 
+    completed: false
+  });
   const [gameState, setGameState] = useState(() => {
     const saved = localStorage.getItem('robotBattleGame');
     if (saved) {
@@ -476,10 +515,66 @@ const recordBattle = (result) => {
     localStorage.removeItem('robotBattleGame');
     window.location.reload();
   };
-  
+  // --- GAUNTLET FUNCTIONS (NEW) ---
+
+  const startGauntlet = () => {
+    const ladder = [];
+    // Define Difficulty Progression
+    const difficulties = [
+      { count: 3, rarity: 'common' },    // Floors 1-3
+      { count: 3, rarity: 'uncommon' },  // Floors 4-6
+      { count: 2, rarity: 'rare' },      // Floors 7-8
+      { count: 1, rarity: 'epic' },      // Floor 9 (Gatekeeper)
+      { count: 1, rarity: 'legendary' }  // Floor 10 (BOSS)
+    ];
+
+    let floor = 1;
+    difficulties.forEach(tier => {
+      for (let i = 0; i < tier.count; i++) {
+        // Generate enemy for this specific floor/difficulty
+        const enemy = generateGauntletEnemy(tier.rarity, floor);
+        ladder.push(enemy);
+        floor++;
+      }
+    });
+
+    setGauntletState({
+      active: true,
+      currentFloor: 0, // Array index (0 is Floor 1)
+      ladder: ladder,
+      completed: false
+    });
+    
+    toast({
+        title: "GAUNTLET INITIALIZED",
+        description: "Survive 10 floors. No turning back.",
+        className: "border-red-500 text-red-500"
+    });
+  };
+
+  const advanceGauntlet = () => {
+    setGauntletState(prev => {
+      const nextFloor = prev.currentFloor + 1;
+      
+      // Check if victory (Finished all floors)
+      if (nextFloor >= prev.ladder.length) {
+        return { ...prev, completed: true };
+      }
+      
+      return { ...prev, currentFloor: nextFloor };
+    });
+  };
+
+  const exitGauntlet = () => {
+    setGauntletState({ active: false, currentFloor: 0, ladder: [], completed: false });
+  };
+
+  // --- CONTEXT VALUE ---
   const value = {
     gameState,
     setGameState,
+    
+    // Inventory & Economy
     getSellValue,
     sellItem,
     sellAllCommonItems,
@@ -488,10 +583,14 @@ const recordBattle = (result) => {
     addToInventory,
     removeFromInventory,
     updateScrap,
-    resetStreaks,
-    recordBattle,
     purchaseMysteryBox,
     performFusion,
+    
+    // Stats & Battle
+    resetStreaks,
+    recordBattle,
+    
+    // Hangar & Customization
     upgradeSlot,
     updateBotName,
     updateBotIcon,
@@ -499,7 +598,13 @@ const recordBattle = (result) => {
     setCurrentTheme,
     purchaseNewBot,
     setActiveBot,
-    factoryReset
+    factoryReset,
+    
+    // Gauntlet (NEW)
+    gauntletState,
+    startGauntlet,
+    advanceGauntlet,
+    exitGauntlet
   };
   
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>;
