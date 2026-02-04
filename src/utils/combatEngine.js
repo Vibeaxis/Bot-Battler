@@ -8,28 +8,26 @@ import {
   DAMAGE_VARIANCE 
 } from '@/constants/gameConstants';
 
-// SAFEGUARD 1: Fallback values prevent NaN if imports fail
 const STARTING_HP = BASE_HEALTH || 100; 
 
-// --- NEW HELPER: DAMAGE SOFT CAP ---
-// Prevents one-shots by dampening damage that exceeds 35% of max HP
+// --- IMPROVED SOFT CAP ---
+// Now uses 20% pass-through instead of 50%.
+// Raw 300 Dmg vs 100 HP -> 35 + (265 * 0.2) = 88 Dmg. (SURVIVAL)
 const applySoftCap = (damage, maxHealth) => {
-  const cap = maxHealth * 0.35; 
-  // If damage is under the cap, let it through
+  const cap = maxHealth * 0.35; // 35 damage threshold
+  
   if (damage <= cap) return damage;
   
-  // If over cap, dampen the excess by 50%
   const excess = damage - cap;
-  return Math.floor(cap + (excess * 0.5));
+  // CHANGED: 0.5 -> 0.2 (Heavy Damping)
+  return Math.floor(cap + (excess * 0.2)); 
 };
 
 const calculateDamage = (attackerDamage, defenderArmor) => {
-  // SAFEGUARD 2: Default to 0 if stats are missing
   const dmg = attackerDamage || 0;
   const arm = defenderArmor || 0;
   
   const baseDamage = dmg - (arm * 0.5);
-  // Ensure we don't multiply by undefined
   const variance = 1 + (Math.random() * 2 - 1) * (DAMAGE_VARIANCE || 0.2);
   
   return Math.max(1, Math.floor(baseDamage * variance));
@@ -47,15 +45,12 @@ const calculateDodgeChance = (defenderSpeed) => {
 };
 
 export const simulateBattle = (botA, botB, protocolA, protocolB) => {
-  // 1. Initial Setup
-  // We capture Max Health for the Soft Cap calculation
   const MAX_HP_A = STARTING_HP;
   const MAX_HP_B = STARTING_HP;
 
   let healthA = STARTING_HP;
   let healthB = STARTING_HP;
 
-  // SAFEGUARD 3: Ensure calculateBotStats returns an object
   let statsA = calculateBotStats(botA) || { Damage: 10, Speed: 10, Armor: 0 };
   let statsB = calculateBotStats(botB) || { Damage: 10, Speed: 10, Armor: 0 };
   
@@ -63,11 +58,9 @@ export const simulateBattle = (botA, botB, protocolA, protocolB) => {
   const healthTimeline = []; 
   const criticalHits = [];
   
-  // 2. The Recorder Helper
   const record = (message) => {
     battleLog.push(message);
     healthTimeline.push({ 
-      // SAFEGUARD 4: Force health to be a number, never NaN
       a: isNaN(healthA) ? 0 : Math.max(0, healthA), 
       b: isNaN(healthB) ? 0 : Math.max(0, healthB) 
     });
@@ -75,17 +68,14 @@ export const simulateBattle = (botA, botB, protocolA, protocolB) => {
 
   record(`⚔️ Battle Start: ${botA.name} vs ${botB.name}`);
 
-  // 3. Apply Protocol Bonuses
   if (protocolA && protocolB) {
     const bonusA = calculateProtocolBonus(protocolA, protocolB.id) || 0;
     const bonusB = calculateProtocolBonus(protocolB, protocolA.id) || 0;
 
-    // Apply A's bonus
     if (statsA[protocolA.statType]) {
        statsA = { ...statsA, [protocolA.statType]: Math.floor(statsA[protocolA.statType] * (1 + bonusA)) };
     }
     
-    // Apply B's bonus
     if (statsB[protocolB.statType]) {
        statsB = { ...statsB, [protocolB.statType]: Math.floor(statsB[protocolB.statType] * (1 + bonusB)) };
     }
@@ -96,7 +86,6 @@ export const simulateBattle = (botA, botB, protocolA, protocolB) => {
     record('---');
   }
 
-  // Log post-buff stats
   record(`${botA.name} (Buffed) - DMG: ${statsA.Damage} | SPD: ${statsA.Speed} | ARM: ${statsA.Armor}`);
   record(`${botB.name} (Buffed) - DMG: ${statsB.Damage} | SPD: ${statsB.Speed} | ARM: ${statsB.Armor}`);
   record('---');
@@ -105,14 +94,12 @@ export const simulateBattle = (botA, botB, protocolA, protocolB) => {
   let missStreakB = 0;
   let round = 0;
   
-  // 4. Combat Loop
   while (healthA > 0 && healthB > 0 && round < 50) {
     round++;
     
     const speedA = statsA.Speed || 0;
     const speedB = statsB.Speed || 0;
 
-    // Determine turn order based on Speed
     const turns = speedA >= speedB
       ? [
           { attacker: botA, defender: botB, attStats: statsA, defStats: statsB, attRef: 'A', defRef: 'B', targetMaxHp: MAX_HP_B },
@@ -137,58 +124,52 @@ export const simulateBattle = (botA, botB, protocolA, protocolB) => {
 
       if (Math.random() > dodgeChance) {
         if (Math.random() < effectiveHitChance) {
-          // HIT LANDED
+          // --- HIT ---
           if (attRef === 'A') missStreakA = 0; else missStreakB = 0;
 
           const isCrit = Math.random() < (CRIT_CHANCE || 0.1);
-          let damage = calculateDamage(attStats.Damage, defStats.Armor);
+          let rawDamage = calculateDamage(attStats.Damage, defStats.Armor);
           
           if (isCrit) {
-            damage = Math.floor(damage * (CRIT_MULTIPLIER || 1.5));
-            // Apply Soft Cap to Crit
-            damage = applySoftCap(damage, targetMaxHp);
-            
-            criticalHits.push(round);
-            
-            if (defRef === 'A') healthA -= damage; else healthB -= damage;
-            record(`💥 Round ${round}: ${attacker.name} lands a CRITICAL HIT for ${damage} damage!`);
-          } else {
-            // Apply Soft Cap to Normal Hit
-            damage = applySoftCap(damage, targetMaxHp);
+            rawDamage = Math.floor(rawDamage * (CRIT_MULTIPLIER || 1.5));
+          }
 
-            if (defRef === 'A') healthA -= damage; else healthB -= damage;
-            record(`⚡ Round ${round}: ${attacker.name} attacks for ${damage} damage`);
+          // APPLY SOFT CAP & DETECT DAMPENING
+          const finalDamage = applySoftCap(rawDamage, targetMaxHp);
+          const isDampened = finalDamage < rawDamage;
+
+          if (isCrit) {
+            criticalHits.push(round);
+            if (defRef === 'A') healthA -= finalDamage; else healthB -= finalDamage;
+            record(`💥 Round ${round}: ${attacker.name} lands a CRITICAL HIT for ${finalDamage} damage!${isDampened ? ' (DAMPENED)' : ''}`);
+          } else {
+            if (defRef === 'A') healthA -= finalDamage; else healthB -= finalDamage;
+            record(`⚡ Round ${round}: ${attacker.name} attacks for ${finalDamage} damage${isDampened ? ' (DAMPENED)' : ''}`);
           }
           
         } else {
-          // HIT MISSED (Graze Check)
+          // --- MISS / GRAZE ---
           if (attRef === 'A') missStreakA++; else missStreakB++;
 
           if (Math.random() < 0.5) {
             let damage = calculateDamage(attStats.Damage, defStats.Armor);
-            // Glancing blow is already reduced (30%), so Soft Cap is rarely needed, but safe to include
             damage = Math.max(1, Math.floor(damage * 0.3)); 
 
             if (defRef === 'A') healthA -= damage; else healthB -= damage;
-            record(`⚠️ Round ${round}: ${attacker.name} lands a glancing blow for ${damage} damage.`);
+            record(`⚠️ Round ${round}: ${attacker.name} lands a GLANCING blow for ${damage} damage.`);
             
           } else {
-            record(`❌ Round ${round}: ${attacker.name}'s attack misses!`);
+            record(`❌ Round ${round}: ${attacker.name} misses target!`);
           }
         }
       } else {
-        // DODGE
+        // --- DODGE FIX ---
         if (attRef === 'A') missStreakA++; else missStreakB++;
-        
-        // --- FIXED LOG MESSAGE ---
-        // Changed from "${defender} dodges" to "${attacker}'s attack was dodged"
-        // This ensures the UI knows WHOSE turn it was (the Attacker's).
-    record(`🌀 Round ${round}: ${attacker.name} misses (DODGED)!`);
+        record(`🌀 Round ${round}: ${attacker.name} misses (DODGED)!`);
       }
     }
   }
   
-  // SAFEGUARD 5: Explicitly handle NaN in winner check
   const cleanHealthA = isNaN(healthA) ? 0 : healthA;
   const cleanHealthB = isNaN(healthB) ? 0 : healthB;
 
