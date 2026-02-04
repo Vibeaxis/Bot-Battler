@@ -62,11 +62,15 @@ export const getRandomProtocol = () => {
   return PROTOCOLS[keys[Math.floor(Math.random() * keys.length)]];
 };
 
-export const calculateProtocolBonus = (protocol, enemyProtocolName) => {
+// Change 'enemyProtocolName' to 'enemyProtocolId'
+export const calculateProtocolBonus = (protocol, enemyProtocolId) => {
   if (!protocol) return 0;
   
-  if (protocol.counterProtocol === enemyProtocolName) {
-    return protocol.doubleBonus;
+  // Now it compares 'TECH' === 'TECH' correctly
+  if (protocol.counterProtocol === enemyProtocolId) {
+    return protocol.doubleBonus; // 40%
   }
-  return protocol.baseBonus;
+  
+  // Otherwise you just get the standard 20%
+  return protocol.baseBonus; 
 };
