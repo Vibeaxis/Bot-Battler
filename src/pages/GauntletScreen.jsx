@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Swords, Skull, Trophy, Lock, ArrowLeft, ShieldAlert } from 'lucide-react';
@@ -11,10 +11,17 @@ const GauntletScreen = () => {
   const navigate = useNavigate();
   const { gauntletState, exitGauntlet } = useGameContext();
   
-  // If no gauntlet is active, redirect back to hub
-  if (!gauntletState.active) {
-    navigate('/hub');
-    return null;
+  // --- FIX: MOVE REDIRECT TO USEEFFECT ---
+  useEffect(() => {
+    // If we land here without an active gauntlet, kick back to hub
+    if (!gauntletState || !gauntletState.active) {
+      navigate('/hub');
+    }
+  }, [gauntletState, navigate]);
+
+  // If state isn't ready yet, return null so we don't render broken UI
+  if (!gauntletState || !gauntletState.active) {
+      return null;
   }
 
   const currentEnemy = gauntletState.ladder[gauntletState.currentFloor];
@@ -78,7 +85,8 @@ const GauntletScreen = () => {
                                     {isBoss ? "APEX PREDATOR" : enemy.name}
                                 </span>
                                 <span className="text-[10px] text-gray-600">
-                                    {enemy.rarity.toUpperCase()} CLASS
+                                    {/* Handle uppercase carefully in case rarity is undefined */}
+                                    {(enemy.rarityId || 'common').toUpperCase()} CLASS
                                 </span>
                             </div>
                         </div>
