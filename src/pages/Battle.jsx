@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Helmet } from 'react-helmet';
 import { motion, useAnimation } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useGameContext } from '@/context/GameContext';
 import { useSoundContext } from '@/context/SoundContext';
 import { Button } from '@/components/ui/button';
