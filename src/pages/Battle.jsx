@@ -22,7 +22,7 @@ import { getRandomFlavor } from '@/data/flavor';
 import { PROTOCOLS, getRandomProtocol } from '@/data/tactics';
 import CombatTextOverlay from '@/components/CombatTextOverlay';
 import { ScreenFlash, ImpactParticles } from '@/components/CombatEffects'; // Import the new file
-
+import { calculateBotStats } from '@/utils/statCalculator';
 
 
 import electricGrid from '@/assets/electric_grid.jpg';
