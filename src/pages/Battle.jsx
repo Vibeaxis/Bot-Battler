@@ -378,23 +378,34 @@ const Battle = () => {
                 if (isCrit) setLeftToast(getRandomFlavor('HIT'));
             }
 
-        // --- UPDATED SOUND LOGIC ---
+   // --- UPDATED SOUND LOGIC ---
             if (damageAmount) {
                 // Determine which sound to play
                 let soundKey = 'HIT'; // Default heavy hit
+                const dmgValue = parseInt(damageAmount, 10);
                 
                 if (isCrit) {
                     soundKey = 'CRIT';
-                } else if (isGlancing || isDampened) {
-                    // Use the lighter "Tink" sound for glancing OR dampened hits
-                    // This fixes the "Dampened sounds too heavy" issue
+                } 
+                else if (isGlancing) {
+                    // Glancing blows always sound like a deflection ("Tink")
                     soundKey = 'GRAZE'; 
+                } 
+                else if (isDampened) {
+                    // INTELLIGENT AUDIO:
+                    // If damage is dampened but still high (>= 10), it should sound like a HIT.
+                    // If damage is dampened to a scratch (< 10), it sounds like a GRAZE.
+                    if (dmgValue < 10) {
+                        soundKey = 'GRAZE';
+                    } else {
+                        soundKey = 'HIT';
+                    }
                 }
 
                 playSound(soundKey);
                 
                 // Visual Flash logic
-                setFlashType(soundKey); // Will use CRIT, HIT, or GRAZE styles if you map them
+                setFlashType(soundKey); 
                 setTimeout(() => setFlashType(null), 100);
 
                 const shakeIntensity = isCrit ? 20 : 5;
