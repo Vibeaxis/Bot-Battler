@@ -7,28 +7,28 @@ import { cn } from '@/lib/utils';
 import { calculateBotStats } from '@/utils/statCalculator';
 import { useToast } from '@/components/ui/use-toast'; 
 
-// --- SKELETON (Compacted for new layout) ---
+// --- SKELETON (Balanced) ---
 const SchematicSkeleton = () => (
   <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 0 }} viewBox="0 0 100 100" preserveAspectRatio="none">
     {/* Central Spine */}
-    <path d="M 50 15 L 50 85" stroke="currentColor" strokeWidth="1" fill="none" className="text-gray-700 opacity-40" vectorEffect="non-scaling-stroke" />
+    <path d="M 50 15 L 50 85" stroke="currentColor" strokeWidth="1.5" fill="none" className="text-gray-700 opacity-50" vectorEffect="non-scaling-stroke" />
     
     {/* Horizontal Bus */}
-    <path d="M 25 35 L 75 35" stroke="currentColor" strokeWidth="1" fill="none" className="text-gray-700 opacity-40" vectorEffect="non-scaling-stroke" />
+    <path d="M 25 38 L 75 38" stroke="currentColor" strokeWidth="1.5" fill="none" className="text-gray-700 opacity-50" vectorEffect="non-scaling-stroke" />
     
-    {/* Nodes */}
-    <circle cx="50" cy="18" r="2" className="fill-gray-800" />
-    <circle cx="50" cy="35" r="3" className="fill-black stroke-gray-600 stroke-1" />
-    <circle cx="50" cy="35" r="1.5" className="fill-[var(--accent-color)] animate-pulse" />
-    <circle cx="25" cy="35" r="2" className="fill-gray-800" />
-    <circle cx="75" cy="35" r="2" className="fill-gray-800" />
-    <circle cx="50" cy="85" r="2" className="fill-gray-800" />
+    {/* Nodes - Aligned with h-16 spacing */}
+    <circle cx="50" cy="18" r="2.5" className="fill-gray-600" />
+    <circle cx="50" cy="38" r="4" className="fill-black stroke-gray-500 stroke-2" />
+    <circle cx="50" cy="38" r="1.5" className="fill-[var(--accent-color)] animate-pulse" />
+    <circle cx="25" cy="38" r="2.5" className="fill-gray-600" />
+    <circle cx="75" cy="38" r="2.5" className="fill-gray-600" />
+    <circle cx="50" cy="82" r="2.5" className="fill-gray-600" />
   </svg>
 );
 
 const BlueprintGrid = () => (
     <div 
-        className="absolute inset-0 pointer-events-none opacity-5"
+        className="absolute inset-0 pointer-events-none opacity-10"
         style={{
             backgroundImage: `
                 linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px),
@@ -43,17 +43,17 @@ const TechFrame = ({ children, className, isActive, colorClass = "text-gray-800"
   <div className={`relative ${className}`}>
     <svg className="absolute inset-0 w-full h-full pointer-events-none transition-all duration-300" style={{ zIndex: 0 }} viewBox="0 0 100 100" preserveAspectRatio="none">
       <path 
-        d="M 0 6 L 6 0 L 94 0 L 100 6 L 100 94 L 94 100 L 6 100 L 0 94 Z" 
+        d="M 0 8 L 8 0 L 92 0 L 100 8 L 100 92 L 92 100 L 8 100 L 0 92 Z" 
         fill="none" 
         stroke="currentColor" 
-        strokeWidth={isActive ? "1.5" : "1"} 
+        strokeWidth={isActive ? "2" : "1"} 
         vectorEffect="non-scaling-stroke"
-        className={isActive ? "text-[var(--accent-color)]" : "text-gray-700"}
+        className={isActive ? "text-[var(--accent-color)] drop-shadow-[0_0_5px_var(--accent-color)]" : "text-gray-700"}
       />
     </svg>
     <div 
         className="relative z-10 w-full h-full flex flex-col items-center justify-center overflow-hidden"
-        style={{ clipPath: 'polygon(6% 0, 94% 0, 100% 6%, 100% 94%, 94% 100%, 6% 100%, 0 94%, 0 6%)' }}
+        style={{ clipPath: 'polygon(8% 0, 92% 0, 100% 8%, 100% 92%, 92% 100%, 8% 100%, 0 92%, 0 8%)' }}
     >
         {children}
     </div>
@@ -99,7 +99,7 @@ const BotCard = ({ bot, slotLevels, isAttacking, side = 'player', className = ''
   const stats = calculateBotStats({ ...bot, slotLevels: slotLevels || bot.slotLevels });
   
   const slots = [
-    { key: 'Head', partId: bot.equipment?.Head, gridClass: 'col-span-2 w-1/2 mx-auto' }, 
+    { key: 'Head', partId: bot.equipment?.Head, gridClass: 'col-span-2 w-3/5 mx-auto' }, 
     { key: 'LeftArm', partId: bot.equipment?.LeftArm, gridClass: 'col-span-1' },
     { key: 'RightArm', partId: bot.equipment?.RightArm, gridClass: 'col-span-1' },
     { key: 'Chassis', partId: bot.equipment?.Chassis, gridClass: 'col-span-2 w-full' }
@@ -120,12 +120,12 @@ const BotCard = ({ bot, slotLevels, isAttacking, side = 'player', className = ''
   }
 
   const StatBox = ({ label, value, icon: Icon, colorClass }) => (
-    <div className="flex items-center justify-between px-2 py-1 border-b border-gray-800 bg-[#0a0a0a]/80">
-        <div className="flex items-center gap-1.5 text-gray-500">
-            <Icon className="w-3 h-3" />
-            <span className="text-[9px] font-mono font-bold uppercase">{label}</span>
+    <div className="flex items-center justify-between px-3 py-1.5 border-b border-gray-800 bg-[#0a0a0a]/80">
+        <div className="flex items-center gap-2 text-gray-500">
+            <Icon className="w-3.5 h-3.5" />
+            <span className="text-[10px] font-mono font-bold uppercase">{label}</span>
         </div>
-        <span className={`text-xs font-bold ${colorClass} font-mono tracking-tighter`}>
+        <span className={`text-sm font-bold ${colorClass} font-mono tracking-tighter`}>
             {value}
         </span>
     </div>
@@ -150,16 +150,15 @@ const BotCard = ({ bot, slotLevels, isAttacking, side = 'player', className = ''
 
   return (
     <div className={cn(
-      // SIZE: Width 80 (Standard), but height fits content tightly
-      "flex flex-col shrink-0 w-80 bg-[#050505] border border-gray-800 shadow-[0_0_40px_-10px_rgba(0,0,0,0.8)] relative z-10 transition-all duration-300",
+      "flex flex-col shrink-0 w-80 h-auto bg-[#030303] border border-gray-800 shadow-[0_0_40px_-10px_rgba(0,0,0,0.8)] relative z-10 transition-all duration-300",
       className
     )}>
       
       <BlueprintGrid />
 
-      {/* HEADER: Compact (py-2) */}
-      <div className="py-2 px-3 flex items-center gap-3 relative bg-[#080808] border-b border-gray-800">
-        <div className="p-1 shrink-0 bg-black border border-gray-700 rounded-sm shadow-inner">
+      {/* HEADER */}
+      <div className="p-3 flex items-center gap-3 relative bg-[#080808] border-b border-gray-800">
+        <div className="p-1.5 shrink-0 bg-black border border-gray-700 rounded-sm shadow-inner">
           <BotIcon className="w-5 h-5 text-[var(--accent-color)]" />
         </div>
         <div className="flex-1 min-w-0 z-10">
@@ -170,13 +169,13 @@ const BotCard = ({ bot, slotLevels, isAttacking, side = 'player', className = ''
             {bot.name}
           </h3>
           <div className="text-[9px] text-gray-500 font-mono font-bold flex items-center gap-2">
-            <span className="text-gray-400">LVL {bot.level || 1}</span>
-            <span className="text-[var(--accent-color)] opacity-80">{bot.rarity ? bot.rarity.toUpperCase() : (side === 'player' ? 'OPERATOR' : 'TARGET')}</span>
+            <span className="bg-gray-800 px-1.5 py-px text-gray-300 border border-gray-700">LVL {bot.level || 1}</span>
+            <span className="text-gray-600 tracking-wide">{bot.rarity ? bot.rarity.toUpperCase() : (side === 'player' ? 'OPERATOR' : 'TARGET')}</span>
           </div>
         </div>
       </div>
       
-      {/* SCHEMATIC: Tight padding (p-3) */}
+      {/* SCHEMATIC */}
       <div className="relative p-3 flex-1">
         <SchematicSkeleton />
 
@@ -204,26 +203,26 @@ const BotCard = ({ bot, slotLevels, isAttacking, side = 'player', className = ''
                         onClick={() => handlePartClick(part)}
                     >
                         <TechFrame 
-                            // SIZE: h-14 (56px) - Saves ~20px per row vs original
-                            className="w-full h-14 transition-all duration-300 cursor-pointer"
+                            // SIZE: h-16 (64px) - The Goldilocks Size
+                            className="w-full h-16 transition-all duration-300 cursor-pointer"
                             isActive={shouldAnimateArm || (hoveredPart && hoveredPart.id === part?.id)}
                             colorClass={part ? "text-gray-600" : "text-gray-800"} 
                         >
                             <div className={cn(
                                 "absolute inset-0 flex flex-col items-center justify-center transition-all duration-300",
-                                // COLOR: Lighter background (Gray-900) for visibility
-                                part ? "bg-gray-900" : "bg-[#080808]",
+                                // COLOR: Lighter background (Gray-800) for visibility
+                                part ? "bg-gray-800" : "bg-[#080808]",
                                 (hoveredPart && hoveredPart.id === part?.id) && "bg-[var(--accent-color)]/10"
                             )}>
-                                {/* LABEL: Visible by default, lighter text */}
-                                <span className="absolute top-0.5 left-1.5 text-[7px] font-mono text-gray-500 font-bold uppercase tracking-widest opacity-80">
+                                {/* LABEL: Bright text-gray-400, always visible */}
+                                <span className="absolute top-1 left-1.5 text-[8px] font-mono text-gray-400 font-bold uppercase tracking-widest opacity-100">
                                     {key.replace('Arm', '')}
                                 </span>
 
                                 <Icon className={cn(
-                                    "w-6 h-6 mt-1 transition-transform duration-300 drop-shadow-md", 
-                                    part ? colors.text : "text-gray-800",
-                                    (hoveredPart && hoveredPart.id === part?.id) ? "scale-110 brightness-150" : "opacity-80"
+                                    "w-7 h-7 mt-1 transition-transform duration-300 drop-shadow-md", 
+                                    part ? colors.text : "text-gray-700",
+                                    (hoveredPart && hoveredPart.id === part?.id) ? "scale-110 brightness-150" : "opacity-90"
                                 )} />
                                 
                                 {part && (
@@ -237,13 +236,16 @@ const BotCard = ({ bot, slotLevels, isAttacking, side = 'player', className = ''
         </div>
       </div>
       
-      {/* FOOTER: Compact (p-2) */}
+      {/* FOOTER */}
       <div className="bg-[#050505] border-t border-gray-800 p-2 relative z-20">
          <div className="grid grid-cols-2 gap-x-4 gap-y-1">
               <StatBox label="DMG" value={stats.Damage} icon={DmgIcon} colorClass="text-red-500" />
               <StatBox label="SPD" value={stats.Speed} icon={SpdIcon} colorClass="text-cyan-400" />
               <StatBox label="ARM" value={stats.Armor} icon={ArmIcon} colorClass="text-emerald-500" />
               <StatBox label="WGT" value={stats.Weight} icon={WgtIcon} colorClass="text-amber-500" />
+         </div>
+         <div className="text-[9px] text-center text-gray-700 mt-2 font-mono uppercase tracking-widest border-t border-gray-900 pt-1.5">
+            {hoveredPart ? `[ ${hoveredPart.name} ]` : "SYSTEM READY"}
          </div>
       </div>
     </div>
