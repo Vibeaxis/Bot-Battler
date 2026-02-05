@@ -1,8 +1,7 @@
-
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { Package, Sword, ArrowLeft } from 'lucide-react';
+import { Package, Sword, ArrowLeft, Hexagon } from 'lucide-react'; // Added Hexagon for tech feel
 import BotCard from './BotCard';
 import { RARITY_COLORS } from '@/constants/gameConstants';
 import RarityBadge from './RarityBadge';
@@ -12,36 +11,55 @@ import { cn } from '@/lib/utils';
 
 const IconMap = { ...LucideIcons };
 
+// --- TECH LOOT CARD ---
 const LootCard = ({ icon: DefaultIcon, name, quantity, tier = 1, delay, partId }) => {
   const colors = RARITY_COLORS[tier];
-  // If it's a part, get its real icon
   const part = partId ? getPartById(partId) : null;
   const Icon = part ? (IconMap[part.icon] || DefaultIcon) : DefaultIcon;
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20, scale: 0.8 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ delay, type: "spring", stiffness: 200 }}
-      whileHover={{ scale: 1.05 }}
+      initial={{ opacity: 0, x: 20 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ delay, type: "spring", stiffness: 100 }}
       className={cn(
-        "p-4 rounded-xl flex flex-col items-center text-center gap-2 backdrop-blur-sm transition-all border",
-        colors.bgTint,
-        colors.border,
-        tier >= 3 ? colors.glow : ''
+        "relative group flex items-center gap-4 p-3 pr-6 rounded-sm border bg-black/60 overflow-hidden hover:bg-white/5 transition-colors",
+        colors.border
       )}
     >
-      <div className={cn("p-3 rounded-full border", colors.bg, "bg-opacity-20", colors.border)}>
-        <Icon className={cn("w-8 h-8", colors.text)} />
+      {/* Rarity Color Bar on Left */}
+      <div className={cn("absolute left-0 top-0 bottom-0 w-1", colors.bg)} />
+      
+      {/* Icon Box */}
+      <div className={cn("shrink-0 w-12 h-12 flex items-center justify-center border bg-black shadow-inner", colors.border)}>
+         <Icon className={cn("w-6 h-6", colors.text)} />
       </div>
-      <div>
-        <h4 className={cn("font-bold text-sm", colors.text)}>{name}</h4>
-        {partId ? (
-           <RarityBadge tier={tier} className="mt-1" />
-        ) : (
-           <p className="text-xs text-gray-400 font-mono mt-1">x{quantity}</p>
-        )}
+
+      {/* Info */}
+      <div className="flex-1 min-w-0 flex flex-col items-start">
+         <span className={cn("text-xs font-mono font-bold uppercase tracking-wider text-gray-500")}>
+            Recovered Item
+         </span>
+         <span className={cn("text-sm font-black uppercase truncate w-full", colors.text)}>
+            {name}
+         </span>
       </div>
+
+      {/* Quantity Badge */}
+      {!partId && (
+        <div className="flex flex-col items-end">
+             <span className="text-[10px] text-gray-500 font-mono">QTY</span>
+             <span className="text-lg font-mono font-bold text-white">x{quantity}</span>
+        </div>
+      )}
+      
+      {/* Part Tier Badge */}
+      {partId && (
+         <RarityBadge tier={tier} className="scale-75 origin-right" />
+      )}
+      
+      {/* Scanline Effect */}
+      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:animate-[shimmer_1s_infinite]" />
     </motion.div>
   );
 };
@@ -52,103 +70,147 @@ const ScavengeModal = ({ isOpen, onNextBattle, onReturn, enemy, rewards }) => {
   return (
     <AnimatePresence>
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-        {/* Backdrop */}
+        {/* Darkened Backdrop with Grid */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="absolute inset-0 bg-black/90 backdrop-blur-sm"
+          className="absolute inset-0 bg-black/95 backdrop-blur-md"
           onClick={(e) => e.stopPropagation()}
-        />
-
-        {/* Modal Content */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.9 }}
-          className="relative z-10 bg-gray-950 border border-gray-800 rounded-2xl max-w-4xl w-full p-8 shadow-2xl overflow-hidden"
         >
-           {/* Victory Burst Background */}
-           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-64 bg-green-500/10 blur-3xl rounded-full pointer-events-none" />
+             <div className="absolute inset-0 opacity-10" 
+                 style={{ backgroundImage: 'linear-gradient(#333 1px, transparent 1px), linear-gradient(90deg, #333 1px, transparent 1px)', backgroundSize: '40px 40px' }} 
+             />
+        </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center relative z-10">
-            
-            {/* Left: Defeated Enemy */}
-            <div className="flex flex-col items-center">
-              <motion.div
-                initial={{ x: 0 }}
-                animate={{ x: [-5, 5, -3, 3, 0] }}
-                transition={{ duration: 0.5, delay: 0.2 }}
-                className="w-full max-w-sm opacity-70 grayscale relative"
-              >
-                <div className="absolute inset-0 flex items-center justify-center z-20">
-                   <motion.div 
-                     initial={{ scale: 0, rotate: -45 }}
-                     animate={{ scale: 1, rotate: -12 }}
-                     transition={{ delay: 0.5, type: "spring" }}
-                     className="bg-red-600 text-white font-black text-3xl px-6 py-2 rounded border-4 border-white shadow-lg uppercase tracking-widest transform -rotate-12"
-                   >
-                     Destroyed
-                   </motion.div>
-                </div>
-                <BotCard bot={enemy} className="pointer-events-none" />
-              </motion.div>
-            </div>
+        {/* Modal Container */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95, y: 10 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.95, y: 10 }}
+          className="relative z-10 w-full max-w-5xl h-auto md:h-[600px] flex flex-col md:flex-row bg-[#080808] border border-gray-800 shadow-2xl overflow-hidden"
+        >
+           {/* Top Border Accent */}
+           <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-orange-500 via-red-500 to-orange-500" />
 
-            {/* Right: Loot */}
-            <div className="flex flex-col gap-6">
-              <div className="text-center md:text-left">
-                <motion.h2 
-                  initial={{ opacity: 0, y: -20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="text-4xl font-black text-white italic uppercase mb-2"
-                >
-                  Victory!
-                </motion.h2>
-                <motion.p 
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.1 }}
-                  className="text-gray-400"
-                >
-                  Enemy neutralized. Scavenging salvageable parts...
-                </motion.p>
-              </div>
-
-              <div className="grid grid-cols-3 gap-3">
-                <LootCard 
-                  icon={Package} 
-                  name="Scrap Metal" 
-                  quantity={rewards.scrap} 
-                  tier={1}
-                  delay={0.2} 
+          {/* --- LEFT SIDE: THE CASUALTY --- */}
+          <div className="w-full md:w-1/2 p-8 relative flex flex-col items-center justify-center bg-black/40 border-b md:border-b-0 md:border-r border-gray-800">
+             <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-red-900/40 via-transparent to-transparent" />
+             
+             <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.2 }}
+                className="relative z-10 scale-90 md:scale-100"
+             >
+                {/* FORCE DEAD STATE:
+                    We pass currentHealth={0} so the card renders the "FATAL EXCEPTION" screen automatically.
+                */}
+                <BotCard 
+                    bot={enemy} 
+                    currentHealth={0} 
+                    maxHealth={100}
+                    className="pointer-events-none shadow-2xl grayscale-[0.5]" 
                 />
-              </div>
+                
+                {/* "DESTROYED" STAMP OVERLAY */}
+                <motion.div 
+                   initial={{ scale: 2, opacity: 0, rotate: -25 }}
+                   animate={{ scale: 1, opacity: 1, rotate: -12 }}
+                   transition={{ delay: 0.5, type: "spring", bounce: 0.5 }}
+                   className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 border-[6px] border-red-600 px-8 py-2 rounded-lg text-red-600 font-black text-5xl uppercase tracking-tighter opacity-80 mix-blend-screen whitespace-nowrap z-20"
+                   style={{ textShadow: "0 0 20px red" }}
+                >
+                   NEUTRALIZED
+                </motion.div>
+             </motion.div>
+             
+             <div className="mt-6 text-[10px] font-mono text-red-500/50 uppercase tracking-[0.5em]">
+                 /// HOSTILE ELIMINATED ///
+             </div>
+          </div>
 
-              <motion.div
+          {/* --- RIGHT SIDE: THE REWARD --- */}
+          <div className="w-full md:w-1/2 p-8 flex flex-col relative">
+             {/* Header */}
+             <div className="mb-8">
+                <motion.div 
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="flex items-center gap-2 mb-2"
+                >
+                    <Hexagon className="w-4 h-4 text-orange-500 fill-orange-500 animate-pulse" />
+                    <span className="text-orange-500 font-mono text-xs font-bold tracking-widest uppercase">
+                        Mission Successful
+                    </span>
+                </motion.div>
+                
+                <motion.h2 
+                   initial={{ opacity: 0, x: 20 }}
+                   animate={{ opacity: 1, x: 0 }}
+                   transition={{ delay: 0.1 }}
+                   className="text-5xl md:text-6xl font-black text-white italic tracking-tighter"
+                >
+                   VICTORY
+                </motion.h2>
+                <motion.div 
+                    initial={{ w: 0 }}
+                    animate={{ w: "100%" }}
+                    transition={{ delay: 0.3, duration: 0.5 }}
+                    className="h-px bg-gray-800 w-full mt-4" 
+                />
+             </div>
+
+             {/* Loot Grid */}
+             <div className="flex-1 flex flex-col gap-3 overflow-y-auto pr-2 custom-scrollbar">
+                <span className="text-[10px] text-gray-500 font-mono uppercase mb-1">Salvage Manifest:</span>
+                
+                {/* Always show Scrap */}
+                <LootCard 
+                   icon={Package} 
+                   name="Scrap Metal" 
+                   quantity={rewards.scrap} 
+                   tier={1}
+                   delay={0.3} 
+                />
+
+                {/* Show Parts if any (Example placeholder logic) */}
+                {rewards.parts && rewards.parts.map((partId, i) => (
+                    <LootCard 
+                        key={i}
+                        partId={partId}
+                        tier={getPartById(partId)?.tier || 2}
+                        name={getPartById(partId)?.name || "Unknown Part"}
+                        delay={0.4 + (i * 0.1)}
+                    />
+                ))}
+             </div>
+
+             {/* Action Buttons */}
+             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.6 }}
-                className="flex flex-col gap-3 mt-4"
-              >
+                className="mt-8 grid grid-cols-1 gap-3"
+             >
                 <Button 
-                  onClick={onNextBattle}
-                  className="w-full bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 text-white font-bold py-6 text-lg tracking-wider uppercase shadow-lg shadow-orange-900/20 transform transition-transform hover:scale-[1.02]"
+                   onClick={onNextBattle}
+                   className="h-16 bg-white text-black hover:bg-gray-200 font-black text-lg uppercase tracking-wider relative overflow-hidden group clip-path-slant"
                 >
-                  <Sword className="w-6 h-6 mr-2" />
-                  Next Battle
+                   <div className="absolute inset-0 bg-gradient-to-r from-transparent via-black/10 to-transparent -translate-x-full group-hover:animate-[shimmer_1s_infinite]" />
+                   <span className="flex items-center gap-3">
+                      Next Engagement <Sword className="w-5 h-5" />
+                   </span>
                 </Button>
                 
                 <Button 
-                  onClick={onReturn}
-                  variant="outline"
-                  className="w-full border-gray-700 hover:bg-gray-800 text-gray-300 font-bold py-6 text-base tracking-wider uppercase"
+                   onClick={onReturn}
+                   variant="ghost"
+                   className="h-12 text-gray-500 hover:text-white font-mono text-xs uppercase tracking-widest hover:bg-white/5 border border-transparent hover:border-gray-800"
                 >
-                  <ArrowLeft className="w-5 h-5 mr-2" />
-                  Back to Workshop
+                   <ArrowLeft className="w-4 h-4 mr-2" /> Return to Base
                 </Button>
-              </motion.div>
-            </div>
+             </motion.div>
           </div>
         </motion.div>
       </div>
