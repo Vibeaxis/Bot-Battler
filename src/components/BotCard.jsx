@@ -119,24 +119,20 @@ const HolographicFrame = ({ children, className, isActive }) => (
     </div>
   </div>
 );
-
 // --- 4. MAIN COMPONENT ---
 const IconMap = { ...LucideIcons };
-
-const RARITY_MAP = {
-    'common': 1, 'uncommon': 2, 'rare': 3, 'epic': 4, 'legendary': 5, 'omega': 6, 'mythic': 7
-};
+const RARITY_MAP = { 'common': 1, 'uncommon': 2, 'rare': 3, 'epic': 4, 'legendary': 5, 'omega': 6, 'mythic': 7 };
 
 const BotCard = ({ bot, currentHealth, maxHealth, slotLevels, isAttacking, side = 'player', className = '' }) => {
   const [hoveredPart, setHoveredPart] = useState(null);
   const { toast } = useToast();
   
-  // --- HIT DETECTION ---
+  // Hit Flash Logic
   const [isHit, setIsHit] = useState(false);
   const prevHealthRef = useRef(currentHealth);
 
   useEffect(() => {
-    // Only flash if health drops AND we aren't already dead
+    // Flash if health drops, but not if we are already dead
     if (currentHealth !== undefined && prevHealthRef.current > currentHealth && currentHealth > 0) {
         setIsHit(true);
         const timer = setTimeout(() => setIsHit(false), 150);
@@ -149,44 +145,39 @@ const BotCard = ({ bot, currentHealth, maxHealth, slotLevels, isAttacking, side 
 
   const stats = calculateBotStats({ ...bot, slotLevels: slotLevels || bot.slotLevels });
   
-  // Health Calculation
+  // Health & Status Logic
   const curHp = currentHealth !== undefined ? currentHealth : 100;
   const maxHp = maxHealth !== undefined ? maxHealth : 100;
   const healthPct = (curHp / maxHp) * 100;
 
-  // --- UPDATED STATUS LOGIC ---
   let systemStatus = 'healthy';
   let statusText = 'ONLINE';
   let statusColor = 'bg-emerald-500';
   let statusBorder = 'border-gray-800';
 
   if (healthPct <= 0) {
-    // DEAD STATE - The "Fatal Exception" Screen
     systemStatus = 'dead';
     statusText = 'SYSTEM FAILURE';
-    statusColor = 'bg-transparent border border-red-500'; // Hollow red circle
+    statusColor = 'bg-transparent border border-red-500';
     statusBorder = 'border-red-900 border-2 shadow-[0_0_50px_rgba(220,38,38,0.2)] bg-red-950/10 grayscale-[0.8]'; 
   } else if (healthPct <= 30) {
-    // CRITICAL STATE - The Glitchy Warning
     systemStatus = 'critical';
     statusText = '! CRITICAL !';
     statusColor = 'bg-red-600 animate-glitch';
     statusBorder = 'border-red-600 shadow-[0_0_30px_-5px_rgba(220,38,38,0.4)]';
   } else if (healthPct <= 60) {
-    // DAMAGED STATE - Unstable Yellow
     systemStatus = 'damaged';
     statusText = 'WARNING';
     statusColor = 'bg-amber-500 animate-flicker';
     statusBorder = 'border-amber-700/50';
   }
 
-  // --- OVERRIDE NAME/ICON IF DEAD ---
+  // Visual Overrides for Dead State
   const isDead = systemStatus === 'dead';
   const DisplayIcon = isDead ? IconMap.Skull : (IconMap[bot.icon] || IconMap.Cpu);
   const displayName = isDead ? "FATAL EXCEPTION" : bot.name;
-  
-  // Determine Text Color
   let nameColorClass = 'text-white';
+  
   if (isDead) {
       nameColorClass = "text-red-500 tracking-[0.2em]";
   } else if (bot.rarityId && RARITY_COLORS[RARITY_MAP[bot.rarityId]]) {
@@ -210,6 +201,23 @@ const BotCard = ({ bot, currentHealth, maxHealth, slotLevels, isAttacking, side 
     </div>
   );
 
+  const handlePartClick = (part) => {
+      if (!part) return;
+      const colors = RARITY_COLORS[part.tier];
+      toast({
+          title: part.name.toUpperCase(),
+          description: (
+              <div className="mt-2 space-y-1">
+                  <div className="flex justify-between text-xs"><span className="text-gray-500">DMG</span> <span className="text-red-400 font-mono">{part.stats.Damage || 0}</span></div>
+                  <div className="flex justify-between text-xs"><span className="text-gray-500">SPD</span> <span className="text-cyan-400 font-mono">{part.stats.Speed || 0}</span></div>
+                  <div className="flex justify-between text-xs"><span className="text-gray-500">ARM</span> <span className="text-emerald-400 font-mono">{part.stats.Armor || 0}</span></div>
+                  <div className="flex justify-between text-xs"><span className="text-gray-500">WGT</span> <span className="text-amber-400 font-mono">{part.stats.Weight || 0}</span></div>
+              </div>
+          ),
+          className: `border-l-4 ${colors.border} bg-black/95`
+      });
+  };
+
   return (
     <div className={cn(
       "flex flex-col shrink-0 w-80 h-[480px] bg-[#030303] border shadow-[0_0_50px_-15px_rgba(0,0,0,0.9)] relative z-10 transition-all duration-300",
@@ -219,25 +227,18 @@ const BotCard = ({ bot, currentHealth, maxHealth, slotLevels, isAttacking, side 
     )}>
       
       {/* Background Grid - Tinted Red if Critical/Dead */}
-      <div className={cn(
-          "absolute inset-0 pointer-events-none transition-colors duration-500",
-          (systemStatus === 'critical' || isDead) ? "bg-red-950/30" : "opacity-5"
-        )} 
-        style={{ backgroundImage: 'radial-gradient(#ffffff 1px, transparent 1px)', backgroundSize: '16px 16px' }} 
-      />
+      <div className={cn("absolute inset-0 pointer-events-none transition-colors duration-500", (systemStatus === 'critical' || isDead) ? "bg-red-950/30" : "opacity-5")} 
+           style={{ backgroundImage: 'radial-gradient(#ffffff 1px, transparent 1px)', backgroundSize: '16px 16px' }} />
 
       {/* HEADER */}
       <div className="flex flex-col relative bg-[#080808] border-b border-gray-800">
         <div className="flex justify-between items-center px-3 py-1 bg-black/50 border-b border-gray-900 text-[9px] font-mono text-gray-600">
              <span>UNIT_ID: {bot.id ? bot.id.substring(0,6).toUpperCase() : 'UNK_ID'}</span>
-             <span className={cn("flex items-center gap-1.5 transition-colors duration-300", 
-                isDead ? "text-red-600 font-black" : (systemStatus === 'critical' ? "text-red-500 font-bold" : "")
-             )}>
+             <span className={cn("flex items-center gap-1.5 transition-colors duration-300", isDead ? "text-red-600 font-black" : (systemStatus === 'critical' ? "text-red-500 font-bold" : ""))}>
                 <span className={`w-1.5 h-1.5 rounded-full ${statusColor}`} /> 
                 {statusText}
              </span>
         </div>
-
         <div className="p-4 flex items-center gap-3">
             <div className={cn("p-2 shrink-0 bg-black border border-gray-800 rounded-sm shadow-inner transition-colors", isDead && "border-red-900 bg-red-950/20")}>
                  <DisplayIcon className={cn("w-6 h-6", isDead ? "text-red-600" : "text-[var(--accent-color)]")} />
@@ -259,48 +260,24 @@ const BotCard = ({ bot, currentHealth, maxHealth, slotLevels, isAttacking, side 
       {/* SCHEMATIC */}
       <div className="relative flex-1 px-4 py-6 flex flex-col justify-center">
         <SchematicSkeleton status={systemStatus} />
-
         <div className={cn("grid grid-cols-2 gap-y-6 gap-x-2 relative z-10", isDead && "opacity-50 grayscale")}>
             {slots.map(({ key, partId, gridClass }, index) => {
                 const part = partId ? getPartById(partId) : null;
                 const Icon = (part ? IconMap[part.icon] : null) || IconMap.Box;
                 const tier = part ? part.tier : 1;
                 const colors = RARITY_COLORS[tier] || RARITY_COLORS[1];
-                
-                const shouldAnimateArm = isAttacking && !isDead && (
-                    (side === 'player' && key === 'RightArm') || 
-                    (side === 'enemy' && key === 'LeftArm')
-                );
+                const shouldAnimateArm = isAttacking && !isDead && ((side === 'player' && key === 'RightArm') || (side === 'enemy' && key === 'LeftArm'));
 
                 return (
-                    <div 
-                        key={`${key}-${index}`} 
-                        className={cn(
-                            `relative group ${gridClass}`,
-                            shouldAnimateArm && (side === 'player' ? 'animate-attack-right' : 'animate-attack-left')
-                        )}
+                    <div key={`${key}-${index}`} className={cn(`relative group ${gridClass}`, shouldAnimateArm && (side === 'player' ? 'animate-attack-right' : 'animate-attack-left'))}
                         onMouseEnter={() => part && setHoveredPart({ ...part, slotKey: key })}
                         onMouseLeave={() => setHoveredPart(null)}
-                        // Disable interactions if dead
                         onClick={() => !isDead && handlePartClick(part)}
                     >
-                        <HolographicFrame 
-                            className="w-full h-16 cursor-pointer"
-                            isActive={shouldAnimateArm || (hoveredPart && hoveredPart.id === part?.id)}
-                        >
-                            <Icon className={cn(
-                                "w-9 h-9 transition-all duration-300 drop-shadow-[0_4px_4px_rgba(0,0,0,0.5)]", 
-                                part ? colors.text : "text-gray-800 opacity-30",
-                                (hoveredPart && hoveredPart.id === part?.id) ? "scale-110 brightness-150" : ""
-                            )} />
-                            
-                            <span className="absolute -top-3 text-[8px] font-mono text-gray-600 font-bold uppercase tracking-widest bg-[#030303] px-1">
-                                {key.replace('Arm', '')}
-                            </span>
-                            
-                            {part && (
-                                <RarityBadge tier={tier} className="scale-[0.6] origin-center absolute -bottom-2 border border-black/50 bg-black" />
-                            )}
+                        <HolographicFrame className="w-full h-16 cursor-pointer" isActive={shouldAnimateArm || (hoveredPart && hoveredPart.id === part?.id)}>
+                            <Icon className={cn("w-9 h-9 transition-all duration-300 drop-shadow-[0_4px_4px_rgba(0,0,0,0.5)]", part ? colors.text : "text-gray-800 opacity-30", (hoveredPart && hoveredPart.id === part?.id) ? "scale-110 brightness-150" : "")} />
+                            <span className="absolute -top-3 text-[8px] font-mono text-gray-600 font-bold uppercase tracking-widest bg-[#030303] px-1">{key.replace('Arm', '')}</span>
+                            {part && (<RarityBadge tier={tier} className="scale-[0.6] origin-center absolute -bottom-2 border border-black/50 bg-black" />)}
                         </HolographicFrame>
                     </div>
                 );
