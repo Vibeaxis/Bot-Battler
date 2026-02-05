@@ -256,7 +256,7 @@ const CHASSIS_PARTS = [
   // --- TIER 5: LEGENDARY ---
   { id: 'ch_dark_matter', name: 'Dark Matter Engine', tier: 5, stats: { Damage: 50, Speed: 50, Armor: 50, Weight: 30 }, icon: 'Video', rarity: RARITY.LEGENDARY },
   { id: 'ch_juggernaut', name: 'Juggernaut Prime', tier: 5, stats: { Damage: 60, Speed: 10, Armor: 120, Weight: 100 }, icon: 'ShieldX', rarity: RARITY.LEGENDARY },
-  { id: 'ch_flash', name: 'Flash Drive', tier: 5, stats: { Damage: 40, Speed: 100, Armor: 20, Weight: 5 }, icon: 'SqaurePower', rarity: RARITY.LEGENDARY },
+  { id: 'ch_flash', name: 'Flash Drive', tier: 5, stats: { Damage: 40, Speed: 100, Armor: 20, Weight: 5 }, icon: 'SquarePower', rarity: RARITY.LEGENDARY },
   { id: 'ch_train', name: 'Pain Train', tier: 5, stats: { Damage: 60, Speed: 20, Armor: 80, Weight: 100 }, icon: 'TrainFront', rarity: 'Legendary' },
   { id: 'ch_castle', name: 'Moving Castle', tier: 5, stats: { Damage: 40, Speed: 5, Armor: 120, Weight: 150 }, icon: 'Castle', rarity: 'Legendary' },
   { id: 'ch_spider_queen', name: 'Brood Mother', tier: 5, stats: { Damage: 50, Speed: 60, Armor: 40, Weight: 30 }, icon: 'Bug', rarity: 'Legendary' },
