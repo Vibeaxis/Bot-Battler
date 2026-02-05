@@ -127,9 +127,9 @@ export const SoundProvider = ({ children }) => {
 
         // --- COMBAT SOUNDS ---
         case 'HIT':
-          // Standard impact
+          // REVERTED: Removed the 'sawtooth' tone. 
+          // Back to pure noise for that crisp snap.
           playNoise(0.1, 0.1);
-          playTone('sawtooth', 100, 50, 0.1, 0.1); // Add a little "thud" to the hiss
           break;
           
         case 'CRIT':
@@ -143,15 +143,12 @@ export const SoundProvider = ({ children }) => {
         case 'DODGE':
           // A "Swoosh" sound. 
           // High frequency Sine wave dropping rapidly to low frequency.
-          // Simulates the Doppler effect of something swinging past you.
           playTone('sine', 1500, 300, 0.15, 0.08); 
           break;
 
         // *** NEW: GRAZE / GLANCING BLOW ***
         case 'GRAZE':
           // A weak "Tink".
-          // High pitch Triangle wave, very short duration.
-          // Sounds like hitting a metal pot.
           playTone('triangle', 2000, 1500, 0.08, 0.05);
           break;
           
