@@ -7,21 +7,28 @@ import { cn } from '@/lib/utils';
 import { calculateBotStats } from '@/utils/statCalculator';
 import { useToast } from '@/components/ui/use-toast'; 
 
-// --- SKELETON (Balanced) ---
+// --- SKELETON (Shoulder Adjustment) ---
 const SchematicSkeleton = () => (
   <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 0 }} viewBox="0 0 100 100" preserveAspectRatio="none">
     {/* Central Spine */}
     <path d="M 50 15 L 50 85" stroke="currentColor" strokeWidth="1.5" fill="none" className="text-gray-700 opacity-50" vectorEffect="non-scaling-stroke" />
     
-    {/* Horizontal Bus */}
-    <path d="M 25 38 L 75 38" stroke="currentColor" strokeWidth="1.5" fill="none" className="text-gray-700 opacity-50" vectorEffect="non-scaling-stroke" />
+    {/* Horizontal Bus (Arms) - Shortened to bring shoulders in */}
+    <path d="M 35 38 L 65 38" stroke="currentColor" strokeWidth="1.5" fill="none" className="text-gray-700 opacity-50" vectorEffect="non-scaling-stroke" />
     
-    {/* Nodes - Aligned with h-16 spacing */}
+    {/* Nodes */}
+    {/* Head Node */}
     <circle cx="50" cy="18" r="2.5" className="fill-gray-600" />
+    
+    {/* Core Node */}
     <circle cx="50" cy="38" r="4" className="fill-black stroke-gray-500 stroke-2" />
     <circle cx="50" cy="38" r="1.5" className="fill-[var(--accent-color)] animate-pulse" />
-    <circle cx="25" cy="38" r="2.5" className="fill-gray-600" />
-    <circle cx="75" cy="38" r="2.5" className="fill-gray-600" />
+    
+    {/* Arm Nodes (Shoulders) - Moved inward from 25/75 to 35/65 */}
+    <circle cx="35" cy="38" r="2.5" className="fill-gray-600" />
+    <circle cx="65" cy="38" r="2.5" className="fill-gray-600" />
+    
+    {/* Chassis Node */}
     <circle cx="50" cy="82" r="2.5" className="fill-gray-600" />
   </svg>
 );
