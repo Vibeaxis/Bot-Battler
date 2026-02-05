@@ -8,7 +8,6 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast'; 
 import { RARITY_COLORS } from '@/constants/gameConstants';
 import BotCard from '@/components/BotCard';
-import AvatarSelectionModal from '@/components/AvatarSelectionModal';
 import { cn } from '@/lib/utils';
 
 // --- STAT CONFIGURATION ---
