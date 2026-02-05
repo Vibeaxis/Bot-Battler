@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useCallback, useRef, useEffect, useState } from 'react';
 
 // 1. The Sound Context
@@ -88,12 +87,14 @@ export const SoundProvider = ({ children }) => {
     gain.connect(ctx.destination);
     noise.start();
   };
-const playSound = useCallback((key) => {
+
+  const playSound = useCallback((key) => {
     // If volume is 0, don't play
     if (masterVolumeRef.current <= 0.01) return;
 
     try {
       switch (key) {
+        // --- EXISTING SOUNDS (Unchanged) ---
         case 'CLICK':
           playTone('sine', 800, null, 0.05, 0.05);
           break;
@@ -103,9 +104,6 @@ const playSound = useCallback((key) => {
           break;
         case 'EQUIP':
           playTone('sawtooth', 150, 50, 0.15, 0.05);
-          break;
-        case 'FUSE':
-          playTone('triangle', 200, 800, 0.4, 0.1);
           break;
         case 'HIT':
           playNoise(0.1, 0.1);
@@ -118,24 +116,43 @@ const playSound = useCallback((key) => {
           playTone('sine', 1200, 400, 0.2, 0.1);
           playNoise(0.1, 0.05);
           break;
-          
-        // --- NEW SYNTHESIZED SOUNDS ---
-        
         case 'VICTORY':
-          // A Retro "Level Up" Arpeggio (Square waves for 8-bit feel)
-          // Note 1: 440Hz (A4)
           playTone('square', 440, 440, 0.1, 0.1);
-          // Note 2: 554Hz (C#5) - 100ms delay
           setTimeout(() => playTone('square', 554, 554, 0.1, 0.1), 100);
-          // Note 3: 659Hz (E5) - 200ms delay
           setTimeout(() => playTone('square', 659, 659, 0.4, 0.1), 200);
           break;
-
         case 'DEFEAT':
-          // A "Power Down" Slide (Sawtooth dropping pitch + Static)
-          playTone('sawtooth', 150, 30, 0.8, 0.15); // Long groan
-          playNoise(0.5, 0.15); // Static hiss
+          playTone('sawtooth', 150, 30, 0.8, 0.15); 
+          playNoise(0.5, 0.15); 
           break;
+
+        // --- UPDATED / NEW SOUNDS ---
+
+        case 'FUSE':
+          // Layer 1: The rising energy (Triangle)
+          playTone('triangle', 200, 600, 0.6, 0.15);
+          // Layer 2: The magical shimmer (Sine, delayed slightly)
+          setTimeout(() => playTone('sine', 600, 1200, 0.4, 0.1), 100);
+          // Layer 3: The success "Ding" (High Sine at the end)
+          setTimeout(() => playTone('sine', 1500, 1500, 0.3, 0.05), 500);
+          break;
+
+        case 'MISS':
+        case 'DODGE':
+          // A "Swoosh" sound. 
+          // High frequency Sine wave dropping rapidly to low frequency.
+          playTone('sine', 1500, 300, 0.15, 0.08); 
+          break;
+
+        case 'GRAZE':
+          // A weak "Tink" (High pitch Triangle).
+          playTone('triangle', 2000, 1500, 0.08, 0.05);
+          break;
+
+        case 'LEVEL_UP':
+             playTone('square', 440, 880, 0.3, 0.1);
+             setTimeout(() => playTone('square', 880, 1760, 0.4, 0.1), 150);
+             break;
 
         default:
           break;
