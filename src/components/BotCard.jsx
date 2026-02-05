@@ -145,7 +145,7 @@ const BotCard = ({ bot, currentHealth, maxHealth, slotLevels, isAttacking, side 
   // Visual Overrides for Dead State
   const isDead = systemStatus === 'dead';
   const DisplayIcon = isDead ? IconMap.Skull : (IconMap[bot.icon] || IconMap.Cpu);
-  const displayName = isDead ? "FATAL EXCEPTION" : bot.name;
+  const displayName = forceName || (isDead ? "FATAL EXCEPTION" : bot.name);
   let nameColorClass = 'text-white';
   
   if (isDead) {

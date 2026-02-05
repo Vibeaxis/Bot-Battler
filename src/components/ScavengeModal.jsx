@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { Package, Sword, ArrowLeft, Hexagon } from 'lucide-react'; // Added Hexagon for tech feel
+import { Package, Sword, ArrowLeft, Hexagon } from 'lucide-react';
 import BotCard from './BotCard';
 import { RARITY_COLORS } from '@/constants/gameConstants';
 import RarityBadge from './RarityBadge';
@@ -23,11 +23,11 @@ const LootCard = ({ icon: DefaultIcon, name, quantity, tier = 1, delay, partId }
       animate={{ opacity: 1, x: 0 }}
       transition={{ delay, type: "spring", stiffness: 100 }}
       className={cn(
-        "relative group flex items-center gap-4 p-3 pr-6 rounded-sm border bg-black/60 overflow-hidden hover:bg-white/5 transition-colors",
+        "relative group flex items-center gap-4 p-3 pr-6 rounded-sm border bg-black/60 overflow-hidden hover:bg-white/5 transition-colors shrink-0", // Added shrink-0
         colors.border
       )}
     >
-      {/* Rarity Color Bar on Left */}
+      {/* Rarity Color Bar */}
       <div className={cn("absolute left-0 top-0 bottom-0 w-1", colors.bg)} />
       
       {/* Icon Box */}
@@ -36,8 +36,8 @@ const LootCard = ({ icon: DefaultIcon, name, quantity, tier = 1, delay, partId }
       </div>
 
       {/* Info */}
-      <div className="flex-1 min-w-0 flex flex-col items-start">
-         <span className={cn("text-xs font-mono font-bold uppercase tracking-wider text-gray-500")}>
+      <div className="flex-1 min-w-0 flex flex-col items-start overflow-hidden">
+         <span className={cn("text-xs font-mono font-bold uppercase tracking-wider text-gray-500 truncate w-full")}>
             Recovered Item
          </span>
          <span className={cn("text-sm font-black uppercase truncate w-full", colors.text)}>
@@ -47,7 +47,7 @@ const LootCard = ({ icon: DefaultIcon, name, quantity, tier = 1, delay, partId }
 
       {/* Quantity Badge */}
       {!partId && (
-        <div className="flex flex-col items-end">
+        <div className="flex flex-col items-end shrink-0">
              <span className="text-[10px] text-gray-500 font-mono">QTY</span>
              <span className="text-lg font-mono font-bold text-white">x{quantity}</span>
         </div>
@@ -55,7 +55,7 @@ const LootCard = ({ icon: DefaultIcon, name, quantity, tier = 1, delay, partId }
       
       {/* Part Tier Badge */}
       {partId && (
-         <RarityBadge tier={tier} className="scale-75 origin-right" />
+         <RarityBadge tier={tier} className="scale-75 origin-right shrink-0" />
       )}
       
       {/* Scanline Effect */}
@@ -103,13 +103,15 @@ const ScavengeModal = ({ isOpen, onNextBattle, onReturn, enemy, rewards }) => {
                 transition={{ delay: 0.2 }}
                 className="relative z-10 scale-90 md:scale-100"
              >
-                {/* FORCE DEAD STATE:
-                    We pass currentHealth={0} so the card renders the "FATAL EXCEPTION" screen automatically.
+                {/* NOTE: We pass currentHealth={0} to trigger the red "Dead" visuals,
+                    but we pass forceName={enemy.name} so it still shows WHO we killed 
+                    instead of "FATAL EXCEPTION".
                 */}
                 <BotCard 
                     bot={enemy} 
                     currentHealth={0} 
                     maxHealth={100}
+                    forceName={enemy.name} // <--- Requires BotCard update to support this prop
                     className="pointer-events-none shadow-2xl grayscale-[0.5]" 
                 />
                 
@@ -118,7 +120,7 @@ const ScavengeModal = ({ isOpen, onNextBattle, onReturn, enemy, rewards }) => {
                    initial={{ scale: 2, opacity: 0, rotate: -25 }}
                    animate={{ scale: 1, opacity: 1, rotate: -12 }}
                    transition={{ delay: 0.5, type: "spring", bounce: 0.5 }}
-                   className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 border-[6px] border-red-600 px-8 py-2 rounded-lg text-red-600 font-black text-5xl uppercase tracking-tighter opacity-80 mix-blend-screen whitespace-nowrap z-20"
+                   className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 border-[6px] border-red-600 px-8 py-2 rounded-lg text-red-600 font-black text-5xl uppercase tracking-tighter opacity-80 mix-blend-screen whitespace-nowrap z-20 pointer-events-none"
                    style={{ textShadow: "0 0 20px red" }}
                 >
                    NEUTRALIZED
@@ -131,9 +133,10 @@ const ScavengeModal = ({ isOpen, onNextBattle, onReturn, enemy, rewards }) => {
           </div>
 
           {/* --- RIGHT SIDE: THE REWARD --- */}
-          <div className="w-full md:w-1/2 p-8 flex flex-col relative">
+          <div className="w-full md:w-1/2 p-8 flex flex-col relative h-full min-h-0"> {/* Added min-h-0 for flex scroll fix */}
+             
              {/* Header */}
-             <div className="mb-8">
+             <div className="mb-6 shrink-0">
                 <motion.div 
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -161,29 +164,33 @@ const ScavengeModal = ({ isOpen, onNextBattle, onReturn, enemy, rewards }) => {
                 />
              </div>
 
-             {/* Loot Grid */}
-             <div className="flex-1 flex flex-col gap-3 overflow-y-auto pr-2 custom-scrollbar">
-                <span className="text-[10px] text-gray-500 font-mono uppercase mb-1">Salvage Manifest:</span>
-                
-                {/* Always show Scrap */}
-                <LootCard 
-                   icon={Package} 
-                   name="Scrap Metal" 
-                   quantity={rewards.scrap} 
-                   tier={1}
-                   delay={0.3} 
-                />
-
-                {/* Show Parts if any (Example placeholder logic) */}
-                {rewards.parts && rewards.parts.map((partId, i) => (
+             {/* Loot Grid - Fixed Scrolling */}
+             <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar min-h-0 w-full">
+                <div className="flex flex-col gap-3 pb-2"> {/* Added inner wrapper for padding */}
+                    <span className="text-[10px] text-gray-500 font-mono uppercase mb-1 sticky top-0 bg-[#080808] z-10 py-1">
+                        Salvage Manifest:
+                    </span>
+                    
+                    {/* Always show Scrap */}
                     <LootCard 
-                        key={i}
-                        partId={partId}
-                        tier={getPartById(partId)?.tier || 2}
-                        name={getPartById(partId)?.name || "Unknown Part"}
-                        delay={0.4 + (i * 0.1)}
+                       icon={Package} 
+                       name="Scrap Metal" 
+                       quantity={rewards.scrap} 
+                       tier={1}
+                       delay={0.3} 
                     />
-                ))}
+
+                    {/* Show Parts if any */}
+                    {rewards.parts && rewards.parts.map((partId, i) => (
+                        <LootCard 
+                            key={i}
+                            partId={partId}
+                            tier={getPartById(partId)?.tier || 2}
+                            name={getPartById(partId)?.name || "Unknown Part"}
+                            delay={0.4 + (i * 0.1)}
+                        />
+                    ))}
+                </div>
              </div>
 
              {/* Action Buttons */}
@@ -191,14 +198,14 @@ const ScavengeModal = ({ isOpen, onNextBattle, onReturn, enemy, rewards }) => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.6 }}
-                className="mt-8 grid grid-cols-1 gap-3"
+                className="mt-6 grid grid-cols-1 gap-3 shrink-0"
              >
                 <Button 
                    onClick={onNextBattle}
                    className="h-16 bg-white text-black hover:bg-gray-200 font-black text-lg uppercase tracking-wider relative overflow-hidden group clip-path-slant"
                 >
                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-black/10 to-transparent -translate-x-full group-hover:animate-[shimmer_1s_infinite]" />
-                   <span className="flex items-center gap-3">
+                   <span className="flex items-center gap-3 relative z-10">
                       Next Engagement <Sword className="w-5 h-5" />
                    </span>
                 </Button>
