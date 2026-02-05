@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Hammer, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useSoundContext } from '@/context/SoundContext'; // <--- IMPORT THIS
 import RarityBadge from '@/components/RarityBadge';
 import StatDisplay from '@/components/StatDisplay';
 import { RARITY_COLORS } from '@/constants/gameConstants';
@@ -20,7 +21,6 @@ const PartCard = ({ part, index, className }) => {
       className={`relative p-4 rounded-xl border-2 ${colors.bg} ${colors.border} bg-opacity-20 backdrop-blur-sm ${className}`}
     >
       <div className="flex flex-col items-center text-center gap-2">
-         {/* Icon Placeholder or actual icon if available */}
         <div className={`w-12 h-12 rounded-full flex items-center justify-center bg-black/30 ${colors.text}`}>
            <Hammer className="w-6 h-6" />
         </div>
@@ -68,9 +68,38 @@ const ResultCard = ({ part }) => {
 };
 
 const FusionInterface = ({ selectedItem, onFuse, isFusing, fusionResult, onReset }) => {
+  // --- 1. ACCESS SOUND CONTEXT ---
+  const { playSound } = useSoundContext();
   
-  // Create 3 dummy copies for visualization if an item is selected
+  // Create 3 dummy copies for visualization
   const inputItems = selectedItem ? [selectedItem, selectedItem, selectedItem] : [];
+
+  // --- 2. SOUND TRIGGERS ---
+
+  // Trigger: Item Selection (Slotting in)
+  useEffect(() => {
+    if (selectedItem && !isFusing && !fusionResult) {
+      playSound('EQUIP');
+    }
+  }, [selectedItem, isFusing, fusionResult, playSound]);
+
+  // Trigger: Success Result (Fanfare)
+  useEffect(() => {
+    if (fusionResult) {
+      playSound('VICTORY'); // Or 'LEVEL_UP' if you prefer a shorter sound
+    }
+  }, [fusionResult, playSound]);
+
+  // Wrapper for the Fuse Button to play the machine noise
+  const handleFuseClick = () => {
+    playSound('FUSE');
+    onFuse();
+  };
+
+  const handleResetClick = () => {
+    playSound('CLICK');
+    onReset();
+  };
 
   return (
     <div className="h-full flex flex-col items-center justify-center py-8 relative">
@@ -118,7 +147,7 @@ const FusionInterface = ({ selectedItem, onFuse, isFusing, fusionResult, onReset
       {selectedItem && !fusionResult && (
         <Button 
             size="lg"
-            onClick={onFuse} 
+            onClick={handleFuseClick} // Use wrapper handler
             disabled={isFusing}
             className="relative px-12 py-6 text-lg font-bold tracking-widest bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 shadow-lg hover:shadow-orange-500/20 transition-all transform hover:scale-105 active:scale-95"
         >
@@ -134,7 +163,7 @@ const FusionInterface = ({ selectedItem, onFuse, isFusing, fusionResult, onReset
 
       {fusionResult && (
          <Button 
-            onClick={onReset}
+            onClick={handleResetClick} // Use wrapper handler
             variant="outline"
             className="mt-4 border-gray-600 text-gray-300 hover:bg-gray-800 hover:text-white"
          >
