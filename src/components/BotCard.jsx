@@ -43,56 +43,26 @@ const injectStyles = () => {
 };
 injectStyles();
 
-// --- 2. SKELETON (Handles Healthy, Damaged, Critical, Dead) ---
+// --- 2. SKELETON (HUD Style) ---
 const SchematicSkeleton = ({ status = 'healthy' }) => {
   const styles = {
-    healthy: {
-      line: "text-gray-800",
-      connector: "text-gray-700",
-      core: "fill-[var(--accent-color)] animate-pulse", 
-    },
-    damaged: {
-      line: "text-amber-700", 
-      connector: "text-amber-800",
-      core: "fill-amber-500 animate-flicker", // Random flicker
-    },
-    critical: {
-      line: "text-red-700", 
-      connector: "text-red-800",
-      core: "fill-red-600 animate-glitch", 
-    },
-    dead: {
-      line: "text-red-900 opacity-50", 
-      connector: "text-red-950 opacity-30",
-      core: "fill-black stroke-red-900", // Dead Core
-    }
+    healthy: { line: "text-gray-800", connector: "text-gray-700", core: "fill-[var(--accent-color)] animate-pulse" },
+    damaged: { line: "text-amber-700", connector: "text-amber-800", core: "fill-amber-500 animate-flicker" },
+    critical: { line: "text-red-700", connector: "text-red-800", core: "fill-red-600 animate-glitch" },
+    dead: { line: "text-red-900 opacity-50", connector: "text-red-950 opacity-30", core: "fill-black stroke-red-900" }
   };
-
   const currentStyle = styles[status] || styles.healthy;
 
   return (
     <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 0 }} viewBox="0 0 100 100" preserveAspectRatio="none">
-      <line 
-        x1="50" y1="15" x2="50" y2="85" 
-        stroke="currentColor" strokeWidth={status === 'healthy' ? 1 : 1.5} 
-        strokeDasharray="2 2"
-        className={`transition-colors duration-300 ${currentStyle.line} ${status === 'critical' ? 'animate-glitch' : ''}`} 
-      />
-      
-      {/* Arms Cross-Bus */}
+      <line x1="50" y1="15" x2="50" y2="85" stroke="currentColor" strokeWidth={status === 'healthy' ? 1 : 1.5} strokeDasharray="2 2" className={`transition-colors duration-300 ${currentStyle.line} ${status === 'critical' ? 'animate-glitch' : ''}`} />
       <path d="M 25 45 L 75 45" stroke="currentColor" strokeWidth="1" fill="none" className={`transition-colors duration-300 ${currentStyle.line}`} />
-      
-      {/* Connectors */}
       <line x1="25" y1="45" x2="25" y2="45" stroke="currentColor" strokeWidth="2" className={currentStyle.connector} />
       <line x1="75" y1="45" x2="75" y2="45" stroke="currentColor" strokeWidth="2" className={currentStyle.connector} />
       <line x1="50" y1="20" x2="50" y2="28" stroke="currentColor" strokeWidth="1" className={currentStyle.connector} />
       <line x1="50" y1="70" x2="50" y2="80" stroke="currentColor" strokeWidth="1" className={currentStyle.connector} />
-      
-      {/* CORE NODE */}
       <circle cx="50" cy="45" r="3" className={`transition-colors duration-300 stroke-gray-900 ${status === 'dead' ? 'fill-black' : 'fill-black'}`} />
       <circle cx="50" cy="45" r={status === 'dead' ? 1 : 1.5} className={currentStyle.core} />
-      
-      {/* Critical/Dead Warning Rings */}
       {(status === 'critical' || status === 'dead') && (
         <circle cx="50" cy="45" r="10" fill="none" stroke="red" strokeWidth="0.5" className="opacity-20 animate-ping" />
       )}
