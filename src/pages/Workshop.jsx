@@ -218,81 +218,86 @@ const Workshop = () => {
         <meta name="description" content="Customize your battle bot with different parts and equipment." />
       </Helmet>
       
-      <div className="min-h-screen bg-[#0a0a12] p-4 pb-32 font-mono text-[#e0e0e0] selection:bg-[var(--accent-color)] selection:text-black">
+      {/* 1. TIGHTER CONTAINER: Reduced bottom padding from pb-32 to pb-12 */}
+      <div className="min-h-screen bg-[#0a0a12] p-4 pb-12 font-mono text-[#e0e0e0] selection:bg-[var(--accent-color)] selection:text-black overflow-y-auto">
         
-        <div className="relative max-w-6xl mx-auto py-8">
-          {/* Header Bar */}
+        {/* 2. TIGHTER HEADER: Reduced py-8 to py-2 */}
+        <div className="relative max-w-6xl mx-auto py-2">
+          
+          {/* Top Bar */}
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
-            className="mb-6 flex justify-between items-center"
+            className="mb-4 flex justify-between items-center"
           >
             <Button
               onClick={() => navigate('/hub')}
               variant="outline"
-              className="bg-black text-[var(--accent-color)] border-[var(--accent-color)] hover:bg-[rgba(var(--accent-rgb),0.1)] rounded-none uppercase tracking-wider"
+              size="sm"
+              className="bg-black text-[var(--accent-color)] border-[var(--accent-color)] hover:bg-[rgba(var(--accent-rgb),0.1)] rounded-none uppercase tracking-wider h-8 text-xs"
             >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Hub
+              <ArrowLeft className="w-3 h-3 mr-2" />
+              Hub
             </Button>
 
-            <div className="bg-black/80 px-4 py-2 border border-yellow-500/50 text-yellow-500 font-bold font-mono tracking-wider rounded-none">
+            <div className="bg-black/80 px-3 py-1 border border-yellow-500/50 text-yellow-500 font-bold font-mono tracking-wider rounded-none text-xs">
               SCRAP: {gameState.scrap}
             </div>
           </motion.div>
           
-          {/* Bot Identity Section */}
+          {/* 3. COMPACT IDENTITY SECTION */}
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-center mb-12 relative"
+            className="text-center mb-6 relative"
           >
-            <h1 className="text-5xl font-bold text-[var(--accent-color)] mb-2 uppercase tracking-widest [text-shadow:0_0_10px_var(--accent-color)]">Workshop</h1>
-            <p className="text-xl text-gray-500 uppercase tracking-[0.2em] mb-8">System Configuration</p>
+            <h1 className="text-3xl font-bold text-[var(--accent-color)] mb-1 uppercase tracking-widest [text-shadow:0_0_10px_var(--accent-color)]">Workshop</h1>
+            <p className="text-xs text-gray-500 uppercase tracking-[0.2em] mb-4">System Configuration</p>
             
-            <div className="flex flex-col md:flex-row items-center justify-center gap-8 bg-black/40 border border-gray-800 p-6 max-w-3xl mx-auto">
+            {/* Reduced Padding (p-4) and Gap (gap-6) */}
+            <div className="flex flex-col md:flex-row items-center justify-center gap-6 bg-black/40 border border-gray-800 p-4 max-w-2xl mx-auto">
                 
-                {/* AVATAR */}
+                {/* SMALLER AVATAR: w-20 h-20 -> w-16 h-16 */}
                 <div className="relative group cursor-pointer" onClick={() => setIsAvatarModalOpen(true)}>
-                    <div className="w-24 h-24 border-2 border-[var(--accent-color)] flex items-center justify-center bg-black shadow-[0_0_20px_rgba(var(--accent-rgb),0.2)] group-hover:shadow-[0_0_30px_rgba(var(--accent-rgb),0.5)] transition-all">
-                        <CurrentBotIcon className="w-12 h-12 text-[var(--accent-color)]" />
+                    <div className="w-16 h-16 border-2 border-[var(--accent-color)] flex items-center justify-center bg-black shadow-[0_0_20px_rgba(var(--accent-rgb),0.2)] group-hover:shadow-[0_0_30px_rgba(var(--accent-rgb),0.5)] transition-all">
+                        <CurrentBotIcon className="w-8 h-8 text-[var(--accent-color)]" />
                     </div>
-                    <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-[var(--accent-color)] text-black text-[9px] font-bold px-2 py-0.5 uppercase opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                        Change Avatar
+                    <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-[var(--accent-color)] text-black text-[8px] font-bold px-2 py-0.5 uppercase opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                        Change
                     </div>
                 </div>
 
-                <div className="flex-1 space-y-4 w-full md:w-auto">
+                <div className="flex-1 space-y-2 w-full md:w-auto text-left">
                     <div className="flex justify-center md:justify-start">
                         <BotNameEditor />
                     </div>
 
-                    {/* Theme Selector */}
-                    <div className="flex flex-col md:flex-row items-center gap-4">
-                        <div className="flex items-center gap-2 text-xs uppercase tracking-widest text-gray-500">
-                            <Palette className="w-4 h-4" />
-                            <span>System Theme</span>
+                    {/* Compact Theme Selector */}
+                    <div className="flex flex-col md:flex-row items-center gap-3">
+                        <div className="flex items-center gap-2 text-[10px] uppercase tracking-widest text-gray-500">
+                            <Palette className="w-3 h-3" />
+                            <span>Theme</span>
                         </div>
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2">
                             <div className="relative inline-block">
                                 <select 
                                 value={gameState.currentTheme}
                                 onChange={(e) => setCurrentTheme(e.target.value)}
-                                className="appearance-none bg-black border border-gray-700 hover:border-[var(--accent-color)] text-[var(--accent-color)] px-4 py-2 pr-8 rounded-none uppercase text-xs font-bold tracking-wider cursor-pointer focus:outline-none focus:ring-1 focus:ring-[var(--accent-color)] w-48"
+                                className="appearance-none bg-black border border-gray-700 hover:border-[var(--accent-color)] text-[var(--accent-color)] px-2 py-1 pr-6 rounded-none uppercase text-[10px] font-bold tracking-wider cursor-pointer focus:outline-none focus:ring-1 focus:ring-[var(--accent-color)] w-32"
                                 >
                                 {gameState.unlockedThemes.map(theme => (
                                     <option key={theme} value={theme}>{theme}</option>
                                 ))}
                                 </select>
                                 <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-[var(--accent-color)]">
-                                    <ChevronUp className="h-3 w-3 transform rotate-180" />
+                                    <ChevronUp className="h-2 w-2 transform rotate-180" />
                                 </div>
                             </div>
                             <div 
-                                className="w-8 h-8 border border-white/20 transition-colors duration-300" 
+                                className="w-6 h-6 border border-white/20 transition-colors duration-300" 
                                 style={{ 
                                 backgroundColor: THEMES[gameState.currentTheme]?.hex || '#00ff9d',
-                                boxShadow: `0 0 10px ${THEMES[gameState.currentTheme]?.hex || '#00ff9d'}`
+                                boxShadow: `0 0 5px ${THEMES[gameState.currentTheme]?.hex || '#00ff9d'}`
                                 }} 
                             />
                         </div>
@@ -301,21 +306,21 @@ const Workshop = () => {
             </div>
           </motion.div>
           
-          {/* Main Layout Grid */}
-          <div className="grid md:grid-cols-2 gap-8 mb-8">
+          {/* Main Layout Grid - Reduced Gap */}
+          <div className="grid md:grid-cols-2 gap-4 mb-4">
             
-            {/* Equipment Column */}
+            {/* Equipment Column - Reduced Padding */}
             <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.2 }}
-              className="bg-black/80 rounded-none p-6 border border-[var(--accent-color)] flex flex-col h-full"
+              className="bg-black/80 rounded-none p-4 border border-[var(--accent-color)] flex flex-col h-full"
             >
-              <h3 className="text-xl font-bold text-[#e0e0e0] mb-4 uppercase tracking-widest border-b border-gray-800 pb-2 text-center flex items-center justify-center gap-2">
-                 <LucideIcons.Wrench className="w-5 h-5" /> Components
+              <h3 className="text-sm font-bold text-[#e0e0e0] mb-2 uppercase tracking-widest border-b border-gray-800 pb-2 text-center flex items-center justify-center gap-2">
+                 <LucideIcons.Wrench className="w-4 h-4" /> Components
               </h3>
 
-              <div className="grid grid-cols-2 gap-4 mt-4 flex-1">
+              <div className="grid grid-cols-2 gap-2 mt-2 flex-1">
                 {slots.map(({ key, label, internalKey }) => {
                   const partId = gameState.playerBot.equipment[key];
                   const part = partId ? getPartById(partId) : null;
@@ -325,8 +330,8 @@ const Workshop = () => {
                   const upgradeCost = 100 * (currentLevel + 1);
                   
                   return (
-                    <div key={key} className="space-y-2">
-                      <div className="flex justify-between items-center text-xs uppercase font-bold tracking-wider">
+                    <div key={key} className="space-y-1">
+                      <div className="flex justify-between items-center text-[10px] uppercase font-bold tracking-wider">
                         <span className="text-gray-500">{label}</span>
                         <span className="text-[var(--accent-color)] opacity-70">Lv. {currentLevel}</span>
                       </div>
@@ -336,29 +341,29 @@ const Workshop = () => {
                         whileTap={{ scale: 0.98 }}
                         onClick={() => handleSlotClick(key)}
                         className={cn(
-                          "rounded-none p-4 border cursor-pointer transition-all h-32 flex flex-col items-center justify-center relative bg-black",
+                          "rounded-none p-2 border cursor-pointer transition-all h-24 flex flex-col items-center justify-center relative bg-black",
                           part ? colors.border : "border-gray-800 hover:border-[var(--accent-color)]",
                           part ? "hover:bg-[rgba(var(--accent-rgb),0.05)]" : "border-dashed"
                         )}
                       >
-                        <Icon className={cn("w-10 h-10 mb-2", part ? colors.text : "text-gray-700")} />
-                        <div className="text-[10px] text-[#e0e0e0] text-center font-bold truncate w-full px-2 uppercase tracking-widest">
-                          {part ? part.name : 'EMPTY SLOT'}
+                        <Icon className={cn("w-8 h-8 mb-1", part ? colors.text : "text-gray-700")} />
+                        <div className="text-[9px] text-[#e0e0e0] text-center font-bold truncate w-full px-1 uppercase tracking-widest">
+                          {part ? part.name : 'EMPTY'}
                         </div>
                         {part && (
                            <div className="mt-1">
-                             <RarityBadge tier={part.tier} className="rounded-none scale-75 origin-top" />
+                             <RarityBadge tier={part.tier} className="rounded-none scale-[0.6] origin-top" />
                            </div>
                         )}
                       </motion.div>
                       
-                      <div className="flex gap-2">
+                      <div className="flex gap-1">
                           <Button
                             onClick={() => handleUpgrade(key, label)}
                             size="sm"
-                            className="flex-1 bg-green-900/10 border border-green-600/30 text-green-400 hover:bg-green-600/20 text-[9px] rounded-none uppercase tracking-tight h-7"
+                            className="flex-1 bg-green-900/10 border border-green-600/30 text-green-400 hover:bg-green-600/20 text-[8px] rounded-none uppercase tracking-tight h-6"
                           >
-                            <ChevronUp className="w-3 h-3 mr-1" />
+                            <ChevronUp className="w-2 h-2 mr-1" />
                             Up ({upgradeCost})
                           </Button>
                           
@@ -370,7 +375,7 @@ const Workshop = () => {
                               }}
                               variant="outline"
                               size="sm"
-                              className="bg-red-900/10 border border-red-600/30 text-red-400 hover:bg-red-600/20 px-2 rounded-none h-7"
+                              className="bg-red-900/10 border border-red-600/30 text-red-400 hover:bg-red-600/20 px-2 rounded-none h-6"
                             >
                               X
                             </Button>
@@ -382,22 +387,22 @@ const Workshop = () => {
               </div>
             </motion.div>
             
-            {/* Stats Column */}
+            {/* Stats Column - Reduced Padding */}
             <motion.div
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.3 }}
-              className="bg-black/80 rounded-none p-6 border border-[var(--accent-color)] h-full flex flex-col"
+              className="bg-black/80 rounded-none p-4 border border-[var(--accent-color)] h-full flex flex-col"
             >
-              <h3 className="text-xl font-bold text-[#e0e0e0] mb-6 uppercase tracking-widest border-b border-gray-800 pb-2 flex items-center gap-2">
-                 <LucideIcons.Activity className="w-5 h-5" /> Diagnostics
+              <h3 className="text-sm font-bold text-[#e0e0e0] mb-4 uppercase tracking-widest border-b border-gray-800 pb-2 flex items-center gap-2">
+                 <LucideIcons.Activity className="w-4 h-4" /> Diagnostics
               </h3>
-              <StatDisplay stats={stats} className="gap-4 font-mono" />
+              <StatDisplay stats={stats} className="gap-2 font-mono" />
               
-              <div className="mt-auto pt-8 space-y-4 font-mono text-xs">
-                <div className="p-4 bg-blue-900/10 rounded-none border-l-4 border-blue-500">
-                  <p className="text-blue-400 uppercase tracking-wide flex gap-2">
-                    <LucideIcons.Info className="w-4 h-4 shrink-0" />
+              <div className="mt-auto pt-4 space-y-2 font-mono text-xs">
+                <div className="p-3 bg-blue-900/10 rounded-none border-l-4 border-blue-500">
+                  <p className="text-blue-400 uppercase tracking-wide flex gap-2 text-[10px]">
+                    <LucideIcons.Info className="w-3 h-3 shrink-0" />
                     <span>Slot Upgrades Boost equipped item stats by <span className="text-white font-bold">10%</span> per level.</span>
                   </p>
                 </div>
@@ -405,89 +410,89 @@ const Workshop = () => {
             </motion.div>
           </div>
 
-          {/* --- NEW SECTION: CORE UPGRADES (Injected Here) --- */}
+          {/* 4. NEW SECTION: NOW VISIBLE */}
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
-            className="grid md:grid-cols-12 gap-8 border-t border-gray-800 pt-8"
+            className="grid md:grid-cols-12 gap-4 border-t border-gray-800 pt-4"
           >
-             {/* LEFT: Firmware Upgrade */}
-             <div className="md:col-span-4 bg-black/40 border border-gray-800 p-6 flex flex-col justify-between">
-                 <div>
-                    <h3 className="text-xl font-bold text-white uppercase tracking-widest mb-2 flex items-center gap-2">
-                        <Zap className="w-5 h-5 text-[var(--accent-color)]" />
-                        Firmware Upgrade
+              {/* LEFT: Firmware Upgrade */}
+              <div className="md:col-span-4 bg-black/40 border border-gray-800 p-4 flex flex-col justify-between">
+                  <div>
+                    <h3 className="text-sm font-bold text-white uppercase tracking-widest mb-1 flex items-center gap-2">
+                        <Zap className="w-4 h-4 text-[var(--accent-color)]" />
+                        Firmware
                     </h3>
-                    <p className="text-xs text-gray-500 mb-6 font-mono">
+                    <p className="text-[10px] text-gray-500 mb-4 font-mono">
                         Increase Core Level to unlock stat points. <br/>
-                        Current Level: <span className="text-[var(--accent-color)] font-bold text-lg">{currentLevel}</span>
+                        Level: <span className="text-[var(--accent-color)] font-bold text-sm">{currentLevel}</span>
                     </p>
-                 </div>
-                 
-                 <Button 
+                  </div>
+                  
+                  <Button 
                     onClick={handleLevelUp}
                     disabled={gameState.scrap < upgradeCost}
                     className={cn(
-                        "w-full h-16 flex flex-col items-center justify-center rounded-sm transition-all border",
+                        "w-full h-12 flex flex-col items-center justify-center rounded-sm transition-all border",
                         gameState.scrap >= upgradeCost 
                             ? "bg-[var(--accent-color)] text-black border-white hover:bg-white" 
                             : "bg-gray-900 text-gray-600 border-gray-800 cursor-not-allowed"
                     )}
-                 >
-                    <span className="font-black uppercase tracking-widest">LEVEL UP</span>
-                    <span className="text-xs font-mono">{upgradeCost} SCRAP</span>
-                 </Button>
-             </div>
+                  >
+                    <span className="font-black uppercase tracking-widest text-xs">LEVEL UP</span>
+                    <span className="text-[10px] font-mono">{upgradeCost} SCRAP</span>
+                  </Button>
+              </div>
 
-             {/* RIGHT: Core Optimization (Stats) */}
-             <div className="md:col-span-8 bg-black/40 border border-gray-800 p-6">
-                 <div className="flex justify-between items-center mb-6 border-b border-gray-800 pb-2">
+              {/* RIGHT: Core Optimization (Stats) */}
+              <div className="md:col-span-8 bg-black/40 border border-gray-800 p-4">
+                  <div className="flex justify-between items-center mb-4 border-b border-gray-800 pb-2">
                     <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
-                        <Activity className="w-4 h-4" /> Core Optimization
+                        <Activity className="w-4 h-4" /> Optimization
                     </h3>
-                    <span className={cn("text-xs font-mono font-bold px-2 py-1 border", availablePoints > 0 ? "bg-[var(--accent-color)] text-black border-[var(--accent-color)] animate-pulse" : "text-gray-600 border-gray-800")}>
-                        {availablePoints} POINTS AVAILABLE
+                    <span className={cn("text-[10px] font-mono font-bold px-2 py-1 border", availablePoints > 0 ? "bg-[var(--accent-color)] text-black border-[var(--accent-color)] animate-pulse" : "text-gray-600 border-gray-800")}>
+                        {availablePoints} PTS AVAILABLE
                     </span>
-                 </div>
+                  </div>
 
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {Object.entries(STAT_CONFIG).map(([key, config]) => {
                         const currentVal = gameState.playerBot?.baseStats?.[key] || 0;
                         const Icon = config.icon;
                         
                         return (
-                            <div key={key} className="bg-black border border-gray-800 p-3 flex items-center justify-between group hover:border-gray-600 transition-colors">
-                                <div className="flex items-center gap-3">
-                                    <div className={cn("p-2 bg-gray-900 rounded-sm", config.color)}>
-                                        <Icon className="w-4 h-4" />
+                            <div key={key} className="bg-black border border-gray-800 p-2 flex items-center justify-between group hover:border-gray-600 transition-colors">
+                                <div className="flex items-center gap-2">
+                                    <div className={cn("p-1.5 bg-gray-900 rounded-sm", config.color)}>
+                                        <Icon className="w-3 h-3" />
                                     </div>
                                     <div>
-                                        <div className="text-xs font-bold text-gray-300 uppercase tracking-wider">{config.label}</div>
-                                        <div className="text-[9px] text-gray-600 font-mono">{config.desc}</div>
+                                        <div className="text-[10px] font-bold text-gray-300 uppercase tracking-wider">{config.label}</div>
+                                        <div className="text-[8px] text-gray-600 font-mono">{config.desc}</div>
                                     </div>
                                 </div>
-                                <div className="flex items-center gap-3">
-                                    <span className="font-mono font-bold text-lg text-white">+{currentVal}</span>
+                                <div className="flex items-center gap-2">
+                                    <span className="font-mono font-bold text-sm text-white">+{currentVal}</span>
                                     <Button
                                         onClick={() => handleAllocatePoint(key)}
                                         disabled={availablePoints <= 0}
                                         size="sm"
                                         className={cn(
-                                            "h-8 w-8 p-0 rounded-sm border",
+                                            "h-6 w-6 p-0 rounded-sm border",
                                             availablePoints > 0 
                                                 ? "bg-gray-800 hover:bg-[var(--accent-color)] hover:text-black border-gray-600 hover:border-white" 
                                                 : "bg-black text-gray-700 border-gray-900 cursor-not-allowed"
                                         )}
                                     >
-                                        <Plus className="w-4 h-4" />
+                                        <Plus className="w-3 h-3" />
                                     </Button>
                                 </div>
                             </div>
                         );
                     })}
-                 </div>
-             </div>
+                  </div>
+              </div>
           </motion.div>
 
         </div>
