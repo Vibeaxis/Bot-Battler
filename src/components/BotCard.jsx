@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils';
 import { calculateBotStats } from '@/utils/statCalculator';
 import { useToast } from '@/components/ui/use-toast'; 
 
-// --- 1. ANIMATIONS (Added Random Flicker) ---
+// --- 1. ANIMATIONS ---
 const injectStyles = () => {
   if (typeof document === 'undefined') return;
   const styleId = 'bot-card-animations';
@@ -22,14 +22,14 @@ const injectStyles = () => {
       0% { opacity: 1; } 20% { opacity: 0.8; } 40% { opacity: 0.9; } 60% { opacity: 0.2; } 80% { opacity: 1; } 100% { opacity: 1; }
     }
     
-    /* NEW: Unstable Power Flicker (for Yellow State) */
+    /* Random Yellow Flicker for Damaged State */
     @keyframes power-flicker {
       0% { opacity: 1; } 95% { opacity: 1; } 96% { opacity: 0.6; } 97% { opacity: 1; } 98% { opacity: 0.4; } 100% { opacity: 1; }
     }
 
-    /* NEW: IMPACT FLASH */
+    /* White Flash on Hit */
     @keyframes hit-flash {
-      0% { background-color: rgba(255, 255, 255, 0.4); border-color: white; }
+      0% { background-color: rgba(255, 255, 255, 0.3); border-color: white; }
       100% { background-color: transparent; border-color: inherit; }
     }
 
@@ -43,7 +43,7 @@ const injectStyles = () => {
 };
 injectStyles();
 
-// --- 2. SKELETON (Updates based on Status) ---
+// --- 2. SKELETON (Handles Healthy, Damaged, Critical, Dead) ---
 const SchematicSkeleton = ({ status = 'healthy' }) => {
   const styles = {
     healthy: {
@@ -101,7 +101,7 @@ const SchematicSkeleton = ({ status = 'healthy' }) => {
 };
 
 // --- 3. HOLOGRAPHIC FRAME ---
-const HolographicFrame = ({ children, className, isActive, colorClass }) => (
+const HolographicFrame = ({ children, className, isActive }) => (
   <div className={cn("relative transition-all duration-300 group", className)}>
     <div className="absolute inset-0 opacity-40 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
         <div className="absolute top-0 left-0 w-2 h-2 border-l border-t border-gray-500" />
@@ -136,7 +136,8 @@ const BotCard = ({ bot, currentHealth, maxHealth, slotLevels, isAttacking, side 
   const prevHealthRef = useRef(currentHealth);
 
   useEffect(() => {
-    if (prevHealthRef.current > currentHealth && currentHealth > 0) {
+    // Only flash if health drops AND we aren't already dead
+    if (currentHealth !== undefined && prevHealthRef.current > currentHealth && currentHealth > 0) {
         setIsHit(true);
         const timer = setTimeout(() => setIsHit(false), 150);
         return () => clearTimeout(timer);
@@ -183,9 +184,14 @@ const BotCard = ({ bot, currentHealth, maxHealth, slotLevels, isAttacking, side 
   const isDead = systemStatus === 'dead';
   const DisplayIcon = isDead ? IconMap.Skull : (IconMap[bot.icon] || IconMap.Cpu);
   const displayName = isDead ? "FATAL EXCEPTION" : bot.name;
-  const nameColor = isDead ? "text-red-500 tracking-[0.2em]" : (
-    (bot.rarityId && RARITY_COLORS[RARITY_MAP[bot.rarityId]]) ? RARITY_COLORS[RARITY_MAP[bot.rarityId]].text : 'text-white'
-  );
+  
+  // Determine Text Color
+  let nameColorClass = 'text-white';
+  if (isDead) {
+      nameColorClass = "text-red-500 tracking-[0.2em]";
+  } else if (bot.rarityId && RARITY_COLORS[RARITY_MAP[bot.rarityId]]) {
+      nameColorClass = RARITY_COLORS[RARITY_MAP[bot.rarityId]].text;
+  }
 
   const slots = [
     { key: 'Head', partId: bot.equipment?.Head, gridClass: 'col-span-2 w-1/2 mx-auto' }, 
@@ -237,7 +243,7 @@ const BotCard = ({ bot, currentHealth, maxHealth, slotLevels, isAttacking, side 
                  <DisplayIcon className={cn("w-6 h-6", isDead ? "text-red-600" : "text-[var(--accent-color)]")} />
             </div>
             <div className="flex-1 min-w-0">
-                <h3 className={cn("text-lg font-black truncate font-mono uppercase tracking-tighter leading-none mb-1", nameColor)}>
+                <h3 className={cn("text-lg font-black truncate font-mono uppercase tracking-tighter leading-none mb-1", nameColorClass)}>
                     {displayName}
                 </h3>
                 {!isDead && (
@@ -275,12 +281,12 @@ const BotCard = ({ bot, currentHealth, maxHealth, slotLevels, isAttacking, side 
                         )}
                         onMouseEnter={() => part && setHoveredPart({ ...part, slotKey: key })}
                         onMouseLeave={() => setHoveredPart(null)}
-                        onClick={() => !isDead && handlePartClick(part)} // Disable clicks if dead
+                        // Disable interactions if dead
+                        onClick={() => !isDead && handlePartClick(part)}
                     >
                         <HolographicFrame 
                             className="w-full h-16 cursor-pointer"
                             isActive={shouldAnimateArm || (hoveredPart && hoveredPart.id === part?.id)}
-                            colorClass={part ? "text-gray-600" : "text-gray-800"} 
                         >
                             <Icon className={cn(
                                 "w-9 h-9 transition-all duration-300 drop-shadow-[0_4px_4px_rgba(0,0,0,0.5)]", 
