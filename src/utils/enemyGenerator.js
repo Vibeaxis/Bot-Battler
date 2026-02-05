@@ -1,45 +1,88 @@
 import { parts, PART_SLOTS } from '@/data/parts';
 import { BASE_HEALTH } from '@/constants/gameConstants';
 
-// --- EXPANDED NAME POOL ---
-const enemyNames = [
-  // Standard Units
-  'Destructor X-9', 'Omega Prime', 'Steel Sentinel', 'Plasma Fury', 'Iron Colossus',
-  'Cyber Reaper', 'Titanium Terror', 'Quantum Killer', 'Voltage Viper', 'Chrome Crusher',
-  'Binary Brawler', 'Neon Nightmare', 'Circuit Slayer', 'Photon Phantom', 'Fusion Fighter',
-  'Mech-01', 'Unit 734', 'Droid Alpha', 'Sector Guard', 'Rust Bucket',
+// --- MODULAR NAME GENERATOR ---
+
+// --- EXPANDED MODULAR NAME POOL ---
+
+const NAME_PREFIXES = [
+  // Elemental & Physical
+  'Cyber', 'Iron', 'Neon', 'Void', 'Steel', 'Mech', 'Nano', 'Flux', 'Grim', 'Doom',
+  'Solar', 'Lunar', 'Toxic', 'Pyro', 'Cryo', 'Dark', 'Holo', 'Warp', 'Null', 'Zero',
+  'Rust', 'Dust', 'Scrap', 'Junk', 'Trash', 'Waste', 'Debris', 'Slag', 'Soot', 'Ash',
+  'Magma', 'Volt', 'Static', 'Acid', 'Sonic', 'Laser', 'Plasma', 'Rad', 'Nuke', 'Bio',
+  'Chrome', 'Cobalt', 'Onyx', 'Obsidian', 'Ivory', 'Crimson', 'Azure', 'Jade', 'Amber', 'Silver',
   
-  // Aggressive
-  'Widow Maker', 'Skull Crusher', 'Bone Breaker', 'Havoc Bringer', 'Doom Forge',
-  'Vortex Striker', 'Nova Blaster', 'Rage Core', 'Spike Walker', 'Blade Runner',
-  
-  // Tactical
-  'Logic Frame', 'System Shock', 'Null Pointer', 'Fatal Exception', 'Blue Screen',
-  'Glitch Walker', 'Firewall Guardian', 'Proxy Server', 'Data Ghost', 'Root User',
-  
-  // Heavy
-  'Heavy Metal', 'Tank Treads', 'Blast Shield', 'Iron Curtain', 'War Path',
-  'Siege Breaker', 'Fortress Prime', 'Bulwark Unit', 'Aegis Core', 'Titan Frame'
+  // Abstract & Status
+  'Rogue', 'Apex', 'Titan', 'Omega', 'Alpha', 'Prime', 'Ultra', 'Hyper', 'Super', 'Mega',
+  'Chaos', 'Law', 'Storm', 'Thunder', 'Ghost', 'Shadow', 'Phantom', 'Spirit', 'Soul', 'Mind',
+  'Fatal', 'Lethal', 'Vile', 'Pure', 'True', 'Lost', 'Fallen', 'Broken', 'Risen', 'Wicked',
+  'Silent', 'Loud', 'Swift', 'Heavy', 'Light', 'Blind', 'Deaf', 'Numb', 'Dead', 'Live',
+  'Grand', 'Arch', 'High', 'Low', 'Deep', 'Far', 'Near', 'Cold', 'Hot', 'Warm',
+
+  // Tech & Military
+  'Tech', 'Data', 'Code', 'Net', 'Web', 'Grid', 'Link', 'Node', 'Core', 'Chip',
+  'Logic', 'System', 'Auto', 'Servo', 'Hydro', 'Aero', 'Geo', 'Exo', 'Endo', 'Meso',
+  'Proto', 'Meta', 'Beta', 'Giga', 'Tera', 'Peta', 'Exa', 'Zetta', 'Yotta', 'Kilo',
+  'Strike', 'Blast', 'Force', 'Power', 'Shock', 'Awe', 'Dread', 'Fear', 'Hate', 'Rage',
+  'War', 'Battle', 'Combat', 'Fight', 'Brawl', 'Duel', 'Kill', 'Hunt', 'Chase', 'Run'
 ];
 
+const NAME_NOUNS = [
+  // Frame Types
+  'Bot', 'Droid', 'Unit', 'Mech', 'Frame', 'Rig', 'Suit', 'Gear', 'Core', 'Mind',
+  'Walker', 'Runner', 'Flyer', 'Glider', 'Hover', 'Tank', 'Jeep', 'Bike', 'Car', 'Van',
+  'Strider', 'Crawler', 'Roller', 'Floater', 'Lifter', 'Loader', 'Hauler', 'Carrier', 'Drone', 'Probe',
+  'Shell', 'Husk', 'Form', 'Body', 'Vessel', 'Avatar', 'Proxy', 'Agent', 'Asset', 'Pawn',
+  
+  // Combat Roles
+  'Slayer', 'Killer', 'Hunter', 'Seeker', 'Finder', 'Keeper', 'Warden', 'Guard', 'Scout', 'Spy',
+  'Reaper', 'Demon', 'Devil', 'Angel', 'God', 'Lord', 'King', 'Queen', 'Prince', 'Duke',
+  'Sniper', 'Gunner', 'Bomber', 'Sapper', 'Medic', 'Tech', 'Engie', 'Pilot', 'Driver', 'Rider',
+  'Brawler', 'Fighter', 'Soldier', 'Grunt', 'Chief', 'Boss', 'Leader', 'Master', 'Slave', 'Servant',
+  'Breaker', 'Crusher', 'Smasher', 'Basher', 'Ripper', 'Tearer', 'Shredder', 'Grinder', 'Mincer', 'Slicer',
+  'Burner', 'Freezer', 'Shocker', 'Blaster', 'Shooter', 'Lancer', 'Archer', 'Knight', 'Rook', 'Bishop',
+
+  // Creatures & Mythos
+  'Viper', 'Cobra', 'Snake', 'Wolf', 'Bear', 'Lion', 'Tiger', 'Shark', 'Whale', 'Hawk',
+  'Eagle', 'Falcon', 'Raven', 'Crow', 'Owl', 'Bat', 'Rat', 'Mouse', 'Cat', 'Dog',
+  'Dragon', 'Wyvern', 'Drake', 'Hydra', 'Golem', 'Giant', 'Troll', 'Orc', 'Elf', 'Dwarf',
+  'Spider', 'Scorpion', 'Wasp', 'Hornet', 'Ant', 'Beetle', 'Mantis', 'Locust', 'Roach', 'Worm',
+  'Wraith', 'Specter', 'Ghoul', 'Zombie', 'Lich', 'Vampire', 'Werewolf', 'Mutant', 'Cyborg', 'Android'
+];
+
+const NAME_TAGS = [
+  // Military & Sci-Fi Codes
+  'X-1', 'X-9', 'V.2', 'mk.I', 'mk.IV', 'G-0', '734', '404', '808', '909',
+  'Alpha', 'Beta', 'Gamma', 'Delta', 'Zero', 'One', 'Red', 'Blue', 'Onyx', 'Gold',
+  'Z-7', 'R-Type', 'Type-0', 'Spec-Ops', 'Gen-1', 'Gen-X', 'V-8', 'V-12', 'X-Wing', 'Y-Wing',
+  '001', '007', '101', '117', '666', '777', '999', '1337', '2077', '2049',
+  
+  // Descriptive Suffixes
+  'Prime', 'Max', 'Pro', 'Lite', 'Mini', 'Micro', 'Nano', 'Pico', 'Femto', 'Atto',
+  'Plus', 'Ultra', 'Extreme', 'Final', 'Last', 'First', 'Only', 'Lone', 'Solo', 'Duo',
+  'Heavy', 'Light', 'Fast', 'Slow', 'Hard', 'Soft', 'Wet', 'Dry', 'Cold', 'Hot',
+  'Elite', 'Ace', 'Vet', 'Noob', 'Bot', 'AI', 'NPC', 'Mob', 'Boss', 'God',
+  'Mk.II', 'Mk.III', 'Mk.V', 'Mk.X', 'Rev.A', 'Rev.B', 'Ver.1', 'Ver.2', 'Patch.1', 'Build.9'
+];
+
+const generateModularName = () => {
+    const p = NAME_PREFIXES[Math.floor(Math.random() * NAME_PREFIXES.length)];
+    const n = NAME_NOUNS[Math.floor(Math.random() * NAME_NOUNS.length)];
+    
+    // 30% chance to have a tag suffix for extra flavor
+    const hasTag = Math.random() < 0.3;
+    const t = hasTag ? ` ${NAME_TAGS[Math.floor(Math.random() * NAME_TAGS.length)]}` : '';
+
+    return `${p} ${n}${t}`;
+};
+
 // --- ENEMY RARITY CONFIG ---
-// This aligns with your item rarity colors:
-// Common (Gray), Uncommon (Green), Rare (Blue), Epic (Purple), Legendary (Orange)
 const ENEMY_RARITIES = [
   { id: 'common', chance: 0.60, prefix: '', tierOffset: 0, rarityName: 'Common' },
-  
-  // CHANGED: 'Reinforced' -> 'Heavy' (50% shorter)
-  // Alternatives: 'Plated', 'Solid', 'Mk.II'
   { id: 'uncommon', chance: 0.25, prefix: 'Heavy', tierOffset: 0, rarityName: 'Uncommon' },
-  
-  // 'Elite' is already short and good (5 chars)
   { id: 'rare', chance: 0.10, prefix: 'Elite', tierOffset: 1, rarityName: 'Rare' }, 
-  
-  // CHANGED: 'Commander' -> 'Prime' (45% shorter)
-  // Alternatives: 'Alpha', 'Major', 'Ace', 'Core'
   { id: 'epic', chance: 0.04, prefix: 'Prime', tierOffset: 1, rarityName: 'Epic' },
-  
-  // 'APEX' is perfect (4 chars)
   { id: 'legendary', chance: 0.01, prefix: 'APEX', tierOffset: 2, rarityName: 'Legendary' }
 ];
 
@@ -75,7 +118,6 @@ const getWeightedTier = (playerAverageTier, streak, tierOffset = 0) => {
   const pressure = Math.floor(streak / 5);
   const variance = Math.floor(Math.random() * 3) - 1; 
 
-  // Add the rarity offset (e.g., Apex enemies try to roll higher tier gear)
   let target = base + pressure + variance + tierOffset;
 
   return Math.max(1, Math.min(5, target));
@@ -100,12 +142,11 @@ export const generateBalancedEnemy = (playerBot, currentWinStreak) => {
   const playerAvgTier = getPlayerAverageTier(playerBot);
   
   // 1. Determine Enemy Rarity
-  // Boss waves (every 10) force at least Epic rarity
   const isBossWave = currentWinStreak > 0 && currentWinStreak % 10 === 0;
   let rarityConfig = getEnemyRarity();
   
   if (isBossWave && (rarityConfig.id === 'common' || rarityConfig.id === 'uncommon' || rarityConfig.id === 'rare')) {
-      rarityConfig = ENEMY_RARITIES.find(r => r.id === 'epic'); // Force Epic minimum for bosses
+      rarityConfig = ENEMY_RARITIES.find(r => r.id === 'epic'); 
   }
 
   const loadout = {
@@ -116,7 +157,6 @@ export const generateBalancedEnemy = (playerBot, currentWinStreak) => {
   };
 
   Object.values(PART_SLOTS).forEach(slot => {
-    // Pass the rarity tier offset to gear generation
     const targetTier = getWeightedTier(playerAvgTier, currentWinStreak, rarityConfig.tierOffset);
 
     let possibleParts = parts.filter(p => p.slot === slot);
@@ -138,19 +178,19 @@ export const generateBalancedEnemy = (playerBot, currentWinStreak) => {
     loadout[slot] = selected.id;
   });
 
-  // Name Generation
-  const baseName = enemyNames[Math.floor(Math.random() * enemyNames.length)];
+  // --- NAME GENERATION ---
+  const baseName = generateModularName();
   let finalName = baseName;
 
-  // Apply Rarity Prefix (e.g. "Elite Destructor")
+  // Apply Rarity Prefix (e.g. "Elite [Iron Sentinel X-9]")
   if (rarityConfig.prefix) {
       finalName = `${rarityConfig.prefix} ${baseName}`;
   }
 
   // Boss Override
   if (isBossWave) {
-      finalName = `[BOSS] ${baseName} Prime`;
-      rarityConfig = ENEMY_RARITIES.find(r => r.id === 'legendary'); // Visual override for boss frame
+      finalName = `[BOSS] ${baseName}`; 
+      rarityConfig = ENEMY_RARITIES.find(r => r.id === 'legendary');
   }
 
   return {
@@ -161,7 +201,6 @@ export const generateBalancedEnemy = (playerBot, currentWinStreak) => {
     isEnemy: true,
     difficulty: currentWinStreak,
     archetype: archetype.statPriority || 'Balanced',
-    // NEW: Pass rarity data so the UI can color the name/border
     rarity: rarityConfig.rarityName, 
     rarityId: rarityConfig.id
   };
