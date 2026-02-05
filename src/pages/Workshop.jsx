@@ -96,23 +96,20 @@ const AvatarModal = ({ isOpen, onClose, currentIcon, onSelect }) => {
 
 const Workshop = () => {
   const navigate = useNavigate();
-  // Added setGameState here
   const { gameState, setGameState, equipPart, unequipPart, upgradeSlot, setCurrentTheme, updateBotIcon } = useGameContext();
   const { playSound } = useSoundContext();
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
   
-  // Use utility with current slotLevels
   const stats = calculateBotStats({
     ...gameState.playerBot,
     slotLevels: gameState.slotLevels
   });
   
-  // Resolve current bot icon
   const CurrentBotIcon = IconMap[gameState.playerBot.icon] || IconMap.Cpu;
 
-  // --- NEW LEVELING LOGIC ---
+  // --- LEVELING LOGIC ---
   const currentLevel = gameState.playerBot?.level || 1;
   const upgradeCost = Math.floor(500 * Math.pow(1.5, currentLevel - 1));
   const availablePoints = gameState.playerBot?.statPoints || 0;
@@ -221,7 +218,6 @@ const Workshop = () => {
         <meta name="description" content="Customize your battle bot with different parts and equipment." />
       </Helmet>
       
-      {/* 3. SCROLL FIX: Added pb-32 to allow scrolling past the new section */}
       <div className="min-h-screen bg-[#0a0a12] p-4 pb-32 font-mono text-[#e0e0e0] selection:bg-[var(--accent-color)] selection:text-black">
         
         <div className="relative max-w-6xl mx-auto py-8">
