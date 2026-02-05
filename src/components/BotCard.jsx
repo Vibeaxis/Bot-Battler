@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils';
 import { calculateBotStats } from '@/utils/statCalculator';
 import { useToast } from '@/components/ui/use-toast'; 
 
-// --- 1. ANIMATIONS (Added "Hit Flash") ---
+// --- 1. ANIMATIONS (Added Random Flicker) ---
 const injectStyles = () => {
   if (typeof document === 'undefined') return;
   const styleId = 'bot-card-animations';
@@ -22,22 +22,28 @@ const injectStyles = () => {
       0% { opacity: 1; } 20% { opacity: 0.8; } 40% { opacity: 0.9; } 60% { opacity: 0.2; } 80% { opacity: 1; } 100% { opacity: 1; }
     }
     
-    /* NEW: IMPACT FLASH - Fires when damage is taken */
+    /* NEW: Unstable Power Flicker (for Yellow State) */
+    @keyframes power-flicker {
+      0% { opacity: 1; } 95% { opacity: 1; } 96% { opacity: 0.6; } 97% { opacity: 1; } 98% { opacity: 0.4; } 100% { opacity: 1; }
+    }
+
+    /* NEW: IMPACT FLASH */
     @keyframes hit-flash {
-      0% { background-color: rgba(255, 255, 255, 0.2); border-color: white; }
+      0% { background-color: rgba(255, 255, 255, 0.4); border-color: white; }
       100% { background-color: transparent; border-color: inherit; }
     }
 
     .animate-attack-right { animation: lunge-right 0.3s ease-out !important; }
     .animate-attack-left { animation: lunge-left 0.3s ease-out !important; }
     .animate-glitch { animation: glitch-pulse 0.3s infinite steps(3, end) !important; }
+    .animate-flicker { animation: power-flicker 3s infinite linear !important; }
     .animate-hit { animation: hit-flash 0.15s ease-out !important; }
   `;
   document.head.appendChild(style);
 };
 injectStyles();
 
-// --- 2. SKELETON (Thicker Lines for Visibility) ---
+// --- 2. SKELETON (Updates based on Status) ---
 const SchematicSkeleton = ({ status = 'healthy' }) => {
   const styles = {
     healthy: {
@@ -46,43 +52,49 @@ const SchematicSkeleton = ({ status = 'healthy' }) => {
       core: "fill-[var(--accent-color)] animate-pulse", 
     },
     damaged: {
-      line: "text-amber-600", // Brighter Amber
-      connector: "text-amber-600",
-      core: "fill-amber-500 animate-pulse duration-75", 
+      line: "text-amber-700", 
+      connector: "text-amber-800",
+      core: "fill-amber-500 animate-flicker", // Random flicker
     },
     critical: {
-      line: "text-red-600", // Brighter Red
-      connector: "text-red-500",
+      line: "text-red-700", 
+      connector: "text-red-800",
       core: "fill-red-600 animate-glitch", 
+    },
+    dead: {
+      line: "text-red-900 opacity-50", 
+      connector: "text-red-950 opacity-30",
+      core: "fill-black stroke-red-900", // Dead Core
     }
   };
 
-  const currentStyle = styles[status];
+  const currentStyle = styles[status] || styles.healthy;
 
   return (
     <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 0 }} viewBox="0 0 100 100" preserveAspectRatio="none">
       <line 
         x1="50" y1="15" x2="50" y2="85" 
-        stroke="currentColor" strokeWidth={status === 'healthy' ? 1 : 2} // Thicker when damaged
+        stroke="currentColor" strokeWidth={status === 'healthy' ? 1 : 1.5} 
         strokeDasharray="2 2"
         className={`transition-colors duration-300 ${currentStyle.line} ${status === 'critical' ? 'animate-glitch' : ''}`} 
       />
       
-      <line x1="50" y1="20" x2="50" y2="28" stroke="currentColor" strokeWidth="1" className={`transition-colors duration-300 ${currentStyle.connector}`} />
-      <circle cx="50" cy="20" r="1.5" className={`transition-colors duration-300 stroke-gray-900 ${status === 'critical' ? 'fill-red-900' : 'fill-gray-800'}`} />
-
-      <path d="M 25 45 L 75 45" stroke="currentColor" strokeWidth={status === 'healthy' ? 1 : 2} fill="none" className={`transition-colors duration-300 ${currentStyle.line}`} />
+      {/* Arms Cross-Bus */}
+      <path d="M 25 45 L 75 45" stroke="currentColor" strokeWidth="1" fill="none" className={`transition-colors duration-300 ${currentStyle.line}`} />
       
-      <line x1="25" y1="45" x2="25" y2="45" stroke="currentColor" strokeWidth="2" className={`transition-colors duration-300 ${currentStyle.connector}`} />
-      <line x1="75" y1="45" x2="75" y2="45" stroke="currentColor" strokeWidth="2" className={`transition-colors duration-300 ${currentStyle.connector}`} />
-      <line x1="50" y1="70" x2="50" y2="80" stroke="currentColor" strokeWidth="1" className={`transition-colors duration-300 ${currentStyle.connector}`} />
+      {/* Connectors */}
+      <line x1="25" y1="45" x2="25" y2="45" stroke="currentColor" strokeWidth="2" className={currentStyle.connector} />
+      <line x1="75" y1="45" x2="75" y2="45" stroke="currentColor" strokeWidth="2" className={currentStyle.connector} />
+      <line x1="50" y1="20" x2="50" y2="28" stroke="currentColor" strokeWidth="1" className={currentStyle.connector} />
+      <line x1="50" y1="70" x2="50" y2="80" stroke="currentColor" strokeWidth="1" className={currentStyle.connector} />
       
-      {/* CORE: Thicker and brighter */}
-      <circle cx="50" cy="45" r="3" className={`transition-colors duration-300 stroke-gray-900 ${status === 'critical' ? 'fill-red-950' : 'fill-black'}`} />
-      <circle cx="50" cy="45" r={status === 'critical' ? 2 : 1.5} className={currentStyle.core} />
+      {/* CORE NODE */}
+      <circle cx="50" cy="45" r="3" className={`transition-colors duration-300 stroke-gray-900 ${status === 'dead' ? 'fill-black' : 'fill-black'}`} />
+      <circle cx="50" cy="45" r={status === 'dead' ? 1 : 1.5} className={currentStyle.core} />
       
-      {status === 'critical' && (
-        <circle cx="50" cy="45" r="12" fill="none" stroke="red" strokeWidth="1" className="opacity-50 animate-ping" />
+      {/* Critical/Dead Warning Rings */}
+      {(status === 'critical' || status === 'dead') && (
+        <circle cx="50" cy="45" r="10" fill="none" stroke="red" strokeWidth="0.5" className="opacity-20 animate-ping" />
       )}
     </svg>
   );
@@ -119,18 +131,14 @@ const BotCard = ({ bot, currentHealth, maxHealth, slotLevels, isAttacking, side 
   const [hoveredPart, setHoveredPart] = useState(null);
   const { toast } = useToast();
   
-  // --- HIT DETECTION LOGIC ---
+  // --- HIT DETECTION ---
   const [isHit, setIsHit] = useState(false);
   const prevHealthRef = useRef(currentHealth);
 
-  // DEBUG: Uncomment this line to FORCE CRITICAL STATE to see what it looks like
-  // currentHealth = maxHealth * 0.2; 
-
   useEffect(() => {
-    // If health dropped, trigger hit flash
-    if (prevHealthRef.current > currentHealth) {
+    if (prevHealthRef.current > currentHealth && currentHealth > 0) {
         setIsHit(true);
-        const timer = setTimeout(() => setIsHit(false), 150); // Short sharp flash
+        const timer = setTimeout(() => setIsHit(false), 150);
         return () => clearTimeout(timer);
     }
     prevHealthRef.current = currentHealth;
@@ -145,23 +153,39 @@ const BotCard = ({ bot, currentHealth, maxHealth, slotLevels, isAttacking, side 
   const maxHp = maxHealth !== undefined ? maxHealth : 100;
   const healthPct = (curHp / maxHp) * 100;
 
-  // Status Logic
+  // --- UPDATED STATUS LOGIC ---
   let systemStatus = 'healthy';
   let statusText = 'ONLINE';
   let statusColor = 'bg-emerald-500';
   let statusBorder = 'border-gray-800';
 
-  if (healthPct <= 30) {
+  if (healthPct <= 0) {
+    // DEAD STATE - The "Fatal Exception" Screen
+    systemStatus = 'dead';
+    statusText = 'SYSTEM FAILURE';
+    statusColor = 'bg-transparent border border-red-500'; // Hollow red circle
+    statusBorder = 'border-red-900 border-2 shadow-[0_0_50px_rgba(220,38,38,0.2)] bg-red-950/10 grayscale-[0.8]'; 
+  } else if (healthPct <= 30) {
+    // CRITICAL STATE - The Glitchy Warning
     systemStatus = 'critical';
     statusText = '! CRITICAL !';
     statusColor = 'bg-red-600 animate-glitch';
-    statusBorder = 'border-red-600 shadow-[0_0_30px_-5px_rgba(220,38,38,0.4)]'; // Stronger glow
+    statusBorder = 'border-red-600 shadow-[0_0_30px_-5px_rgba(220,38,38,0.4)]';
   } else if (healthPct <= 60) {
+    // DAMAGED STATE - Unstable Yellow
     systemStatus = 'damaged';
     statusText = 'WARNING';
-    statusColor = 'bg-amber-500';
+    statusColor = 'bg-amber-500 animate-flicker';
     statusBorder = 'border-amber-700/50';
   }
+
+  // --- OVERRIDE NAME/ICON IF DEAD ---
+  const isDead = systemStatus === 'dead';
+  const DisplayIcon = isDead ? IconMap.Skull : (IconMap[bot.icon] || IconMap.Cpu);
+  const displayName = isDead ? "FATAL EXCEPTION" : bot.name;
+  const nameColor = isDead ? "text-red-500 tracking-[0.2em]" : (
+    (bot.rarityId && RARITY_COLORS[RARITY_MAP[bot.rarityId]]) ? RARITY_COLORS[RARITY_MAP[bot.rarityId]].text : 'text-white'
+  );
 
   const slots = [
     { key: 'Head', partId: bot.equipment?.Head, gridClass: 'col-span-2 w-1/2 mx-auto' }, 
@@ -169,20 +193,6 @@ const BotCard = ({ bot, currentHealth, maxHealth, slotLevels, isAttacking, side 
     { key: 'RightArm', partId: bot.equipment?.RightArm, gridClass: 'col-span-1' },
     { key: 'Chassis', partId: bot.equipment?.Chassis, gridClass: 'col-span-2 w-full mt-2' }
   ];
-
-  const BotIcon = IconMap[bot.icon] || IconMap.Cpu;
-  const DmgIcon = IconMap.Zap;
-  const SpdIcon = IconMap.Activity;
-  const ArmIcon = IconMap.Shield;
-  const WgtIcon = IconMap.Weight;
-
-  let nameColorClass = 'text-white';
-  if (bot.rarityId && RARITY_MAP[bot.rarityId]) {
-      const tier = RARITY_MAP[bot.rarityId];
-      if (RARITY_COLORS[tier]) {
-          nameColorClass = RARITY_COLORS[tier].text;
-      }
-  }
 
   const StatBox = ({ label, value, icon: Icon, colorClass }) => (
     <div className="flex flex-col items-center justify-center p-2 border-r last:border-r-0 border-gray-900/50 bg-[#0a0a0a]/40">
@@ -194,36 +204,18 @@ const BotCard = ({ bot, currentHealth, maxHealth, slotLevels, isAttacking, side 
     </div>
   );
 
-  const handlePartClick = (part) => {
-      if (!part) return;
-      const colors = RARITY_COLORS[part.tier];
-      toast({
-          title: part.name.toUpperCase(),
-          description: (
-              <div className="mt-2 space-y-1">
-                  <div className="flex justify-between text-xs"><span className="text-gray-500">DMG</span> <span className="text-red-400 font-mono">{part.stats.Damage || 0}</span></div>
-                  <div className="flex justify-between text-xs"><span className="text-gray-500">SPD</span> <span className="text-cyan-400 font-mono">{part.stats.Speed || 0}</span></div>
-                  <div className="flex justify-between text-xs"><span className="text-gray-500">ARM</span> <span className="text-emerald-400 font-mono">{part.stats.Armor || 0}</span></div>
-                  <div className="flex justify-between text-xs"><span className="text-gray-500">WGT</span> <span className="text-amber-400 font-mono">{part.stats.Weight || 0}</span></div>
-              </div>
-          ),
-          className: `border-l-4 ${colors.border} bg-black/95`
-      });
-  };
-
   return (
     <div className={cn(
-      "flex flex-col shrink-0 w-80 h-[480px] bg-[#030303] border shadow-[0_0_50px_-15px_rgba(0,0,0,0.9)] relative z-10 transition-all duration-100",
+      "flex flex-col shrink-0 w-80 h-[480px] bg-[#030303] border shadow-[0_0_50px_-15px_rgba(0,0,0,0.9)] relative z-10 transition-all duration-300",
       statusBorder,
-      // HIT FLASH TRIGGER
       isHit ? "animate-hit" : "",
       className
     )}>
       
-      {/* Background Grid - VISIBLY TINTED ON DAMAGE */}
+      {/* Background Grid - Tinted Red if Critical/Dead */}
       <div className={cn(
-          "absolute inset-0 pointer-events-none transition-colors duration-300",
-          systemStatus === 'critical' ? "bg-red-950/40 opacity-100" : "opacity-5"
+          "absolute inset-0 pointer-events-none transition-colors duration-500",
+          (systemStatus === 'critical' || isDead) ? "bg-red-950/30" : "opacity-5"
         )} 
         style={{ backgroundImage: 'radial-gradient(#ffffff 1px, transparent 1px)', backgroundSize: '16px 16px' }} 
       />
@@ -232,24 +224,28 @@ const BotCard = ({ bot, currentHealth, maxHealth, slotLevels, isAttacking, side 
       <div className="flex flex-col relative bg-[#080808] border-b border-gray-800">
         <div className="flex justify-between items-center px-3 py-1 bg-black/50 border-b border-gray-900 text-[9px] font-mono text-gray-600">
              <span>UNIT_ID: {bot.id ? bot.id.substring(0,6).toUpperCase() : 'UNK_ID'}</span>
-             <span className={cn("flex items-center gap-1.5 transition-colors duration-300", systemStatus === 'critical' ? "text-red-500 font-bold" : "")}>
+             <span className={cn("flex items-center gap-1.5 transition-colors duration-300", 
+                isDead ? "text-red-600 font-black" : (systemStatus === 'critical' ? "text-red-500 font-bold" : "")
+             )}>
                 <span className={`w-1.5 h-1.5 rounded-full ${statusColor}`} /> 
                 {statusText}
              </span>
         </div>
 
         <div className="p-4 flex items-center gap-3">
-            <div className="p-2 shrink-0 bg-black border border-gray-800 rounded-sm shadow-inner">
-                 <BotIcon className="w-6 h-6 text-[var(--accent-color)]" />
+            <div className={cn("p-2 shrink-0 bg-black border border-gray-800 rounded-sm shadow-inner transition-colors", isDead && "border-red-900 bg-red-950/20")}>
+                 <DisplayIcon className={cn("w-6 h-6", isDead ? "text-red-600" : "text-[var(--accent-color)]")} />
             </div>
             <div className="flex-1 min-w-0">
-                <h3 className={cn("text-lg font-black truncate font-mono uppercase tracking-tighter leading-none mb-1", nameColorClass)}>
-                    {bot.name}
+                <h3 className={cn("text-lg font-black truncate font-mono uppercase tracking-tighter leading-none mb-1", nameColor)}>
+                    {displayName}
                 </h3>
-                <div className="flex items-center gap-2 text-[10px] font-mono font-bold">
-                    <span className="bg-gray-900 text-gray-400 px-1.5 py-0.5 border border-gray-800">LVL {bot.level || 1}</span>
-                    <span className="text-gray-600">{bot.rarity ? bot.rarity.toUpperCase() : (side === 'player' ? 'OPERATOR' : 'TARGET')}</span>
-                </div>
+                {!isDead && (
+                    <div className="flex items-center gap-2 text-[10px] font-mono font-bold">
+                        <span className="bg-gray-900 text-gray-400 px-1.5 py-0.5 border border-gray-800">LVL {bot.level || 1}</span>
+                        <span className="text-gray-600">{bot.rarity ? bot.rarity.toUpperCase() : (side === 'player' ? 'OPERATOR' : 'TARGET')}</span>
+                    </div>
+                )}
             </div>
         </div>
       </div>
@@ -258,14 +254,14 @@ const BotCard = ({ bot, currentHealth, maxHealth, slotLevels, isAttacking, side 
       <div className="relative flex-1 px-4 py-6 flex flex-col justify-center">
         <SchematicSkeleton status={systemStatus} />
 
-        <div className="grid grid-cols-2 gap-y-6 gap-x-2 relative z-10">
+        <div className={cn("grid grid-cols-2 gap-y-6 gap-x-2 relative z-10", isDead && "opacity-50 grayscale")}>
             {slots.map(({ key, partId, gridClass }, index) => {
                 const part = partId ? getPartById(partId) : null;
                 const Icon = (part ? IconMap[part.icon] : null) || IconMap.Box;
                 const tier = part ? part.tier : 1;
                 const colors = RARITY_COLORS[tier] || RARITY_COLORS[1];
                 
-                const shouldAnimateArm = isAttacking && (
+                const shouldAnimateArm = isAttacking && !isDead && (
                     (side === 'player' && key === 'RightArm') || 
                     (side === 'enemy' && key === 'LeftArm')
                 );
@@ -279,7 +275,7 @@ const BotCard = ({ bot, currentHealth, maxHealth, slotLevels, isAttacking, side 
                         )}
                         onMouseEnter={() => part && setHoveredPart({ ...part, slotKey: key })}
                         onMouseLeave={() => setHoveredPart(null)}
-                        onClick={() => handlePartClick(part)}
+                        onClick={() => !isDead && handlePartClick(part)} // Disable clicks if dead
                     >
                         <HolographicFrame 
                             className="w-full h-16 cursor-pointer"
@@ -308,14 +304,14 @@ const BotCard = ({ bot, currentHealth, maxHealth, slotLevels, isAttacking, side 
       
       {/* FOOTER */}
       <div className="bg-[#050505] border-t border-gray-800">
-         <div className="grid grid-cols-4 divide-x divide-gray-900/50">
-             <StatBox label="DMG" value={stats.Damage} icon={DmgIcon} colorClass="text-red-500" />
-             <StatBox label="SPD" value={stats.Speed} icon={SpdIcon} colorClass="text-cyan-400" />
-             <StatBox label="ARM" value={stats.Armor} icon={ArmIcon} colorClass="text-emerald-500" />
-             <StatBox label="WGT" value={stats.Weight} icon={WgtIcon} colorClass="text-amber-500" />
+         <div className={cn("grid grid-cols-4 divide-x divide-gray-900/50", isDead && "opacity-50")}>
+             <StatBox label="DMG" value={stats.Damage} icon={IconMap.Zap} colorClass="text-red-500" />
+             <StatBox label="SPD" value={stats.Speed} icon={IconMap.Activity} colorClass="text-cyan-400" />
+             <StatBox label="ARM" value={stats.Armor} icon={IconMap.Shield} colorClass="text-emerald-500" />
+             <StatBox label="WGT" value={stats.Weight} icon={IconMap.Weight} colorClass="text-amber-500" />
          </div>
          <div className="p-1.5 text-[9px] text-center text-gray-700 font-mono uppercase tracking-[0.2em] border-t border-gray-900 bg-black">
-            {hoveredPart ? `>> ANALYZING: ${hoveredPart.name} <<` : "SYSTEM READY"}
+            {isDead ? "/// CONNECTION LOST ///" : (hoveredPart ? `>> ANALYZING: ${hoveredPart.name} <<` : "SYSTEM READY")}
          </div>
       </div>
     </div>
