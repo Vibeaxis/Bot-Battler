@@ -7,61 +7,53 @@ import { cn } from '@/lib/utils';
 import { calculateBotStats } from '@/utils/statCalculator';
 import { useToast } from '@/components/ui/use-toast'; 
 
-// --- SKELETON (Shoulder Adjustment) ---
+// --- 1. NEW "DATA BUS" SKELETON ---
+// This draws lines explicitly to where the icons float, connecting them visually.
 const SchematicSkeleton = () => (
   <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 0 }} viewBox="0 0 100 100" preserveAspectRatio="none">
-    {/* Central Spine */}
-    <path d="M 50 15 L 50 85" stroke="currentColor" strokeWidth="1.5" fill="none" className="text-gray-700 opacity-50" vectorEffect="non-scaling-stroke" />
+    {/* Main Vertical Bus */}
+    <line x1="50" y1="15" x2="50" y2="85" stroke="currentColor" strokeWidth="1" className="text-gray-800" strokeDasharray="2 2" />
     
-    {/* Horizontal Bus (Arms) - Shortened to bring shoulders in */}
-    <path d="M 35 38 L 65 38" stroke="currentColor" strokeWidth="1.5" fill="none" className="text-gray-700 opacity-50" vectorEffect="non-scaling-stroke" />
+    {/* Head Connector */}
+    <line x1="50" y1="20" x2="50" y2="28" stroke="currentColor" strokeWidth="1" className="text-gray-700" />
+    <circle cx="50" cy="20" r="1.5" className="fill-gray-800 stroke-gray-600" />
+
+    {/* Arms Cross-Bus */}
+    <path d="M 25 45 L 75 45" stroke="currentColor" strokeWidth="1" fill="none" className="text-gray-800" />
     
-    {/* Nodes */}
-    {/* Head Node */}
-    <circle cx="50" cy="18" r="2.5" className="fill-gray-600" />
+    {/* Arm Connectors (Vertical drops to nodes) */}
+    <line x1="25" y1="45" x2="25" y2="45" stroke="currentColor" strokeWidth="2" className="text-gray-600" />
+    <line x1="75" y1="45" x2="75" y2="45" stroke="currentColor" strokeWidth="2" className="text-gray-600" />
     
-    {/* Core Node */}
-    <circle cx="50" cy="38" r="4" className="fill-black stroke-gray-500 stroke-2" />
-    <circle cx="50" cy="38" r="1.5" className="fill-[var(--accent-color)] animate-pulse" />
+    {/* Chassis Connector */}
+    <line x1="50" y1="70" x2="50" y2="80" stroke="currentColor" strokeWidth="1" className="text-gray-700" />
     
-    {/* Arm Nodes (Shoulders) - Moved inward from 25/75 to 35/65 */}
-    <circle cx="35" cy="38" r="2.5" className="fill-gray-600" />
-    <circle cx="65" cy="38" r="2.5" className="fill-gray-600" />
-    
-    {/* Chassis Node */}
-    <circle cx="50" cy="82" r="2.5" className="fill-gray-600" />
+    {/* Decorative Circuit Nodes */}
+    <circle cx="50" cy="45" r="3" className="fill-black stroke-gray-700" />
+    <circle cx="50" cy="45" r="1" className="fill-[var(--accent-color)] animate-pulse" />
   </svg>
 );
 
-const BlueprintGrid = () => (
-    <div 
-        className="absolute inset-0 pointer-events-none opacity-10"
-        style={{
-            backgroundImage: `
-                linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)
-            `,
-            backgroundSize: '20px 20px'
-        }}
-    />
-);
+// --- 2. HUD BRACKET FRAME ---
+// No background fill. Just corners. Allows the wireframe to shine through.
+const HolographicFrame = ({ children, className, isActive, colorClass }) => (
+  <div className={cn("relative transition-all duration-300 group", className)}>
+    
+    {/* Corner Brackets - visible only enough to define the space */}
+    <div className="absolute inset-0 opacity-40 group-hover:opacity-100 transition-opacity duration-300">
+        <div className="absolute top-0 left-0 w-2 h-2 border-l border-t border-gray-500" />
+        <div className="absolute top-0 right-0 w-2 h-2 border-r border-t border-gray-500" />
+        <div className="absolute bottom-0 left-0 w-2 h-2 border-l border-b border-gray-500" />
+        <div className="absolute bottom-0 right-0 w-2 h-2 border-r border-b border-gray-500" />
+    </div>
 
-const TechFrame = ({ children, className, isActive, colorClass = "text-gray-800" }) => (
-  <div className={`relative ${className}`}>
-    <svg className="absolute inset-0 w-full h-full pointer-events-none transition-all duration-300" style={{ zIndex: 0 }} viewBox="0 0 100 100" preserveAspectRatio="none">
-      <path 
-        d="M 0 8 L 8 0 L 92 0 L 100 8 L 100 92 L 92 100 L 8 100 L 0 92 Z" 
-        fill="none" 
-        stroke="currentColor" 
-        strokeWidth={isActive ? "2" : "1"} 
-        vectorEffect="non-scaling-stroke"
-        className={isActive ? "text-[var(--accent-color)] drop-shadow-[0_0_5px_var(--accent-color)]" : "text-gray-700"}
-      />
-    </svg>
-    <div 
-        className="relative z-10 w-full h-full flex flex-col items-center justify-center overflow-hidden"
-        style={{ clipPath: 'polygon(8% 0, 92% 0, 100% 8%, 100% 92%, 92% 100%, 8% 100%, 0 92%, 0 8%)' }}
-    >
+    {/* Selection Glow (Optional) */}
+    {isActive && (
+       <div className="absolute inset-0 bg-[var(--accent-color)]/5 shadow-[0_0_20px_rgba(var(--accent-rgb),0.1)] border border-[var(--accent-color)]/20" />
+    )}
+
+    {/* Content Container */}
+    <div className="relative z-10 w-full h-full flex flex-col items-center justify-center">
         {children}
     </div>
   </div>
@@ -88,13 +80,7 @@ injectStyles();
 const IconMap = { ...LucideIcons };
 
 const RARITY_MAP = {
-    'common': 1,
-    'uncommon': 2,
-    'rare': 3,
-    'epic': 4,
-    'legendary': 5,
-    'omega': 6,
-    'mythic': 7
+    'common': 1, 'uncommon': 2, 'rare': 3, 'epic': 4, 'legendary': 5, 'omega': 6, 'mythic': 7
 };
 
 const BotCard = ({ bot, slotLevels, isAttacking, side = 'player', className = '' }) => {
@@ -105,11 +91,12 @@ const BotCard = ({ bot, slotLevels, isAttacking, side = 'player', className = ''
 
   const stats = calculateBotStats({ ...bot, slotLevels: slotLevels || bot.slotLevels });
   
+  // NOTE: Adjusted gridClass to be simpler since we aren't using big blocks anymore
   const slots = [
-    { key: 'Head', partId: bot.equipment?.Head, gridClass: 'col-span-2 w-3/5 mx-auto' }, 
+    { key: 'Head', partId: bot.equipment?.Head, gridClass: 'col-span-2 w-1/2 mx-auto' }, 
     { key: 'LeftArm', partId: bot.equipment?.LeftArm, gridClass: 'col-span-1' },
     { key: 'RightArm', partId: bot.equipment?.RightArm, gridClass: 'col-span-1' },
-    { key: 'Chassis', partId: bot.equipment?.Chassis, gridClass: 'col-span-2 w-full' }
+    { key: 'Chassis', partId: bot.equipment?.Chassis, gridClass: 'col-span-2 w-full mt-2' }
   ];
 
   const BotIcon = IconMap[bot.icon] || IconMap.Cpu;
@@ -127,14 +114,12 @@ const BotCard = ({ bot, slotLevels, isAttacking, side = 'player', className = ''
   }
 
   const StatBox = ({ label, value, icon: Icon, colorClass }) => (
-    <div className="flex items-center justify-between px-3 py-1.5 border-b border-gray-800 bg-[#0a0a0a]/80">
-        <div className="flex items-center gap-2 text-gray-500">
-            <Icon className="w-3.5 h-3.5" />
-            <span className="text-[10px] font-mono font-bold uppercase">{label}</span>
+    <div className="flex flex-col items-center justify-center p-2 border-r last:border-r-0 border-gray-900/50 bg-[#0a0a0a]/40">
+        <span className="text-[9px] font-mono font-bold text-gray-600 uppercase mb-0.5">{label}</span>
+        <div className="flex items-center gap-1">
+             <Icon className={`w-3 h-3 ${colorClass}`} />
+             <span className="text-sm font-bold text-gray-200 font-mono leading-none">{value}</span>
         </div>
-        <span className={`text-sm font-bold ${colorClass} font-mono tracking-tighter`}>
-            {value}
-        </span>
     </div>
   );
 
@@ -157,36 +142,48 @@ const BotCard = ({ bot, slotLevels, isAttacking, side = 'player', className = ''
 
   return (
     <div className={cn(
-      "flex flex-col shrink-0 w-80 h-auto bg-[#030303] border border-gray-800 shadow-[0_0_40px_-10px_rgba(0,0,0,0.8)] relative z-10 transition-all duration-300",
+      "flex flex-col shrink-0 w-80 h-[480px] bg-[#030303] border border-gray-800 shadow-[0_0_50px_-15px_rgba(0,0,0,0.9)] relative z-10 transition-all duration-300",
       className
     )}>
       
-      <BlueprintGrid />
+      {/* Background Grid Pattern */}
+      <div className="absolute inset-0 pointer-events-none opacity-5" 
+           style={{ backgroundImage: 'radial-gradient(#ffffff 1px, transparent 1px)', backgroundSize: '16px 16px' }} />
 
-      {/* HEADER */}
-      <div className="p-3 flex items-center gap-3 relative bg-[#080808] border-b border-gray-800">
-        <div className="p-1.5 shrink-0 bg-black border border-gray-700 rounded-sm shadow-inner">
-          <BotIcon className="w-5 h-5 text-[var(--accent-color)]" />
+      {/* --- EXPANDED HEADER --- */}
+      {/* Added height and extra info row to fill top space */}
+      <div className="flex flex-col relative bg-[#080808] border-b border-gray-800">
+        {/* Status Line */}
+        <div className="flex justify-between items-center px-3 py-1 bg-black/50 border-b border-gray-900 text-[9px] font-mono text-gray-600">
+             <span>UNIT_ID: {Math.random().toString(36).substr(2, 6).toUpperCase()}</span>
+             <span className="flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> 
+                ONLINE
+             </span>
         </div>
-        <div className="flex-1 min-w-0 z-10">
-          <h3 className={cn(
-             "text-sm font-black truncate font-mono uppercase tracking-widest leading-none mb-0.5",
-             nameColorClass
-          )}>
-            {bot.name}
-          </h3>
-          <div className="text-[9px] text-gray-500 font-mono font-bold flex items-center gap-2">
-            <span className="bg-gray-800 px-1.5 py-px text-gray-300 border border-gray-700">LVL {bot.level || 1}</span>
-            <span className="text-gray-600 tracking-wide">{bot.rarity ? bot.rarity.toUpperCase() : (side === 'player' ? 'OPERATOR' : 'TARGET')}</span>
-          </div>
+
+        {/* Main Title Area */}
+        <div className="p-4 flex items-center gap-3">
+            <div className="p-2 shrink-0 bg-black border border-gray-800 rounded-sm shadow-inner">
+                 <BotIcon className="w-6 h-6 text-[var(--accent-color)]" />
+            </div>
+            <div className="flex-1 min-w-0">
+                <h3 className={cn("text-lg font-black truncate font-mono uppercase tracking-tighter leading-none mb-1", nameColorClass)}>
+                    {bot.name}
+                </h3>
+                <div className="flex items-center gap-2 text-[10px] font-mono font-bold">
+                    <span className="bg-gray-900 text-gray-400 px-1.5 py-0.5 border border-gray-800">LVL {bot.level || 1}</span>
+                    <span className="text-gray-600">{bot.rarity ? bot.rarity.toUpperCase() : (side === 'player' ? 'OPERATOR' : 'TARGET')}</span>
+                </div>
+            </div>
         </div>
       </div>
       
-      {/* MAIN SCHEMATIC AREA */}
-      <div className="relative flex-1 px-6 py-8 flex flex-col justify-center">
+      {/* --- SCHEMATIC VIEW --- */}
+      <div className="relative flex-1 px-4 py-6 flex flex-col justify-center">
         <SchematicSkeleton />
 
-        <div className="grid grid-cols-2 gap-2 relative z-10">
+        <div className="grid grid-cols-2 gap-y-6 gap-x-2 relative z-10">
             {slots.map(({ key, partId, gridClass }, index) => {
                 const part = partId ? getPartById(partId) : null;
                 const Icon = (part ? IconMap[part.icon] : null) || IconMap.Box;
@@ -209,34 +206,28 @@ const BotCard = ({ bot, slotLevels, isAttacking, side = 'player', className = ''
                         onMouseLeave={() => setHoveredPart(null)}
                         onClick={() => handlePartClick(part)}
                     >
-                        <TechFrame 
-                            // SIZE: h-16 (64px) - The Goldilocks Size
-                            className="w-full h-16 transition-all duration-300 cursor-pointer"
+                        {/* HOLOGRAPHIC FRAME REPLACES TECHFRAME */}
+                        <HolographicFrame 
+                            className="w-full h-16 cursor-pointer"
                             isActive={shouldAnimateArm || (hoveredPart && hoveredPart.id === part?.id)}
                             colorClass={part ? "text-gray-600" : "text-gray-800"} 
                         >
-                            <div className={cn(
-                                "absolute inset-0 flex flex-col items-center justify-center transition-all duration-300",
-                                // COLOR: Lighter background (Gray-800) for visibility
-                                part ? "bg-gray-800" : "bg-[#080808]",
-                                (hoveredPart && hoveredPart.id === part?.id) && "bg-[var(--accent-color)]/10"
-                            )}>
-                                {/* LABEL: Bright text-gray-400, always visible */}
-                                <span className="absolute top-1 left-1.5 text-[8px] font-mono text-gray-400 font-bold uppercase tracking-widest opacity-100">
-                                    {key.replace('Arm', '')}
-                                </span>
-
-                                <Icon className={cn(
-                                    "w-7 h-7 mt-1 transition-transform duration-300 drop-shadow-md", 
-                                    part ? colors.text : "text-gray-700",
-                                    (hoveredPart && hoveredPart.id === part?.id) ? "scale-110 brightness-150" : "opacity-90"
-                                )} />
-                                
-                                {part && (
-                                    <RarityBadge tier={tier} className="scale-[0.5] origin-center border border-white/5 bg-black/80 px-1.5 absolute bottom-1 right-1" />
-                                )}
-                            </div>
-                        </TechFrame>
+                            {/* The Icon floats freely now */}
+                            <Icon className={cn(
+                                "w-9 h-9 transition-all duration-300 drop-shadow-[0_4px_4px_rgba(0,0,0,0.5)]", 
+                                part ? colors.text : "text-gray-800 opacity-30",
+                                (hoveredPart && hoveredPart.id === part?.id) ? "scale-110 brightness-150" : ""
+                            )} />
+                            
+                            {/* Label floating above */}
+                            <span className="absolute -top-3 text-[8px] font-mono text-gray-600 font-bold uppercase tracking-widest bg-[#030303] px-1">
+                                {key.replace('Arm', '')}
+                            </span>
+                            
+                            {part && (
+                                <RarityBadge tier={tier} className="scale-[0.6] origin-center absolute -bottom-2 border border-black/50 bg-black" />
+                            )}
+                        </HolographicFrame>
                     </div>
                 );
             })}
@@ -244,15 +235,15 @@ const BotCard = ({ bot, slotLevels, isAttacking, side = 'player', className = ''
       </div>
       
       {/* FOOTER */}
-      <div className="bg-[#050505] border-t border-gray-800 p-2 relative z-20">
-         <div className="grid grid-cols-2 gap-x-4 gap-y-1">
-              <StatBox label="DMG" value={stats.Damage} icon={DmgIcon} colorClass="text-red-500" />
-              <StatBox label="SPD" value={stats.Speed} icon={SpdIcon} colorClass="text-cyan-400" />
-              <StatBox label="ARM" value={stats.Armor} icon={ArmIcon} colorClass="text-emerald-500" />
-              <StatBox label="WGT" value={stats.Weight} icon={WgtIcon} colorClass="text-amber-500" />
+      <div className="bg-[#050505] border-t border-gray-800">
+         <div className="grid grid-cols-4 divide-x divide-gray-900/50">
+             <StatBox label="DMG" value={stats.Damage} icon={DmgIcon} colorClass="text-red-500" />
+             <StatBox label="SPD" value={stats.Speed} icon={SpdIcon} colorClass="text-cyan-400" />
+             <StatBox label="ARM" value={stats.Armor} icon={ArmIcon} colorClass="text-emerald-500" />
+             <StatBox label="WGT" value={stats.Weight} icon={WgtIcon} colorClass="text-amber-500" />
          </div>
-         <div className="text-[9px] text-center text-gray-700 mt-2 font-mono uppercase tracking-widest border-t border-gray-900 pt-1.5">
-            {hoveredPart ? `[ ${hoveredPart.name} ]` : "SYSTEM READY"}
+         <div className="p-1.5 text-[9px] text-center text-gray-700 font-mono uppercase tracking-[0.2em] border-t border-gray-900 bg-black">
+            {hoveredPart ? `>> ANALYZING: ${hoveredPart.name} <<` : "SYSTEM READY"}
          </div>
       </div>
     </div>
