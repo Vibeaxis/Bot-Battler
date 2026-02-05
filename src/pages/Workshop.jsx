@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { useGameContext, THEMES } from '@/context/GameContext';
 import { useSoundContext } from '@/context/SoundContext';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, ChevronUp, Palette, X, Check, Zap, Activity, Shield, Weight, Plus } from 'lucide-react';
+import { ArrowLeft, ChevronUp, Palette, X, Zap, Activity, Shield, Weight, Plus } from 'lucide-react';
 import { getPartById, PART_SLOTS } from '@/data/parts';
 import * as LucideIcons from 'lucide-react';
 import PartModal from '@/components/PartModal';
@@ -17,8 +17,7 @@ import { cn } from '@/lib/utils';
 import { calculateBotStats } from '@/utils/statCalculator';
 import BotNameEditor from '@/components/BotNameEditor';
 
-
-// --- STAT CONFIGURATION FOR LEVELING ---
+// --- STAT CONFIGURATION ---
 const STAT_CONFIG = {
   Damage: { icon: Zap, color: "text-red-500", label: "Core Output", desc: "Base Damage Bonus" },
   Speed: { icon: Activity, color: "text-cyan-400", label: "Clock Speed", desc: "Base Speed Bonus" },
@@ -97,7 +96,8 @@ const AvatarModal = ({ isOpen, onClose, currentIcon, onSelect }) => {
 
 const Workshop = () => {
   const navigate = useNavigate();
-  const { gameState, equipPart, unequipPart, upgradeSlot, setCurrentTheme, updateBotIcon, setGameState } = useGameContext();
+  // Added setGameState here
+  const { gameState, setGameState, equipPart, unequipPart, upgradeSlot, setCurrentTheme, updateBotIcon } = useGameContext();
   const { playSound } = useSoundContext();
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -112,14 +112,14 @@ const Workshop = () => {
   // Resolve current bot icon
   const CurrentBotIcon = IconMap[gameState.playerBot.icon] || IconMap.Cpu;
 
-  // Leveling Logic
+  // --- NEW LEVELING LOGIC ---
   const currentLevel = gameState.playerBot?.level || 1;
   const upgradeCost = Math.floor(500 * Math.pow(1.5, currentLevel - 1));
   const availablePoints = gameState.playerBot?.statPoints || 0;
 
   const handleLevelUp = () => {
     if (gameState.scrap < upgradeCost) {
-        toast({ title: "INSUFFICIENT FUNDS", description: `Required: ${upgradeCost} Scrap`, variant: "destructive" });
+        toast({ title: "INSUFFICIENT FUNDS", description: `Required: ${upgradeCost} Scrap`, variant: "destructive", className: "font-mono" });
         return;
     }
 
@@ -221,6 +221,7 @@ const Workshop = () => {
         <meta name="description" content="Customize your battle bot with different parts and equipment." />
       </Helmet>
       
+      {/* 3. SCROLL FIX: Added pb-32 to allow scrolling past the new section */}
       <div className="min-h-screen bg-[#0a0a12] p-4 pb-32 font-mono text-[#e0e0e0] selection:bg-[var(--accent-color)] selection:text-black">
         
         <div className="relative max-w-6xl mx-auto py-8">
@@ -408,24 +409,34 @@ const Workshop = () => {
             </motion.div>
           </div>
 
-          {/* --- NEW SECTION: CORE UPGRADES --- */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-             
-             {/* LEFT: Level Up */}
-             <div className="lg:col-span-4 bg-black/40 border border-gray-800 p-6 flex flex-col justify-between">
+          {/* --- NEW SECTION: CORE UPGRADES (Injected Here) --- */}
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            className="grid md:grid-cols-12 gap-8 border-t border-gray-800 pt-8"
+          >
+             {/* LEFT: Firmware Upgrade */}
+             <div className="md:col-span-4 bg-black/40 border border-gray-800 p-6 flex flex-col justify-between">
                  <div>
-                    <h3 className="text-xl font-bold text-white uppercase tracking-widest mb-2">Firmware Upgrade</h3>
-                    <p className="text-xs text-gray-500 mb-6">Current: <span className="text-[var(--accent-color)]">Lv. {currentLevel}</span></p>
+                    <h3 className="text-xl font-bold text-white uppercase tracking-widest mb-2 flex items-center gap-2">
+                        <Zap className="w-5 h-5 text-[var(--accent-color)]" />
+                        Firmware Upgrade
+                    </h3>
+                    <p className="text-xs text-gray-500 mb-6 font-mono">
+                        Increase Core Level to unlock stat points. <br/>
+                        Current Level: <span className="text-[var(--accent-color)] font-bold text-lg">{currentLevel}</span>
+                    </p>
                  </div>
                  
                  <Button 
                     onClick={handleLevelUp}
                     disabled={gameState.scrap < upgradeCost}
                     className={cn(
-                        "w-full h-16 flex flex-col items-center justify-center rounded-sm transition-all",
+                        "w-full h-16 flex flex-col items-center justify-center rounded-sm transition-all border",
                         gameState.scrap >= upgradeCost 
-                            ? "bg-[var(--accent-color)] text-black hover:bg-white" 
-                            : "bg-gray-900 text-gray-600 cursor-not-allowed"
+                            ? "bg-[var(--accent-color)] text-black border-white hover:bg-white" 
+                            : "bg-gray-900 text-gray-600 border-gray-800 cursor-not-allowed"
                     )}
                  >
                     <span className="font-black uppercase tracking-widest">LEVEL UP</span>
@@ -433,13 +444,13 @@ const Workshop = () => {
                  </Button>
              </div>
 
-             {/* RIGHT: Stat Allocation */}
-             <div className="lg:col-span-8 bg-black/40 border border-gray-800 p-6">
-                 <div className="flex justify-between items-center mb-4 border-b border-gray-800 pb-2">
+             {/* RIGHT: Core Optimization (Stats) */}
+             <div className="md:col-span-8 bg-black/40 border border-gray-800 p-6">
+                 <div className="flex justify-between items-center mb-6 border-b border-gray-800 pb-2">
                     <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
                         <Activity className="w-4 h-4" /> Core Optimization
                     </h3>
-                    <span className={cn("text-xs font-mono font-bold px-2 py-1", availablePoints > 0 ? "bg-[var(--accent-color)] text-black animate-pulse" : "text-gray-600")}>
+                    <span className={cn("text-xs font-mono font-bold px-2 py-1 border", availablePoints > 0 ? "bg-[var(--accent-color)] text-black border-[var(--accent-color)] animate-pulse" : "text-gray-600 border-gray-800")}>
                         {availablePoints} POINTS AVAILABLE
                     </span>
                  </div>
@@ -450,14 +461,14 @@ const Workshop = () => {
                         const Icon = config.icon;
                         
                         return (
-                            <div key={key} className="bg-black border border-gray-800 p-3 flex items-center justify-between">
+                            <div key={key} className="bg-black border border-gray-800 p-3 flex items-center justify-between group hover:border-gray-600 transition-colors">
                                 <div className="flex items-center gap-3">
                                     <div className={cn("p-2 bg-gray-900 rounded-sm", config.color)}>
                                         <Icon className="w-4 h-4" />
                                     </div>
                                     <div>
-                                        <div className="text-xs font-bold text-gray-300 uppercase">{config.label}</div>
-                                        <div className="text-[9px] text-gray-600">{config.desc}</div>
+                                        <div className="text-xs font-bold text-gray-300 uppercase tracking-wider">{config.label}</div>
+                                        <div className="text-[9px] text-gray-600 font-mono">{config.desc}</div>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-3">
@@ -467,10 +478,10 @@ const Workshop = () => {
                                         disabled={availablePoints <= 0}
                                         size="sm"
                                         className={cn(
-                                            "h-7 w-7 p-0 rounded-sm border",
+                                            "h-8 w-8 p-0 rounded-sm border",
                                             availablePoints > 0 
-                                                ? "bg-gray-800 hover:bg-[var(--accent-color)] hover:text-black border-gray-600" 
-                                                : "bg-black text-gray-700 border-gray-900"
+                                                ? "bg-gray-800 hover:bg-[var(--accent-color)] hover:text-black border-gray-600 hover:border-white" 
+                                                : "bg-black text-gray-700 border-gray-900 cursor-not-allowed"
                                         )}
                                     >
                                         <Plus className="w-4 h-4" />
@@ -481,7 +492,7 @@ const Workshop = () => {
                     })}
                  </div>
              </div>
-          </div>
+          </motion.div>
 
         </div>
       </div>
