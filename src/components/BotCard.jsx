@@ -46,29 +46,23 @@ const BlueprintGrid = () => (
     />
 );
 
-// --- UPDATED TECH FRAME (HUD STYLE) ---
-const TechFrame = ({ children, className, isActive, part }) => (
-  <div className={cn("relative transition-all duration-300", className)}>
-    {/* Minimal HUD Brackets - Only shows on corners */}
-    <div className="absolute inset-0 pointer-events-none">
-      <div className="absolute top-0 left-0 w-2 h-2 border-t border-l border-gray-700" />
-      <div className="absolute top-0 right-0 w-2 h-2 border-t border-r border-gray-700" />
-      <div className="absolute bottom-0 left-0 w-2 h-2 border-b border-l border-gray-700" />
-      <div className="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-gray-700" />
-    </div>
-
-    {/* Subtle Scanline Background (Only if part exists) */}
-    {part && (
-      <div className="absolute inset-0 bg-gradient-to-b from-white/[0.02] to-transparent pointer-events-none" />
-    )}
-
-    {/* Selection Glow */}
-    {isActive && (
-      <div className="absolute inset-0 border border-[var(--accent-color)]/30 bg-[var(--accent-color)]/5 shadow-[0_0_15px_rgba(var(--accent-rgb),0.1)]" />
-    )}
-
-    <div className="relative z-10 w-full h-full flex flex-col items-center justify-center">
-      {children}
+const TechFrame = ({ children, className, isActive, colorClass = "text-gray-800" }) => (
+  <div className={`relative ${className}`}>
+    <svg className="absolute inset-0 w-full h-full pointer-events-none transition-all duration-300" style={{ zIndex: 0 }} viewBox="0 0 100 100" preserveAspectRatio="none">
+      <path 
+        d="M 0 8 L 8 0 L 92 0 L 100 8 L 100 92 L 92 100 L 8 100 L 0 92 Z" 
+        fill="none" 
+        stroke="currentColor" 
+        strokeWidth={isActive ? "2" : "1"} 
+        vectorEffect="non-scaling-stroke"
+        className={isActive ? "text-[var(--accent-color)] drop-shadow-[0_0_5px_var(--accent-color)]" : "text-gray-700"}
+      />
+    </svg>
+    <div 
+        className="relative z-10 w-full h-full flex flex-col items-center justify-center overflow-hidden"
+        style={{ clipPath: 'polygon(8% 0, 92% 0, 100% 8%, 100% 92%, 92% 100%, 8% 100%, 0 92%, 0 8%)' }}
+    >
+        {children}
     </div>
   </div>
 );
