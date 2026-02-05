@@ -1,387 +1,253 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { useGameContext, THEMES } from '@/context/GameContext';
-import { useSoundContext } from '@/context/SoundContext';
+import { ArrowLeft, Hammer, Shield, Zap, Activity, Cpu, ChevronRight, User, Plus, Weight } from 'lucide-react';
+import { useGameContext } from '@/context/GameContext';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, ChevronUp, Palette, X, Check } from 'lucide-react';
-import { getPartById, PART_SLOTS } from '@/data/parts';
-import * as LucideIcons from 'lucide-react';
-import PartModal from '@/components/PartModal';
-import StatDisplay from '@/components/StatDisplay';
-import { toast } from '@/components/ui/use-toast';
+import { useToast } from '@/components/ui/use-toast'; 
 import { RARITY_COLORS } from '@/constants/gameConstants';
-import RarityBadge from '@/components/RarityBadge';
+import BotCard from '@/components/BotCard';
+import AvatarSelectionModal from '@/components/AvatarSelectionModal';
 import { cn } from '@/lib/utils';
-import { calculateBotStats } from '@/utils/statCalculator';
-import BotNameEditor from '@/components/BotNameEditor';
 
-// --- 1. CURATED AVATAR LIST ---
-// Only allow these icons for the Bot Avatar to distinguish them from items
-const AVATAR_ICONS = [
-  { id: 'Bot', icon: LucideIcons.Bot, label: 'Droid' },
-  { id: 'Cpu', icon: LucideIcons.Cpu, label: 'Core' },
-  { id: 'Skull', icon: LucideIcons.Skull, label: 'Reaper' },
-  { id: 'Ghost', icon: LucideIcons.Ghost, label: 'Phantom' },
-  { id: 'Zap', icon: LucideIcons.Zap, label: 'Volt' },
-  { id: 'Shield', icon: LucideIcons.Shield, label: 'Guardian' },
-  { id: 'Crosshair', icon: LucideIcons.Crosshair, label: 'Sniper' },
-  { id: 'Swords', icon: LucideIcons.Swords, label: 'Brawler' },
-  { id: 'Gamepad2', icon: LucideIcons.Gamepad2, label: 'Pilot' },
-  { id: 'Radio', icon: LucideIcons.Radio, label: 'Comms' },
-  { id: 'Fingerprint', icon: LucideIcons.Fingerprint, label: 'ID' },
-  { id: 'Eye', icon: LucideIcons.Eye, label: 'Watcher' },
-];
-
-const IconMap = { ...LucideIcons };
-
-// --- 2. AVATAR SELECTOR MODAL ---
-const AvatarModal = ({ isOpen, onClose, currentIcon, onSelect }) => {
-  if (!isOpen) return null;
-
-  return (
-    <AnimatePresence>
-      <motion.div 
-        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-        className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
-        onClick={onClose}
-      >
-        <motion.div 
-          initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }}
-          className="bg-[#0a0a0a] border border-[var(--accent-color)] w-full max-w-md p-6 relative shadow-[0_0_50px_rgba(0,0,0,0.8)]"
-          onClick={e => e.stopPropagation()}
-        >
-          <div className="flex justify-between items-center mb-6 border-b border-gray-800 pb-4">
-            <h2 className="text-xl font-bold text-white uppercase tracking-widest flex items-center gap-2">
-              <LucideIcons.ScanFace className="text-[var(--accent-color)]" /> Select Avatar
-            </h2>
-            <button onClick={onClose} className="text-gray-500 hover:text-white"><X /></button>
-          </div>
-
-          <div className="grid grid-cols-4 gap-4">
-            {AVATAR_ICONS.map((item) => {
-              const Icon = item.icon;
-              const isSelected = currentIcon === item.id;
-              
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => onSelect(item.id)}
-                  className={cn(
-                    "aspect-square flex flex-col items-center justify-center gap-2 border transition-all duration-200 group",
-                    isSelected 
-                      ? "bg-[var(--accent-color)] border-[var(--accent-color)] text-black" 
-                      : "bg-black border-gray-800 text-gray-500 hover:border-[var(--accent-color)] hover:text-[var(--accent-color)]"
-                  )}
-                >
-                  <Icon className="w-8 h-8" />
-                  <span className="text-[9px] uppercase font-bold tracking-wider">{item.label}</span>
-                </button>
-              );
-            })}
-          </div>
-        </motion.div>
-      </motion.div>
-    </AnimatePresence>
-  );
+// --- STAT CONFIGURATION ---
+const STAT_CONFIG = {
+  Damage: { icon: Zap, color: "text-red-500", label: "Core Output", desc: "Base Damage Bonus" },
+  Speed: { icon: Activity, color: "text-cyan-400", label: "Clock Speed", desc: "Base Speed Bonus" },
+  Armor: { icon: Shield, color: "text-emerald-500", label: "Hull Integrity", desc: "Base Armor Bonus" },
+  Weight: { icon: Weight, color: "text-amber-500", label: "Hydraulics", desc: "Max Weight Capacity" }
 };
 
 const Workshop = () => {
   const navigate = useNavigate();
-  const { gameState, equipPart, unequipPart, upgradeSlot, setCurrentTheme, updateBotIcon } = useGameContext();
-  const { playSound } = useSoundContext();
-  const [selectedSlot, setSelectedSlot] = useState(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false); // State for new modal
+  const { toast } = useToast();
+  const { gameState, setGameState, updatePlayerProfile } = useGameContext();
   
-  // Use utility with current slotLevels
-  const stats = calculateBotStats({
-    ...gameState.playerBot,
-    slotLevels: gameState.slotLevels
-  });
-  
-  // Resolve current bot icon
-  const CurrentBotIcon = IconMap[gameState.playerBot.icon] || IconMap.Cpu;
+  const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState('upgrade'); // 'upgrade' or 'cosmetic'
 
-  const handleSlotClick = (slot) => {
-    setSelectedSlot(slot);
-    setIsModalOpen(true);
-  };
+  // --- LEVELING LOGIC ---
+  // Cost Formula: Base 500 * 1.5 ^ (CurrentLevel - 1)
+  const currentLevel = gameState.playerBot?.level || 1;
+  const upgradeCost = Math.floor(500 * Math.pow(1.5, currentLevel - 1));
+  const availablePoints = gameState.playerBot?.statPoints || 0;
+
+  // --- HANDLERS ---
   
-  const handleUnequip = (slot) => {
-    unequipPart(slot);
+  const handleLevelUp = () => {
+    if (gameState.scrap < upgradeCost) {
+        toast({ title: "INSUFFICIENT FUNDS", description: `Required: ${upgradeCost} Scrap`, variant: "destructive" });
+        return;
+    }
+
+    setGameState(prev => ({
+        ...prev,
+        scrap: prev.scrap - upgradeCost,
+        playerBot: {
+            ...prev.playerBot,
+            level: (prev.playerBot.level || 1) + 1,
+            statPoints: (prev.playerBot.statPoints || 0) + 3 // Give 3 points per level
+        }
+    }));
+
     toast({
-      title: "PART UNEQUIPPED",
-      description: "COMPONENT RETURNED TO INVENTORY",
-      className: "font-mono uppercase bg-black border border-[var(--accent-color)] text-[var(--accent-color)]"
+        title: "SYSTEM UPGRADE SUCCESSFUL",
+        description: `Unit upgraded to Level ${currentLevel + 1}. +3 Stat Points acquired.`,
+        className: "bg-green-900 border-green-500 text-white"
     });
   };
 
-  const handleUpgrade = (slotKey, slotNameLabel) => {
-    const slotMapping = {
-      [PART_SLOTS.HEAD]: 'head',
-      [PART_SLOTS.RIGHT_ARM]: 'rightArm',
-      [PART_SLOTS.LEFT_ARM]: 'leftArm',
-      [PART_SLOTS.CHASSIS]: 'chassis'
-    };
+  const handleAllocatePoint = (statKey) => {
+    if (availablePoints <= 0) return;
 
-    const internalSlotName = slotMapping[slotKey];
-    
-    if (upgradeSlot(internalSlotName)) {
-      playSound('EQUIP'); 
-      toast({
-        title: "UPGRADE SUCCESSFUL",
-        description: `${slotNameLabel} SYSTEM OPTIMIZED TO LEVEL ${gameState.slotLevels[internalSlotName] + 1}`,
-        className: "bg-[rgba(var(--accent-rgb),0.1)] border border-[var(--accent-color)] text-[var(--accent-color)] font-mono uppercase"
-      });
-    } else {
-      toast({
-        title: "INSUFFICIENT RESOURCES",
-        description: "ADDITIONAL SCRAP REQUIRED FOR OPTIMIZATION.",
-        variant: "destructive",
-        className: "font-mono uppercase"
-      });
-    }
+    setGameState(prev => {
+        const currentBonus = prev.playerBot.baseStats?.[statKey] || 0;
+        return {
+            ...prev,
+            playerBot: {
+                ...prev.playerBot,
+                statPoints: prev.playerBot.statPoints - 1,
+                baseStats: {
+                    ...(prev.playerBot.baseStats || {}),
+                    [statKey]: currentBonus + 1 // Add 1 to the base stat
+                }
+            }
+        };
+    });
   };
 
-  const handleAvatarSelect = (iconId) => {
-    updateBotIcon(iconId);
-    playSound('CLICK');
-    setIsAvatarModalOpen(false);
-  };
-  
-  const slots = [
-    { key: PART_SLOTS.HEAD, label: 'Head', internalKey: 'head' },
-    { key: PART_SLOTS.RIGHT_ARM, label: 'Right Arm', internalKey: 'rightArm' },
-    { key: PART_SLOTS.LEFT_ARM, label: 'Left Arm', internalKey: 'leftArm' },
-    { key: PART_SLOTS.CHASSIS, label: 'Chassis', internalKey: 'chassis' }
-  ];
-  
   return (
     <>
       <Helmet>
-        <title>Workshop - Robot Battle Arena</title>
-        <meta name="description" content="Customize your battle bot with different parts and equipment." />
+        <title>Workshop // UPGRADE</title>
       </Helmet>
-      
-      {/* 3. SCROLL FIX: Added pb-24 to ensure bottom clearance */}
-      <div className="min-h-screen bg-[#0a0a12] p-4 pb-24 font-mono text-[#e0e0e0] selection:bg-[var(--accent-color)] selection:text-black">
+
+      <div className="min-h-screen bg-[#050505] text-gray-300 font-mono flex flex-col selection:bg-[var(--accent-color)] selection:text-black bg-[url('/grid-pattern.png')]">
         
-        <div className="relative max-w-6xl mx-auto py-8">
-          {/* Header Bar */}
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="mb-6 flex justify-between items-center"
-          >
-            <Button
-              onClick={() => navigate('/hub')}
-              variant="outline"
-              className="bg-black text-[var(--accent-color)] border-[var(--accent-color)] hover:bg-[rgba(var(--accent-rgb),0.1)] rounded-none uppercase tracking-wider"
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Hub
-            </Button>
-
-            <div className="bg-black/80 px-4 py-2 border border-yellow-500/50 text-yellow-500 font-bold font-mono tracking-wider rounded-none">
-              SCRAP: {gameState.scrap}
+        {/* Header */}
+        <header className="h-16 bg-black/90 border-b border-gray-800 flex items-center justify-between px-6 shrink-0 z-20 backdrop-blur-md sticky top-0">
+            <div className="flex items-center gap-4">
+                <Button 
+                    onClick={() => navigate('/hub')} 
+                    variant="ghost" 
+                    className="text-gray-500 hover:text-white hover:bg-white/5"
+                >
+                    <ArrowLeft className="w-4 h-4 mr-2" /> HUB
+                </Button>
+                <div className="h-8 w-px bg-gray-800" />
+                <h1 className="text-xl font-black uppercase tracking-[0.2em] text-[var(--accent-color)] flex items-center gap-3">
+                    <Cpu className="w-5 h-5" /> Workshop
+                </h1>
             </div>
-          </motion.div>
-          
-          {/* Bot Identity Section */}
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-center mb-12 relative"
-          >
-            <h1 className="text-5xl font-bold text-[var(--accent-color)] mb-2 uppercase tracking-widest [text-shadow:0_0_10px_var(--accent-color)]">Workshop</h1>
-            <p className="text-xl text-gray-500 uppercase tracking-[0.2em] mb-8">System Configuration</p>
             
-            <div className="flex flex-col md:flex-row items-center justify-center gap-8 bg-black/40 border border-gray-800 p-6 max-w-3xl mx-auto">
+            {/* Scrap Display */}
+            <div className="flex items-center gap-2 text-yellow-500 font-bold border border-yellow-900/30 bg-yellow-950/10 px-4 py-1 rounded-sm">
+               {gameState.scrap} SCRAP
+            </div>
+        </header>
+
+        <div className="flex-1 max-w-7xl mx-auto w-full p-6 grid grid-cols-1 lg:grid-cols-12 gap-8">
+            
+            {/* LEFT: BOT PREVIEW (Col-span-4) */}
+            <div className="lg:col-span-4 flex flex-col gap-6">
+                {/* Bot Card Visualization */}
+                <div className="relative group">
+                    <BotCard 
+                        bot={gameState.playerBot} 
+                        className="w-full scale-100 shadow-2xl"
+                    />
+                    {/* Level Badge Overlay */}
+                    <div className="absolute -top-3 -right-3 bg-[var(--accent-color)] text-black font-black px-3 py-1 text-sm border-2 border-white shadow-lg rotate-3">
+                        LVL {currentLevel}
+                    </div>
+                </div>
+
+                {/* Profile Edit Button (Unified) */}
+                <Button 
+                    onClick={() => setIsAvatarModalOpen(true)}
+                    className="w-full bg-black border border-gray-700 hover:border-white hover:bg-gray-900 text-gray-400 hover:text-white transition-all h-12 uppercase tracking-widest text-xs font-bold"
+                >
+                    <User className="w-4 h-4 mr-2" /> Edit Pilot Profile
+                </Button>
+            </div>
+
+            {/* RIGHT: UPGRADE TERMINAL (Col-span-8) */}
+            <div className="lg:col-span-8 flex flex-col gap-6">
                 
-                {/* 4. AVATAR CLICKABLE AREA */}
-                <div className="relative group cursor-pointer" onClick={() => setIsAvatarModalOpen(true)}>
-                    <div className="w-24 h-24 border-2 border-[var(--accent-color)] flex items-center justify-center bg-black shadow-[0_0_20px_rgba(var(--accent-rgb),0.2)] group-hover:shadow-[0_0_30px_rgba(var(--accent-rgb),0.5)] transition-all">
-                        <CurrentBotIcon className="w-12 h-12 text-[var(--accent-color)]" />
+                {/* 1. LEVEL UP SECTION */}
+                <div className="bg-black/40 border border-gray-800 p-6 relative overflow-hidden">
+                    <div className="absolute top-0 right-0 p-4 opacity-10">
+                        <Cpu className="w-32 h-32 text-white" />
                     </div>
-                    <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-[var(--accent-color)] text-black text-[9px] font-bold px-2 py-0.5 uppercase opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                        Change Avatar
+
+                    <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
+                        <div>
+                            <h2 className="text-2xl font-black text-white uppercase tracking-tighter mb-1">
+                                Firmware Upgrade
+                            </h2>
+                            <p className="text-gray-500 text-xs font-mono max-w-md">
+                                Increase Core Level to unlock additional stat allocation points.
+                                Higher levels improve base efficiency.
+                            </p>
+                        </div>
+
+                        <Button 
+                            onClick={handleLevelUp}
+                            disabled={gameState.scrap < upgradeCost}
+                            className={cn(
+                                "h-16 min-w-[200px] flex flex-col items-center justify-center border-2 transition-all",
+                                gameState.scrap >= upgradeCost 
+                                    ? "bg-[var(--accent-color)] border-white text-black hover:scale-105" 
+                                    : "bg-gray-900 border-gray-800 text-gray-600 cursor-not-allowed"
+                            )}
+                        >
+                            <span className="text-sm font-black uppercase tracking-widest">
+                                Level Up
+                            </span>
+                            <span className="text-xs font-mono mt-1">
+                                {upgradeCost} SCRAP
+                            </span>
+                        </Button>
                     </div>
                 </div>
 
-                <div className="flex-1 space-y-4 w-full md:w-auto">
-                    <div className="flex justify-center md:justify-start">
-                        <BotNameEditor />
-                    </div>
-
-                    {/* Theme Selector */}
-                    <div className="flex flex-col md:flex-row items-center gap-4">
-                        <div className="flex items-center gap-2 text-xs uppercase tracking-widest text-gray-500">
-                            <Palette className="w-4 h-4" />
-                            <span>System Theme</span>
-                        </div>
-                        <div className="flex items-center gap-3">
-                            <div className="relative inline-block">
-                                <select 
-                                value={gameState.currentTheme}
-                                onChange={(e) => setCurrentTheme(e.target.value)}
-                                className="appearance-none bg-black border border-gray-700 hover:border-[var(--accent-color)] text-[var(--accent-color)] px-4 py-2 pr-8 rounded-none uppercase text-xs font-bold tracking-wider cursor-pointer focus:outline-none focus:ring-1 focus:ring-[var(--accent-color)] w-48"
-                                >
-                                {gameState.unlockedThemes.map(theme => (
-                                    <option key={theme} value={theme}>{theme}</option>
-                                ))}
-                                </select>
-                                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-[var(--accent-color)]">
-                                    <ChevronUp className="h-3 w-3 transform rotate-180" />
-                                </div>
+                {/* 2. STAT ALLOCATION */}
+                <div className="flex-1 bg-black/40 border border-gray-800 p-6 flex flex-col">
+                    <div className="flex justify-between items-center mb-6 border-b border-gray-800 pb-4">
+                        <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                            <Activity className="w-4 h-4" /> Core Optimization
+                        </h3>
+                        
+                        {availablePoints > 0 ? (
+                            <div className="animate-pulse bg-[var(--accent-color)] text-black px-3 py-1 text-xs font-bold uppercase tracking-wide">
+                                {availablePoints} Points Available
                             </div>
-                            <div 
-                                className="w-8 h-8 border border-white/20 transition-colors duration-300" 
-                                style={{ 
-                                backgroundColor: THEMES[gameState.currentTheme]?.hex || '#00ff9d',
-                                boxShadow: `0 0 10px ${THEMES[gameState.currentTheme]?.hex || '#00ff9d'}`
-                                }} 
-                            />
-                        </div>
+                        ) : (
+                            <div className="text-gray-600 text-xs font-mono uppercase">
+                                Systems Optimized
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {Object.entries(STAT_CONFIG).map(([key, config]) => {
+                            const currentVal = gameState.playerBot?.baseStats?.[key] || 0;
+                            const Icon = config.icon;
+
+                            return (
+                                <div key={key} className="bg-black border border-gray-800 p-4 flex items-center justify-between group hover:border-gray-600 transition-colors">
+                                    <div className="flex items-center gap-4">
+                                        <div className={cn("p-2 bg-gray-900 rounded-sm", config.color)}>
+                                            <Icon className="w-5 h-5" />
+                                        </div>
+                                        <div>
+                                            <div className="text-xs font-bold text-gray-300 uppercase tracking-wider">
+                                                {config.label}
+                                            </div>
+                                            <div className="text-[10px] text-gray-500 font-mono">
+                                                {config.desc}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center gap-3">
+                                        <span className="text-xl font-black font-mono text-white">
+                                            +{currentVal}
+                                        </span>
+                                        <Button
+                                            onClick={() => handleAllocatePoint(key)}
+                                            disabled={availablePoints <= 0}
+                                            size="sm"
+                                            className={cn(
+                                                "h-8 w-8 p-0 rounded-sm border",
+                                                availablePoints > 0 
+                                                    ? "bg-gray-800 border-gray-600 hover:bg-[var(--accent-color)] hover:text-black hover:border-white" 
+                                                    : "bg-black border-gray-800 text-gray-700 cursor-not-allowed"
+                                            )}
+                                        >
+                                            <Plus className="w-4 h-4" />
+                                        </Button>
+                                    </div>
+                                </div>
+                            );
+                        })}
                     </div>
                 </div>
+
             </div>
-          </motion.div>
-          
-          {/* Main Layout Grid */}
-          <div className="grid md:grid-cols-2 gap-8">
-            
-            {/* Equipment Column */}
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.2 }}
-              className="bg-black/80 rounded-none p-6 border border-[var(--accent-color)] flex flex-col h-full"
-            >
-              <h3 className="text-xl font-bold text-[#e0e0e0] mb-4 uppercase tracking-widest border-b border-gray-800 pb-2 text-center flex items-center justify-center gap-2">
-                 <LucideIcons.Wrench className="w-5 h-5" /> Components
-              </h3>
-
-              <div className="grid grid-cols-2 gap-4 mt-4 flex-1">
-                {slots.map(({ key, label, internalKey }) => {
-                  const partId = gameState.playerBot.equipment[key];
-                  const part = partId ? getPartById(partId) : null;
-                  const Icon = part ? IconMap[part.icon] : IconMap.Box;
-                  const colors = part ? RARITY_COLORS[part.tier] : null;
-                  const currentLevel = gameState.slotLevels[internalKey] || 0;
-                  const upgradeCost = 100 * (currentLevel + 1);
-                  
-                  return (
-                    <div key={key} className="space-y-2">
-                      <div className="flex justify-between items-center text-xs uppercase font-bold tracking-wider">
-                        <span className="text-gray-500">{label}</span>
-                        <span className="text-[var(--accent-color)] opacity-70">Lv. {currentLevel}</span>
-                      </div>
-                      
-                      <motion.div
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                        onClick={() => handleSlotClick(key)}
-                        className={cn(
-                          "rounded-none p-4 border cursor-pointer transition-all h-32 flex flex-col items-center justify-center relative bg-black",
-                          part ? colors.border : "border-gray-800 hover:border-[var(--accent-color)]",
-                          part ? "hover:bg-[rgba(var(--accent-rgb),0.05)]" : "border-dashed"
-                        )}
-                      >
-                        <Icon className={cn("w-10 h-10 mb-2", part ? colors.text : "text-gray-700")} />
-                        <div className="text-[10px] text-[#e0e0e0] text-center font-bold truncate w-full px-2 uppercase tracking-widest">
-                          {part ? part.name : 'EMPTY SLOT'}
-                        </div>
-                        {part && (
-                           <div className="mt-1">
-                             <RarityBadge tier={part.tier} className="rounded-none scale-75 origin-top" />
-                           </div>
-                        )}
-                      </motion.div>
-                      
-                      <div className="flex gap-2">
-                          <Button
-                            onClick={() => handleUpgrade(key, label)}
-                            size="sm"
-                            className="flex-1 bg-green-900/10 border border-green-600/30 text-green-400 hover:bg-green-600/20 text-[9px] rounded-none uppercase tracking-tight h-7"
-                          >
-                            <ChevronUp className="w-3 h-3 mr-1" />
-                            Up ({upgradeCost})
-                          </Button>
-                          
-                          {part && (
-                            <Button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleUnequip(key);
-                              }}
-                              variant="outline"
-                              size="sm"
-                              className="bg-red-900/10 border border-red-600/30 text-red-400 hover:bg-red-600/20 px-2 rounded-none h-7"
-                            >
-                              X
-                            </Button>
-                          )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </motion.div>
-            
-            {/* Stats Column */}
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.3 }}
-              className="bg-black/80 rounded-none p-6 border border-[var(--accent-color)] h-full flex flex-col"
-            >
-              <h3 className="text-xl font-bold text-[#e0e0e0] mb-6 uppercase tracking-widest border-b border-gray-800 pb-2 flex items-center gap-2">
-                 <LucideIcons.Activity className="w-5 h-5" /> Diagnostics
-              </h3>
-              <StatDisplay stats={stats} className="gap-4 font-mono" />
-              
-              <div className="mt-auto pt-8 space-y-4 font-mono text-xs">
-                <div className="p-4 bg-blue-900/10 rounded-none border-l-4 border-blue-500">
-                  <p className="text-blue-400 uppercase tracking-wide flex gap-2">
-                    <LucideIcons.Info className="w-4 h-4 shrink-0" />
-                    <span>Slot Upgrades Boost equipped item stats by <span className="text-white font-bold">10%</span> per level.</span>
-                  </p>
-                </div>
-                <div className="p-4 bg-purple-900/10 rounded-none border-l-4 border-purple-500">
-                    <p className="text-purple-400 uppercase tracking-wide flex gap-2">
-                      <LucideIcons.Save className="w-4 h-4 shrink-0" />
-                      <span>Upgrades are permanent to the chassis slot, persisting across weapon swaps.</span>
-                   </p>
-                </div>
-              </div>
-            </motion.div>
-          </div>
         </div>
-      </div>
-      
-      {/* Modals */}
-      <AvatarModal 
-        isOpen={isAvatarModalOpen} 
-        onClose={() => setIsAvatarModalOpen(false)} 
-        currentIcon={gameState.playerBot.icon}
-        onSelect={handleAvatarSelect}
-      />
 
-      {selectedSlot && (
-        <PartModal
-          isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
-          slot={selectedSlot}
-          currentPartId={gameState.playerBot.equipment[selectedSlot]}
-          availableParts={gameState.inventory}
-          onEquip={(id, slot) => {
-            playSound('EQUIP');
-            equipPart(id, slot);
-          }}
+        {/* MODAL */}
+        <AvatarSelectionModal 
+            isOpen={isAvatarModalOpen}
+            onClose={() => setIsAvatarModalOpen(false)}
+            currentName={gameState.playerBot?.name}
+            currentIcon={gameState.playerBot?.icon}
+            onSave={updatePlayerProfile}
         />
-      )}
+
+      </div>
     </>
   );
 };
