@@ -41,7 +41,7 @@ const ForgeScreen = () => {
         const part = getPartById(id);
         return part ? { ...part, count } : null;
       })
-      .filter(item => item && item.tier < 4)
+     .filter(item => item && item.tier < 7)
       .sort((a, b) => a.tier - b.tier || a.name.localeCompare(b.name));
   }, [gameState.inventory]);
 
