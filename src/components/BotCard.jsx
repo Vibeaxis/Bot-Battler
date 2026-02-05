@@ -93,7 +93,7 @@ const HolographicFrame = ({ children, className, isActive }) => (
 const IconMap = { ...LucideIcons };
 const RARITY_MAP = { 'common': 1, 'uncommon': 2, 'rare': 3, 'epic': 4, 'legendary': 5, 'omega': 6, 'mythic': 7 };
 
-const BotCard = ({ bot, currentHealth, maxHealth, slotLevels, isAttacking, side = 'player', className = '' }) => {
+const BotCard = ({ bot, currentHealth, maxHealth, slotLevels, isAttacking, side = 'player', className = '', forceName }) => {
   const [hoveredPart, setHoveredPart] = useState(null);
   const { toast } = useToast();
   
