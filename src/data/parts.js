@@ -80,6 +80,10 @@ const HEAD_PARTS = [
   { id: 'h_oracle_ai', name: 'Oracle AI Core', tier: 5, stats: { Damage: 55, Speed: 60, Armor: 30, Weight: 15 }, icon: 'Brain', rarity: RARITY.LEGENDARY },
   { id: 'h_crown_kings', name: 'Crown of Kings', tier: 5, stats: { Damage: 70, Speed: 30, Armor: 50, Weight: 25 }, icon: 'Crown', rarity: RARITY.LEGENDARY },
   { id: 'h_death_stare', name: 'Death Stare', tier: 5, stats: { Damage: 90, Speed: 40, Armor: 10, Weight: 12 }, icon: 'HeadPhones', rarity: RARITY.LEGENDARY },
+  { id: 'h_medusa', name: 'Medusa Gaze', tier: 5, stats: { Damage: 60, Speed: 10, Armor: 30, Weight: 15 }, icon: 'ScanFace', rarity: 'Legendary' }, // Stuns? (High Dmg representation)
+  { id: 'h_hive_mind', name: 'Hive Mind Node', tier: 5, stats: { Damage: 40, Speed: 50, Armor: 10, Weight: 5 }, icon: 'BrainCircuit', rarity: 'Legendary' },
+  { id: 'h_cyclops', name: 'Cyclops Visor', tier: 5, stats: { Damage: 80, Speed: 5, Armor: 20, Weight: 20 }, icon: 'Eye', rarity: 'Legendary' }, // Simple Eye icon is scary
+  { id: 'h_king_crown', name: 'Command Crown', tier: 5, stats: { Damage: 50, Speed: 30, Armor: 40, Weight: 10 }, icon: 'Crown', rarity: 'Legendary' },
 
   // --- TIER 6: OMEGA (Teal) ---
   { id: 'h_nebula_mind', name: 'Nebula Mind', tier: 6, stats: { Damage: 80, Speed: 90, Armor: 40, Weight: 10 }, icon: 'CloudFog', rarity: RARITY.OMEGA },
@@ -138,6 +142,12 @@ const RIGHT_ARM_PARTS = [
   { id: 'ra_doomsday', name: 'Doomsday Cannon', tier: 5, stats: { Damage: 120, Speed: 5, Armor: 15, Weight: 50 }, icon: 'Bomb', rarity: RARITY.LEGENDARY },
   { id: 'ra_mjolnir', name: 'Hammer of Thor', tier: 5, stats: { Damage: 100, Speed: 20, Armor: 30, Weight: 60 }, icon: 'Gavel', rarity: RARITY.LEGENDARY },
   { id: 'ra_excalibur', name: 'Photon Saber', tier: 5, stats: { Damage: 90, Speed: 50, Armor: 10, Weight: 10 }, icon: 'Usb', rarity: RARITY.LEGENDARY },
+  { id: 'ra_reaper', name: 'Grim Scythe', tier: 5, stats: { Damage: 95, Speed: 25, Armor: 0, Weight: 15 }, icon: 'Crop', rarity: 'Legendary' }, // 'Crop' looks like a scythe/tool
+  { id: 'ra_mjolnir_mk2', name: 'Thunder Hammer', tier: 5, stats: { Damage: 110, Speed: 10, Armor: 20, Weight: 40 }, icon: 'Hammer', rarity: 'Legendary' },
+  { id: 'ra_inferno', name: 'Inferno Projector', tier: 5, stats: { Damage: 85, Speed: 30, Armor: 5, Weight: 20 }, icon: 'Flame', rarity: 'Legendary' },
+  { id: 'ra_cryo_beam', name: 'Absolute Zero', tier: 5, stats: { Damage: 70, Speed: 15, Armor: 30, Weight: 25 }, icon: 'Snowflake', rarity: 'Legendary' }, // Snowflake is standard
+  { id: 'ra_sonic', name: 'Bass Cannon', tier: 5, stats: { Damage: 80, Speed: 40, Armor: 0, Weight: 30 }, icon: 'Speaker', rarity: 'Legendary' },
+  { id: 'ra_drill_giga', name: 'Giga Drill', tier: 5, stats: { Damage: 100, Speed: 5, Armor: 30, Weight: 50 }, icon: 'Ratchet', rarity: 'Legendary' }, // Ratchet looks mechanical
 
   // --- TIER 6: OMEGA ---
   { id: 'ra_supernova', name: 'Supernova Gauntlet', tier: 6, stats: { Damage: 150, Speed: 30, Armor: 50, Weight: 40 }, icon: 'Sun', rarity: RARITY.OMEGA },
@@ -192,6 +202,11 @@ const LEFT_ARM_PARTS = [
   // --- TIER 5: LEGENDARY ---
   { id: 'la_absolute', name: 'Absolute Defense', tier: 5, stats: { Damage: 20, Speed: 15, Armor: 85, Weight: 35 }, icon: 'Lock', rarity: RARITY.LEGENDARY },
   { id: 'la_reflector', name: 'Mirror Force', tier: 5, stats: { Damage: 50, Speed: 40, Armor: 40, Weight: 20 }, icon: 'Scaling', rarity: RARITY.LEGENDARY },
+  { id: 'la_aegis_prime', name: 'Aegis Prime', tier: 5, stats: { Damage: 20, Speed: 10, Armor: 90, Weight: 40 }, icon: 'ShieldCheck', rarity: 'Legendary' },
+  { id: 'la_mirror', name: 'Mirror Force', tier: 5, stats: { Damage: 50, Speed: 30, Armor: 40, Weight: 15 }, icon: 'Minimize', rarity: 'Legendary' }, // Reflective vibe
+  { id: 'la_black_box', name: 'Black Box', tier: 5, stats: { Damage: 0, Speed: 0, Armor: 120, Weight: 60 }, icon: 'BoxSelect', rarity: 'Legendary' },
+  { id: 'la_phase', name: 'Ghost Generator', tier: 5, stats: { Damage: 10, Speed: 80, Armor: 10, Weight: 5 }, icon: 'Ghost', rarity: 'Legendary' },
+  { id: 'la_bio_shield', name: 'Living Metal', tier: 5, stats: { Damage: 10, Speed: 20, Armor: 60, Weight: 20 }, icon: 'Dna', rarity: 'Legendary' },
 
   // --- TIER 6: OMEGA ---
   { id: 'la_star_shield', name: 'Star Shield', tier: 6, stats: { Damage: 30, Speed: 20, Armor: 150, Weight: 50 }, icon: 'UserStar', rarity: RARITY.OMEGA },
@@ -242,6 +257,10 @@ const CHASSIS_PARTS = [
   { id: 'ch_dark_matter', name: 'Dark Matter Engine', tier: 5, stats: { Damage: 50, Speed: 50, Armor: 50, Weight: 30 }, icon: 'Video', rarity: RARITY.LEGENDARY },
   { id: 'ch_juggernaut', name: 'Juggernaut Prime', tier: 5, stats: { Damage: 60, Speed: 10, Armor: 120, Weight: 100 }, icon: 'ShieldX', rarity: RARITY.LEGENDARY },
   { id: 'ch_flash', name: 'Flash Drive', tier: 5, stats: { Damage: 40, Speed: 100, Armor: 20, Weight: 5 }, icon: 'SqaurePower', rarity: RARITY.LEGENDARY },
+  { id: 'ch_train', name: 'Pain Train', tier: 5, stats: { Damage: 60, Speed: 20, Armor: 80, Weight: 100 }, icon: 'TrainFront', rarity: 'Legendary' },
+  { id: 'ch_castle', name: 'Moving Castle', tier: 5, stats: { Damage: 40, Speed: 5, Armor: 120, Weight: 150 }, icon: 'Castle', rarity: 'Legendary' },
+  { id: 'ch_spider_queen', name: 'Brood Mother', tier: 5, stats: { Damage: 50, Speed: 60, Armor: 40, Weight: 30 }, icon: 'Bug', rarity: 'Legendary' },
+  { id: 'ch_ufo', name: 'Saucer Hull', tier: 5, stats: { Damage: 30, Speed: 90, Armor: 30, Weight: 10 }, icon: 'Disc', rarity: 'Legendary' },
 
   // --- TIER 6: OMEGA ---
   { id: 'ch_neutron', name: 'Neutron Star', tier: 6, stats: { Damage: 100, Speed: 10, Armor: 200, Weight: 200 }, icon: 'SatelliteDish', rarity: RARITY.OMEGA },
