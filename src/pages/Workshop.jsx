@@ -17,6 +17,7 @@ import { cn } from '@/lib/utils';
 import { calculateBotStats } from '@/utils/statCalculator';
 import BotNameEditor from '@/components/BotNameEditor';
 
+
 // --- STAT CONFIGURATION FOR LEVELING ---
 const STAT_CONFIG = {
   Damage: { icon: Zap, color: "text-red-500", label: "Core Output", desc: "Base Damage Bonus" },
