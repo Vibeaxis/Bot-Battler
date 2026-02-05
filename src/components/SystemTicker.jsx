@@ -20,17 +20,17 @@ const TIPS = [
   "TIP: Repairing is automatic, but trauma lingers in the code.",
   "TIP: Certain enemy archetypes are weak to high-damage alpha strikes.",
 
-  // --- FLAVOR & LORE (World Building) ---
-  "FLAVOR: 'One man's trash is another man's lethal weapon.' - Scavenger Code",
-  "FLAVOR: The Neon District allows unauthorized combat after 02:00 AM.",
-  "FLAVOR: Rumor has it the 'Omega' units are run by a rogue AI.",
-  "FLAVOR: Don't ask where the Scrap comes from. You don't want to know.",
-  "FLAVOR: The Arena was built on the ruins of the Old World banking sector.",
-  "FLAVOR: Keep your bot clean. Oil leaks attract Scav-Rats.",
-  "FLAVOR: 'I sold my kidney for a Legendary chassis. Worth it.' - Anon",
-  "FLAVOR: Rust is the only thing that truly never sleeps.",
-  "FLAVOR: They say the 'Prime' units can feel pain. Let's hope so.",
-  "FLAVOR: A winning bot is a profitable bot. A losing bot is spare parts.",
+  // --- LORE (World Building) ---
+  "LORE: 'One man's trash is another man's lethal weapon.' - Scavenger Code",
+  "LORE: The Neon District allows unauthorized combat after 02:00 AM.",
+  "LORE: Rumor has it the 'Omega' units are run by a rogue AI.",
+  "LORE: Don't ask where the Scrap comes from. You don't want to know.",
+  "LORE: The Arena was built on the ruins of the Old World banking sector.",
+  "LORE: Keep your bot clean. Oil leaks attract Scav-Rats.",
+  "LORE: 'I sold my kidney for a Legendary chassis. Worth it.' - Anon",
+  "LORE: Rust is the only thing that truly never sleeps.",
+  "LORE: They say the 'Prime' units can feel pain. Let's hope so.",
+  "LORE: A winning bot is a profitable bot. A losing bot is spare parts.",
 
   // --- CORPORATE PROPAGANDA (The "House" Voice) ---
   "SYSTEM: Unauthorized modification of firmware is a Class A felony.",
@@ -57,6 +57,17 @@ const TIPS = [
   "ADVICE: There is no 'respawn' in the real world, kid."
 ];
 
+// Helper to style the prefix
+const getPrefixStyle = (prefix) => {
+  switch (prefix) {
+    case 'TIP': return 'text-cyan-400';
+    case 'LORE': return 'text-purple-400';
+    case 'SYSTEM': return 'text-red-500';
+    case 'ADVICE': return 'text-amber-400';
+    default: return 'text-gray-400';
+  }
+};
+
 const SystemTicker = () => {
   const [index, setIndex] = useState(0);
 
@@ -66,6 +77,12 @@ const SystemTicker = () => {
     }, 6000); // Rotate every 6 seconds
     return () => clearInterval(timer);
   }, []);
+
+  // Parse the current tip
+  const fullText = TIPS[index];
+  const splitIndex = fullText.indexOf(':');
+  const prefix = splitIndex !== -1 ? fullText.substring(0, splitIndex) : '';
+  const message = splitIndex !== -1 ? fullText.substring(splitIndex + 1) : fullText;
 
   return (
     <div className="w-full bg-black/60 border-t border-b border-[var(--accent-color)]/30 py-2 px-4 flex items-center gap-4 overflow-hidden backdrop-blur-sm">
@@ -84,8 +101,15 @@ const SystemTicker = () => {
             transition={{ duration: 0.5 }}
             className="absolute inset-0 flex items-center"
           >
-            <span className="text-xs md:text-sm font-mono text-gray-300 truncate">
-              {TIPS[index]}
+            <span className="text-xs md:text-sm font-mono truncate">
+              {prefix && (
+                <span className={`font-bold mr-2 ${getPrefixStyle(prefix)}`}>
+                  {prefix}:
+                </span>
+              )}
+              <span className="text-gray-300">
+                {message}
+              </span>
             </span>
           </motion.div>
         </AnimatePresence>
