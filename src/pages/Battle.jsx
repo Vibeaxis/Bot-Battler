@@ -348,7 +348,7 @@ const Battle = () => {
         const isPlayerAction = logEntry.includes(gameState.playerBot.name);
         const isEnemyAction = logEntry.includes(enemy.name);
 
-        if (damageAmount || isMiss) {
+      if (damageAmount || isMiss) {
             if (isPlayerAction) {
                 setPlayerAttacking(true);
                 if (damageAmount) {
@@ -378,9 +378,23 @@ const Battle = () => {
                 if (isCrit) setLeftToast(getRandomFlavor('HIT'));
             }
 
+          // --- UPDATED SOUND LOGIC ---
             if (damageAmount) {
-                playSound(isCrit ? 'CRIT' : 'HIT');
-                setFlashType(isCrit ? 'CRIT' : 'HIT');
+                // Determine which sound to play
+                let soundKey = 'HIT'; // Default heavy hit
+                
+                if (isCrit) {
+                    soundKey = 'CRIT';
+                } else if (isGlancing || isDampened) {
+                    // Use the lighter "Tink" sound for glancing OR dampened hits
+                    // This fixes the "Dampened sounds too heavy" issue
+                    soundKey = 'GRAZE'; 
+                }
+
+                playSound(soundKey);
+                
+                // Visual Flash logic
+                setFlashType(soundKey); // Will use CRIT, HIT, or GRAZE styles if you map them
                 setTimeout(() => setFlashType(null), 100);
 
                 const shakeIntensity = isCrit ? 20 : 5;
@@ -389,23 +403,14 @@ const Battle = () => {
                     y: [0, -shakeIntensity/2, shakeIntensity/2, 0], 
                     transition: { duration: 0.2 }
                 });
+            } else {
+                // Play Miss or Dodge sound
+                playSound(isDodge ? 'DODGE' : 'MISS');
             }
+            // ---------------------------
+
             await new Promise(r => setTimeout(r, 200 / battleSpeedRef.current));
         }
-
-        if (result.healthTimeline && result.healthTimeline[i]) {
-            setPlayerHealth(result.healthTimeline[i].a);
-            setEnemyHealth(result.healthTimeline[i].b);
-        }
-
-        const delay = (damageAmount || isMiss) ? 600 : 50; 
-        await new Promise(r => setTimeout(r, delay / battleSpeedRef.current));
-
-        setPlayerAttacking(false);
-        setEnemyAttacking(false);
-        setPlayerFloatingText(null);
-        setEnemyFloatingText(null);
-    }
 
     // END BATTLE LOGIC
     const playerWon = result.winner.name === gameState.playerBot.name;
