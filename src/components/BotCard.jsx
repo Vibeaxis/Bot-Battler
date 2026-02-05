@@ -7,60 +7,7 @@ import { cn } from '@/lib/utils';
 import { calculateBotStats } from '@/utils/statCalculator';
 import { useToast } from '@/components/ui/use-toast'; 
 
-// --- 1. NEW "DATA BUS" SKELETON ---
-// This draws lines explicitly to where the icons float, connecting them visually.
-const SchematicSkeleton = () => (
-  <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 0 }} viewBox="0 0 100 100" preserveAspectRatio="none">
-    {/* Main Vertical Bus */}
-    <line x1="50" y1="15" x2="50" y2="85" stroke="currentColor" strokeWidth="1" className="text-gray-800" strokeDasharray="2 2" />
-    
-    {/* Head Connector */}
-    <line x1="50" y1="20" x2="50" y2="28" stroke="currentColor" strokeWidth="1" className="text-gray-700" />
-    <circle cx="50" cy="20" r="1.5" className="fill-gray-800 stroke-gray-600" />
-
-    {/* Arms Cross-Bus */}
-    <path d="M 25 45 L 75 45" stroke="currentColor" strokeWidth="1" fill="none" className="text-gray-800" />
-    
-    {/* Arm Connectors (Vertical drops to nodes) */}
-    <line x1="25" y1="45" x2="25" y2="45" stroke="currentColor" strokeWidth="2" className="text-gray-600" />
-    <line x1="75" y1="45" x2="75" y2="45" stroke="currentColor" strokeWidth="2" className="text-gray-600" />
-    
-    {/* Chassis Connector */}
-    <line x1="50" y1="70" x2="50" y2="80" stroke="currentColor" strokeWidth="1" className="text-gray-700" />
-    
-    {/* Decorative Circuit Nodes */}
-    <circle cx="50" cy="45" r="3" className="fill-black stroke-gray-700" />
-    <circle cx="50" cy="45" r="1" className="fill-[var(--accent-color)] animate-pulse" />
-  </svg>
-);
-
-// --- 2. HUD BRACKET FRAME ---
-// No background fill. Just corners. Allows the wireframe to shine through.
-const HolographicFrame = ({ children, className, isActive, colorClass }) => (
-  <div className={cn("relative transition-all duration-300 group", className)}>
-    
-    {/* Corner Brackets - visible only enough to define the space */}
-    <div className="absolute inset-0 opacity-40 group-hover:opacity-100 transition-opacity duration-300">
-        <div className="absolute top-0 left-0 w-2 h-2 border-l border-t border-gray-500" />
-        <div className="absolute top-0 right-0 w-2 h-2 border-r border-t border-gray-500" />
-        <div className="absolute bottom-0 left-0 w-2 h-2 border-l border-b border-gray-500" />
-        <div className="absolute bottom-0 right-0 w-2 h-2 border-r border-b border-gray-500" />
-    </div>
-
-    {/* Selection Glow (Optional) */}
-    {isActive && (
-       <div className="absolute inset-0 bg-[var(--accent-color)]/5 shadow-[0_0_20px_rgba(var(--accent-rgb),0.1)] border border-[var(--accent-color)]/20" />
-    )}
-
-    {/* Content Container */}
-    <div className="relative z-10 w-full h-full flex flex-col items-center justify-center">
-        {children}
-    </div>
-  </div>
-);
-
-// --- MAIN COMPONENT ---
-
+// --- 1. GLOBAL STYLES (Animations) ---
 const injectStyles = () => {
   if (typeof document === 'undefined') return;
   const styleId = 'bot-card-animations';
@@ -70,20 +17,117 @@ const injectStyles = () => {
   style.innerHTML = `
     @keyframes lunge-right { 0% { transform: translateX(0); } 20% { transform: translateX(-10px); } 40% { transform: translateX(30px); } 100% { transform: translateX(0); } }
     @keyframes lunge-left { 0% { transform: translateX(0); } 20% { transform: translateX(10px); } 40% { transform: translateX(-30px); } 100% { transform: translateX(0); } }
+    
+    /* NEW: Erratic Glitch Flash for Critical Health */
+    @keyframes glitch-pulse {
+      0% { opacity: 1; }
+      10% { opacity: 0.4; }
+      20% { opacity: 1; }
+      30% { opacity: 0.1; }
+      40% { opacity: 1; }
+      90% { opacity: 1; }
+      95% { opacity: 0.2; }
+      100% { opacity: 1; }
+    }
+    
     .animate-attack-right { animation: lunge-right 0.3s ease-out !important; }
     .animate-attack-left { animation: lunge-left 0.3s ease-out !important; }
+    .animate-glitch { animation: glitch-pulse 0.5s infinite steps(5, end) !important; }
   `;
   document.head.appendChild(style);
 };
 injectStyles();
 
+// --- 2. SKELETON (Updates based on Status) ---
+const SchematicSkeleton = ({ status = 'healthy' }) => {
+  // Define visual states based on health status
+  const styles = {
+    healthy: {
+      line: "text-gray-800",
+      connector: "text-gray-700",
+      core: "fill-[var(--accent-color)] animate-pulse", 
+    },
+    damaged: {
+      line: "text-amber-900", // Dark orange/brown wiring
+      connector: "text-amber-700",
+      core: "fill-amber-500 animate-pulse duration-75", // Fast anxiety pulse
+    },
+    critical: {
+      line: "text-red-900",
+      connector: "text-red-600",
+      core: "fill-red-600 animate-glitch", // Erratic glitching
+    }
+  };
+
+  const currentStyle = styles[status];
+
+  return (
+    <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 0 }} viewBox="0 0 100 100" preserveAspectRatio="none">
+      {/* Main Vertical Bus (Spine) */}
+      <line 
+        x1="50" y1="15" x2="50" y2="85" 
+        stroke="currentColor" strokeWidth="1" 
+        strokeDasharray="2 2"
+        className={`transition-colors duration-500 ${currentStyle.line} ${status === 'critical' ? 'animate-glitch' : ''}`} 
+      />
+      
+      {/* Head Connector */}
+      <line x1="50" y1="20" x2="50" y2="28" stroke="currentColor" strokeWidth="1" className={`transition-colors duration-500 ${currentStyle.connector}`} />
+      <circle cx="50" cy="20" r="1.5" className={`transition-colors duration-500 stroke-gray-900 ${status === 'critical' ? 'fill-red-900' : 'fill-gray-800'}`} />
+
+      {/* Arms Cross-Bus */}
+      <path d="M 25 45 L 75 45" stroke="currentColor" strokeWidth="1" fill="none" className={`transition-colors duration-500 ${currentStyle.line}`} />
+      
+      {/* Arm Connectors (Vertical drops) */}
+      <line x1="25" y1="45" x2="25" y2="45" stroke="currentColor" strokeWidth="2" className={`transition-colors duration-500 ${currentStyle.connector}`} />
+      <line x1="75" y1="45" x2="75" y2="45" stroke="currentColor" strokeWidth="2" className={`transition-colors duration-500 ${currentStyle.connector}`} />
+      
+      {/* Chassis Connector */}
+      <line x1="50" y1="70" x2="50" y2="80" stroke="currentColor" strokeWidth="1" className={`transition-colors duration-500 ${currentStyle.connector}`} />
+      
+      {/* CENTRAL CORE NODE */}
+      <circle cx="50" cy="45" r="3" className={`transition-colors duration-300 stroke-gray-900 ${status === 'critical' ? 'fill-red-950' : 'fill-black'}`} />
+      <circle cx="50" cy="45" r="1.5" className={currentStyle.core} />
+      
+      {/* Critical Warning Rings (Only visible when critical) */}
+      {status === 'critical' && (
+        <circle cx="50" cy="45" r="8" fill="none" stroke="red" strokeWidth="0.5" className="opacity-30 animate-ping" />
+      )}
+    </svg>
+  );
+};
+
+// --- 3. HOLOGRAPHIC FRAME (The Bracket UI) ---
+const HolographicFrame = ({ children, className, isActive, colorClass }) => (
+  <div className={cn("relative transition-all duration-300 group", className)}>
+    {/* Corner Brackets */}
+    <div className="absolute inset-0 opacity-40 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+        <div className="absolute top-0 left-0 w-2 h-2 border-l border-t border-gray-500" />
+        <div className="absolute top-0 right-0 w-2 h-2 border-r border-t border-gray-500" />
+        <div className="absolute bottom-0 left-0 w-2 h-2 border-l border-b border-gray-500" />
+        <div className="absolute bottom-0 right-0 w-2 h-2 border-r border-b border-gray-500" />
+    </div>
+
+    {/* Selection Glow */}
+    {isActive && (
+       <div className="absolute inset-0 bg-[var(--accent-color)]/5 shadow-[0_0_20px_rgba(var(--accent-rgb),0.1)] border border-[var(--accent-color)]/20 pointer-events-none" />
+    )}
+
+    {/* Content Container */}
+    <div className="relative z-10 w-full h-full flex flex-col items-center justify-center">
+        {children}
+    </div>
+  </div>
+);
+
+// --- 4. MAIN COMPONENT ---
 const IconMap = { ...LucideIcons };
 
 const RARITY_MAP = {
     'common': 1, 'uncommon': 2, 'rare': 3, 'epic': 4, 'legendary': 5, 'omega': 6, 'mythic': 7
 };
 
-const BotCard = ({ bot, slotLevels, isAttacking, side = 'player', className = '' }) => {
+const BotCard = ({ bot, currentHealth, maxHealth, slotLevels, isAttacking, side = 'player', className = '' }) => {
   const [hoveredPart, setHoveredPart] = useState(null);
   const { toast } = useToast();
 
@@ -91,7 +135,26 @@ const BotCard = ({ bot, slotLevels, isAttacking, side = 'player', className = ''
 
   const stats = calculateBotStats({ ...bot, slotLevels: slotLevels || bot.slotLevels });
   
-  // NOTE: Adjusted gridClass to be simpler since we aren't using big blocks anymore
+  // --- HEALTH CALCULATION LOGIC ---
+  const curHp = currentHealth !== undefined ? currentHealth : 100;
+  const maxHp = maxHealth !== undefined ? maxHealth : 100;
+  const healthPct = (curHp / maxHp) * 100;
+
+  let systemStatus = 'healthy';
+  let statusText = 'ONLINE';
+  let statusColor = 'bg-emerald-500';
+
+  if (healthPct <= 30) {
+    systemStatus = 'critical';
+    statusText = '! CRITICAL !';
+    statusColor = 'bg-red-600 animate-glitch'; 
+  } else if (healthPct <= 60) {
+    systemStatus = 'damaged';
+    statusText = 'WARNING';
+    statusColor = 'bg-amber-500';
+  }
+
+  // --- SLOTS CONFIG ---
   const slots = [
     { key: 'Head', partId: bot.equipment?.Head, gridClass: 'col-span-2 w-1/2 mx-auto' }, 
     { key: 'LeftArm', partId: bot.equipment?.LeftArm, gridClass: 'col-span-1' },
@@ -142,23 +205,28 @@ const BotCard = ({ bot, slotLevels, isAttacking, side = 'player', className = ''
 
   return (
     <div className={cn(
-      "flex flex-col shrink-0 w-80 h-[480px] bg-[#030303] border border-gray-800 shadow-[0_0_50px_-15px_rgba(0,0,0,0.9)] relative z-10 transition-all duration-300",
+      "flex flex-col shrink-0 w-80 h-[480px] bg-[#030303] border shadow-[0_0_50px_-15px_rgba(0,0,0,0.9)] relative z-10 transition-all duration-300",
+      // DYNAMIC BORDER: Glows red when critical
+      systemStatus === 'critical' ? "border-red-900/50 shadow-[0_0_30px_-5px_rgba(255,0,0,0.15)]" : "border-gray-800",
       className
     )}>
       
-      {/* Background Grid Pattern */}
-      <div className="absolute inset-0 pointer-events-none opacity-5" 
-           style={{ backgroundImage: 'radial-gradient(#ffffff 1px, transparent 1px)', backgroundSize: '16px 16px' }} />
+      {/* Background Grid Pattern - DYNAMIC TINT */}
+      <div className={cn(
+          "absolute inset-0 pointer-events-none opacity-5 transition-colors duration-500",
+          systemStatus === 'critical' ? "bg-red-900/20" : ""
+        )} 
+        style={{ backgroundImage: 'radial-gradient(#ffffff 1px, transparent 1px)', backgroundSize: '16px 16px' }} 
+      />
 
-      {/* --- EXPANDED HEADER --- */}
-      {/* Added height and extra info row to fill top space */}
+      {/* --- HEADER --- */}
       <div className="flex flex-col relative bg-[#080808] border-b border-gray-800">
         {/* Status Line */}
         <div className="flex justify-between items-center px-3 py-1 bg-black/50 border-b border-gray-900 text-[9px] font-mono text-gray-600">
-             <span>UNIT_ID: {Math.random().toString(36).substr(2, 6).toUpperCase()}</span>
-             <span className="flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> 
-                ONLINE
+             <span>UNIT_ID: {bot.id ? bot.id.substring(0,6).toUpperCase() : 'UNK_ID'}</span>
+             <span className={cn("flex items-center gap-1.5 transition-colors duration-300", systemStatus === 'critical' ? "text-red-500 font-bold" : "")}>
+                <span className={`w-1.5 h-1.5 rounded-full ${statusColor}`} /> 
+                {statusText}
              </span>
         </div>
 
@@ -181,7 +249,8 @@ const BotCard = ({ bot, slotLevels, isAttacking, side = 'player', className = ''
       
       {/* --- SCHEMATIC VIEW --- */}
       <div className="relative flex-1 px-4 py-6 flex flex-col justify-center">
-        <SchematicSkeleton />
+        {/* Pass status to skeleton for color changes */}
+        <SchematicSkeleton status={systemStatus} />
 
         <div className="grid grid-cols-2 gap-y-6 gap-x-2 relative z-10">
             {slots.map(({ key, partId, gridClass }, index) => {
@@ -206,20 +275,17 @@ const BotCard = ({ bot, slotLevels, isAttacking, side = 'player', className = ''
                         onMouseLeave={() => setHoveredPart(null)}
                         onClick={() => handlePartClick(part)}
                     >
-                        {/* HOLOGRAPHIC FRAME REPLACES TECHFRAME */}
                         <HolographicFrame 
                             className="w-full h-16 cursor-pointer"
                             isActive={shouldAnimateArm || (hoveredPart && hoveredPart.id === part?.id)}
                             colorClass={part ? "text-gray-600" : "text-gray-800"} 
                         >
-                            {/* The Icon floats freely now */}
                             <Icon className={cn(
                                 "w-9 h-9 transition-all duration-300 drop-shadow-[0_4px_4px_rgba(0,0,0,0.5)]", 
                                 part ? colors.text : "text-gray-800 opacity-30",
                                 (hoveredPart && hoveredPart.id === part?.id) ? "scale-110 brightness-150" : ""
                             )} />
                             
-                            {/* Label floating above */}
                             <span className="absolute -top-3 text-[8px] font-mono text-gray-600 font-bold uppercase tracking-widest bg-[#030303] px-1">
                                 {key.replace('Arm', '')}
                             </span>
@@ -234,7 +300,7 @@ const BotCard = ({ bot, slotLevels, isAttacking, side = 'player', className = ''
         </div>
       </div>
       
-      {/* FOOTER */}
+      {/* --- FOOTER --- */}
       <div className="bg-[#050505] border-t border-gray-800">
          <div className="grid grid-cols-4 divide-x divide-gray-900/50">
              <StatBox label="DMG" value={stats.Damage} icon={DmgIcon} colorClass="text-red-500" />
