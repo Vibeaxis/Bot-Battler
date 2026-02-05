@@ -1,12 +1,12 @@
 import React, { useState, useMemo } from 'react';
 import { Helmet } from 'react-helmet';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Hammer, Plus, Coins, Zap, ShieldAlert, Cpu } from 'lucide-react';
+import { ArrowLeft, Hammer, Plus, Coins, Zap } from 'lucide-react';
 import { useGameContext } from '@/context/GameContext';
 import { getPartById, parts } from '@/data/parts'; 
 import { Button } from '@/components/ui/button';
-import { useToast } from '@/components/ui/use-toast'; 
+import { useToast } from '@/components/ui/use-toast'; // CHANGED: Import the hook
 import { RARITY_COLORS } from '@/constants/gameConstants';
 import RarityBadge from '@/components/RarityBadge';
 import FusionInterface from '@/components/FusionInterface';
@@ -14,7 +14,7 @@ import { cn } from '@/lib/utils';
 
 const ForgeScreen = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
+  const { toast } = useToast(); // CHANGED: Initialize the hook
   const { gameState, performFusion, setGameState } = useGameContext();
   const [selectedItemId, setSelectedItemId] = useState(null);
   const [isFusing, setIsFusing] = useState(false);
@@ -26,7 +26,7 @@ const ForgeScreen = () => {
     UNSTABLE: 50 
   };
 
-  // --- FUSION LOGIC ---
+  // --- SAFE MEMOIZATION ---
   const fusibleItems = useMemo(() => {
     if (!gameState?.inventory) return [];
     
@@ -36,57 +36,83 @@ const ForgeScreen = () => {
     });
 
     return Object.entries(counts)
+      .filter(([id, count]) => count >= 3)
       .map(([id, count]) => {
         const part = getPartById(id);
-        if (!part) return null;
-        // LOGIC: Tier 1 (Common) needs 4. Others need 3.
-        const required = part.tier === 1 ? 4 : 3;
-        return { ...part, count, required };
+        return part ? { ...part, count } : null;
       })
-      .filter(item => item && item.count >= item.required && item.tier < 4) 
-      .sort((a, b) => b.tier - a.tier || a.name.localeCompare(b.name));
+      .filter(item => item && item.tier < 4)
+      .sort((a, b) => a.tier - b.tier || a.name.localeCompare(b.name));
   }, [gameState.inventory]);
 
-  const selectedItem = selectedItemId ? fusibleItems.find(i => i.id === selectedItemId) : null;
-  if (selectedItemId && !selectedItem && !fusionResult) {
-      setSelectedItemId(null);
-  }
+  const selectedItem = selectedItemId ? getPartById(selectedItemId) : null;
 
   // --- HANDLERS ---
   const handleFuse = async () => {
     if (!selectedItemId) return;
+    
     setIsFusing(true);
     
+    // Simulate delay
     setTimeout(() => {
         try {
             const newItem = performFusion(selectedItemId);
+            
             if (newItem) {
                 setFusionResult(newItem);
                 toast({
-                    title: "FUSION COMPLETE",
-                    description: `Fabricated: ${newItem.name}`,
-                    className: "bg-green-900 border-green-500 text-white font-mono"
+                    title: "Fusion Successful! 🎉",
+                    description: `You crafted a ${newItem.name}!`,
+                    className: "bg-green-600 text-white border-none"
                 });
+            } else {
+                 throw new Error("Fusion returned null");
             }
         } catch (error) {
              console.error("Fusion Error:", error);
+             toast({
+                title: "Fusion Failed",
+                description: "Could not fuse items. Please try again.",
+                variant: "destructive"
+             });
         } finally {
             setIsFusing(false);
         }
-    }, 1500);
+    }, 2000);
   };
 
   const handleCraft = (tier) => {
     try {
         const cost = tier === 1 ? CRAFT_COSTS.COMMON : CRAFT_COSTS.UNCOMMON;
+        
         if (gameState.scrap < cost) {
-          toast({ title: "INSUFFICIENT FUNDS", description: `Required: ${cost} Scrap`, variant: "destructive" });
+          toast({
+            title: "Insufficient Scrap",
+            description: `You need ${cost} scrap to craft this.`,
+            variant: "destructive"
+          });
           return;
         }
 
+        // Safety check for parts array
+        if (!parts || !Array.isArray(parts)) {
+            console.error("Parts data is missing or invalid");
+            return;
+        }
+
         const possibleParts = parts.filter(p => p.tier === tier);
-        if (possibleParts.length === 0) return;
+        
+        if (possibleParts.length === 0) {
+            console.error(`No parts found for tier ${tier}`);
+            return;
+        }
+
         const randomPart = possibleParts[Math.floor(Math.random() * possibleParts.length)];
+
+        // Safety check for setGameState
+        if (typeof setGameState !== 'function') {
+            throw new Error("Game Context Error: setGameState is missing");
+        }
 
         setGameState(prev => ({
           ...prev,
@@ -95,28 +121,46 @@ const ForgeScreen = () => {
         }));
 
         toast({
-          title: "FABRICATION SUCCESSFUL",
-          description: `Acquired: ${randomPart.name}`,
-           className: cn("border-l-4 bg-black text-white font-mono", RARITY_COLORS[tier].border)
+          title: "Crafting Successful",
+          description: `Fabricated: ${randomPart.name}`,
+           className: cn("border-2", RARITY_COLORS[tier].border, "bg-black text-white")
         });
     } catch (err) {
         console.error("Crafting Error:", err);
+        // Fallback alert if toast fails
+        if (typeof toast !== 'function') alert("Crafting Failed: " + err.message);
     }
   };
 
   const handleUnstableCraft = () => {
       try {
           if (gameState.scrap < CRAFT_COSTS.UNSTABLE) {
-              toast({ title: "INSUFFICIENT FUNDS", description: "Required: 50 Scrap", variant: "destructive" });
+              toast({ title: "Insufficient Scrap", variant: "destructive" });
               return;
           }
+
           const roll = Math.random();
           let tier = 1;
-          if (roll > 0.99) tier = 4;
-          else if (roll > 0.90) tier = 3; 
-          else if (roll > 0.60) tier = 2; 
+          // Chances: 1% Epic, 9% Rare, 30% Uncommon, 60% Common
+          if (roll > 0.99) tier = 4; // Epic
+          else if (roll > 0.90) tier = 3; // Rare
+          else if (roll > 0.60) tier = 2; // Uncommon
+          // else Common
 
           const possibleParts = parts.filter(p => p.tier === tier);
+           if (possibleParts.length === 0) {
+             // Fallback to common if something breaks
+             const common = parts.filter(p => p.tier === 1);
+             const fallback = common[Math.floor(Math.random() * common.length)];
+             
+             setGameState(prev => ({
+                  ...prev,
+                  scrap: prev.scrap - CRAFT_COSTS.UNSTABLE,
+                  inventory: [...prev.inventory, fallback.id]
+              }));
+              return;
+           }
+
           const randomPart = possibleParts[Math.floor(Math.random() * possibleParts.length)];
 
           setGameState(prev => ({
@@ -125,15 +169,28 @@ const ForgeScreen = () => {
               inventory: [...prev.inventory, randomPart.id]
           }));
 
-          const isRare = tier >= 3;
-          toast({
-              title: isRare ? "CRITICAL SUCCESS! ⚡" : "FABRICATION COMPLETE",
-              description: `Created: ${randomPart.name} [${RARITY_COLORS[tier].name}]`,
-              className: isRare ? "bg-purple-900 border-purple-500 text-white font-mono" : "bg-black border-gray-700 text-white font-mono"
-          });
+          if (tier >= 3) {
+               toast({
+                  title: "CRITICAL SUCCESS! ⚡",
+                  description: `Unstable fusion stabilized! Created ${randomPart.name} (${RARITY_COLORS[tier].name})`,
+                  className: "bg-purple-600 text-white border-2 border-yellow-400"
+              });
+          } else {
+              toast({
+                  title: "Fabrication Complete",
+                  description: `Created: ${randomPart.name}`,
+                  className: cn("border-2", RARITY_COLORS[tier].border, "bg-black text-white")
+              });
+          }
       } catch (err) {
           console.error("Unstable Craft Error:", err);
       }
+  };
+
+
+  const handleReset = () => {
+      setFusionResult(null);
+      setSelectedItemId(null);
   };
 
   const handleSelect = (id) => {
@@ -145,57 +202,58 @@ const ForgeScreen = () => {
   return (
     <>
       <Helmet>
-        <title>The Forge // FABRICATION</title>
+        <title>The Forge - Robot Battle Arena</title>
+        <meta name="description" content="Fuse duplicate parts to create powerful upgraded equipment." />
       </Helmet>
 
-      <div className="h-screen bg-[#050505] text-gray-300 font-mono flex flex-col overflow-hidden selection:bg-[var(--accent-color)] selection:text-black">
-        
+      <div className="min-h-screen bg-[#0a0a12] text-[#e0e0e0] font-mono selection:bg-[var(--accent-color)] selection:text-black flex flex-col">
         {/* Header */}
-        <header className="h-16 bg-black/90 border-b border-gray-800 flex items-center justify-between px-6 shrink-0 z-20 backdrop-blur-md relative">
+        <div className="bg-black/80 border-b border-[var(--accent-color)] p-4 sticky top-0 z-20 shadow-[0_0_15px_rgba(var(--accent-rgb),0.1)] backdrop-blur-md">
+          <div className="max-w-7xl mx-auto flex items-center justify-between">
             <div className="flex items-center gap-4">
-                <Button 
-                    onClick={() => navigate('/hub')} 
-                    variant="ghost" 
-                    className="text-gray-500 hover:text-white hover:bg-white/5"
-                >
-                    <ArrowLeft className="w-4 h-4 mr-2" /> EXIT
-                </Button>
-                <div className="h-8 w-px bg-gray-800" />
-                <h1 className="text-xl font-black uppercase tracking-[0.2em] text-[var(--accent-color)] flex items-center gap-3">
-                    <Hammer className="w-5 h-5" /> The Forge
-                </h1>
+              <Button 
+                onClick={() => navigate('/hub')} 
+                variant="ghost" 
+                className="text-gray-400 hover:text-[var(--accent-color)] hover:bg-[rgba(var(--accent-rgb),0.1)] rounded-none"
+              >
+                <ArrowLeft className="w-5 h-5 mr-2" />
+                Hub
+              </Button>
+              <h1 className="text-2xl font-bold flex items-center gap-2 uppercase tracking-widest text-[var(--accent-color)] [text-shadow:0_0_10px_var(--accent-color)]">
+                <Hammer className="w-6 h-6" />
+                The Forge
+              </h1>
             </div>
             
-            <div className="flex items-center gap-2 px-4 py-1.5 bg-gray-900 border border-gray-700 rounded-sm shadow-inner">
-                <Coins className="w-4 h-4 text-yellow-500" />
-                <span className="text-yellow-500 font-bold tracking-wider">{gameState.scrap}</span>
+            <div className="flex items-center gap-2 px-4 py-2 bg-black border border-gray-800">
+               <Coins className="w-4 h-4 text-yellow-500" />
+               <span className="text-yellow-500 font-bold">{gameState.scrap}</span>
             </div>
-        </header>
+          </div>
+        </div>
 
-        {/* WORKSPACE - This consumes the rest of the height */}
-        <div className="flex-1 flex overflow-hidden p-6 gap-6 relative z-10">
+        <div className="flex-1 max-w-7xl mx-auto w-full p-4 grid grid-cols-1 lg:grid-cols-3 gap-6">
             
-            {/* LEFT: INVENTORY LIST (Restored to original style but fixed scroll) */}
-            <div className="w-80 bg-black/40 border border-gray-800 backdrop-blur-sm flex flex-col shrink-0">
-                <div className="p-4 border-b border-gray-800 bg-black/60 shrink-0">
-                    <h2 className="text-xs font-bold text-[var(--accent-color)] uppercase tracking-widest">
-                        Fusion Candidates
-                    </h2>
-                </div>
+            {/* Left Panel: Inventory */}
+            <div className="lg:col-span-1 bg-black/40 rounded-none border border-gray-800 p-4 h-[calc(100vh-140px)] flex flex-col">
+                <h2 className="text-sm font-bold mb-4 text-[var(--accent-color)] uppercase tracking-widest border-b border-gray-800 pb-2">
+                    Fusion Candidates
+                </h2>
                 
-                <div className="flex-1 overflow-y-auto p-2 space-y-2 custom-scrollbar">
+                <div className="flex-1 overflow-y-auto pr-2 space-y-2 scrollbar-thin scrollbar-thumb-gray-800">
                     {fusibleItems.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center h-full text-gray-700 gap-2 opacity-50">
-                            <ShieldAlert className="w-8 h-8" />
-                            <span className="text-xs uppercase">No Matches Found</span>
+                        <div className="text-center py-10 text-gray-600">
+                            <Hammer className="w-12 h-12 mx-auto mb-4 opacity-20" />
+                            <p>No fusible items found.</p>
+                            <p className="text-[10px] mt-2 uppercase tracking-wide">Collect 3 duplicates to fuse.</p>
                         </div>
                     ) : (
                         fusibleItems.map((item) => {
                             const isSelected = selectedItemId === item.id;
-                            
                             return (
                                 <motion.div
                                     key={item.id}
+                                    whileHover={{ scale: 1.01 }}
                                     onClick={() => handleSelect(item.id)}
                                     className={cn(
                                         "cursor-pointer p-3 border transition-all relative overflow-hidden group rounded-sm",
@@ -206,10 +264,10 @@ const ForgeScreen = () => {
                                 >
                                     <div className="flex justify-between items-center">
                                         <div className="flex-1">
-                                            <div className={cn("font-bold text-sm mb-1 uppercase", isSelected ? 'text-[var(--accent-color)]' : 'text-gray-300')}>
+                                            <div className={`font-bold text-sm mb-1 ${isSelected ? 'text-[var(--accent-color)]' : 'text-gray-300'}`}>
                                                 {item.name}
                                             </div>
-                                            <RarityBadge tier={item.tier} className="scale-75 origin-left" />
+                                            <RarityBadge tier={item.tier} className="scale-90 origin-left" />
                                         </div>
                                         <div className="bg-[#111] px-2 py-1 border border-gray-700 text-xs font-mono text-gray-400">
                                             x{item.count}
@@ -223,63 +281,74 @@ const ForgeScreen = () => {
                 </div>
             </div>
 
-            {/* MIDDLE: FUSION CHAMBER (Takes up remaining space) */}
-            <div className="flex-1 flex flex-col gap-6 min-w-[400px]">
+            {/* Right Panel: Reordered Fusion First */}
+            <div className="lg:col-span-2 flex flex-col gap-6">
                 
-                {/* 1. FUSION CHAMBER */}
-                <div className="flex-[3] bg-black/40 border border-gray-800 relative flex flex-col items-center justify-center overflow-hidden">
-                    <h2 className="absolute top-4 left-4 text-xs font-bold text-gray-500 uppercase tracking-widest flex items-center gap-2">
-                        <Hammer className="w-3 h-3" /> Fusion Chamber
+                {/* 1. Fusion Interface (Moved to TOP) */}
+                {/* FIXED: Added h-[600px] to prevent layout shift when card appears */}
+                <div className="bg-black/40 border border-gray-800 p-6 relative flex flex-col items-center justify-center h-[600px]">
+                      <h2 className="absolute top-6 left-6 text-sm font-bold text-[var(--accent-color)] uppercase tracking-widest flex items-center gap-2">
+                        <Hammer className="w-4 h-4" /> Fusion Chamber
                     </h2>
 
-                    <div className="w-full h-full p-8 flex items-center justify-center">
-                        <FusionInterface 
-                            selectedItem={selectedItem} 
-                            onFuse={handleFuse}
-                            isFusing={isFusing}
-                            fusionResult={fusionResult}
-                            onReset={() => {
-                                setFusionResult(null);
-                                setSelectedItemId(null);
-                            }}
-                        />
-                    </div>
+                    <FusionInterface 
+                        selectedItem={selectedItem}
+                        onFuse={handleFuse}
+                        isFusing={isFusing}
+                        fusionResult={fusionResult}
+                        onReset={handleReset}
+                    />
                 </div>
 
-                {/* 2. COMPACT FABRICATOR */}
-                <div className="flex-1 bg-black/40 border border-gray-800 flex flex-col shrink-0 min-h-[140px]">
-                    <div className="p-2 px-4 border-b border-gray-800 bg-black/60">
-                        <h2 className="text-xs font-bold text-[var(--accent-color)] uppercase tracking-widest flex items-center gap-2">
-                            <Plus className="w-3 h-3" /> Material Fabrication
-                        </h2>
+                {/* 2. Crafting Station (Moved to BOTTOM) */}
+                <div className="bg-black/40 border border-gray-800 p-6 relative overflow-hidden">
+                    <div className="absolute top-0 right-0 p-4 opacity-10">
+                        <Zap className="w-32 h-32 text-[var(--accent-color)]" />
                     </div>
                     
-                    <div className="flex-1 p-4 grid grid-cols-3 gap-4 items-center">
-                        <Button 
-                            onClick={() => handleCraft(1)}
-                            className="h-full bg-black border border-gray-700 hover:border-gray-400 flex flex-col items-center justify-center gap-1 rounded-sm group"
-                        >
-                            <span className="text-xs font-bold text-white group-hover:text-[var(--accent-color)]">COMMON</span>
-                            <span className="text-[10px] text-yellow-600 font-mono">{CRAFT_COSTS.COMMON} SCRAP</span>
-                        </Button>
+                    <h2 className="text-sm font-bold mb-4 text-[var(--accent-color)] uppercase tracking-widest border-b border-gray-800 pb-2 flex items-center gap-2">
+                        <Plus className="w-4 h-4" /> Material Fabrication
+                    </h2>
+                    
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 relative z-10">
                         
                         <Button 
-                            onClick={() => handleCraft(2)}
-                            className="h-full bg-black border border-green-900 hover:border-green-500 flex flex-col items-center justify-center gap-1 rounded-sm group"
+                            onClick={() => handleCraft(1)}
+                            className="h-auto py-6 flex flex-col items-center bg-black border border-gray-700 hover:border-gray-400 hover:bg-gray-900 rounded-none group transition-all"
                         >
-                            <span className="text-xs font-bold text-green-500 group-hover:text-green-400">UNCOMMON</span>
-                            <span className="text-[10px] text-yellow-600 font-mono">{CRAFT_COSTS.UNCOMMON} SCRAP</span>
+                            <div className="text-lg font-bold text-white mb-1 uppercase tracking-wider">Fabricate Common</div>
+                            <div className="flex items-center gap-2 text-yellow-500 text-sm">
+                                <Coins className="w-3 h-3" /> {CRAFT_COSTS.COMMON} Scrap
+                            </div>
+                            <div className="mt-2 text-[10px] text-gray-500 group-hover:text-gray-400">Generates Random Tier 1 Part</div>
+                        </Button>
+
+                        <Button 
+                            onClick={() => handleCraft(2)}
+                            className="h-auto py-6 flex flex-col items-center bg-black border border-green-900/50 hover:border-green-500 hover:bg-green-900/10 rounded-none group transition-all"
+                        >
+                            <div className="text-lg font-bold text-green-400 mb-1 uppercase tracking-wider">Fabricate Uncommon</div>
+                            <div className="flex items-center gap-2 text-yellow-500 text-sm">
+                                <Coins className="w-3 h-3" /> {CRAFT_COSTS.UNCOMMON} Scrap
+                            </div>
+                            <div className="mt-2 text-[10px] text-gray-500 group-hover:text-green-400/70">Generates Random Tier 2 Part</div>
                         </Button>
 
                         <Button 
                             onClick={handleUnstableCraft}
-                            className="h-full bg-black border border-red-900 hover:border-red-500 flex flex-col items-center justify-center gap-1 rounded-sm group relative overflow-hidden"
+                            className="sm:col-span-2 h-auto py-6 flex flex-col items-center bg-black border border-red-900/50 hover:border-red-500 hover:bg-red-900/10 rounded-none group transition-all relative overflow-hidden"
                         >
-                            <div className="absolute inset-0 bg-red-900/10 opacity-0 group-hover:opacity-100 transition-opacity" />
-                            <span className="text-xs font-bold text-red-500 flex items-center gap-1 relative z-10">
-                                <Zap className="w-3 h-3" /> UNSTABLE
-                            </span>
-                            <span className="text-[10px] text-yellow-600 font-mono relative z-10">{CRAFT_COSTS.UNSTABLE} SCRAP</span>
+                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-red-500/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
+                            
+                            <div className="text-lg font-bold text-red-500 mb-1 uppercase tracking-wider flex items-center gap-2">
+                                <Zap className="w-5 h-5 animate-pulse" /> Unstable Fabrication
+                            </div>
+                            <div className="flex items-center gap-2 text-yellow-500 text-sm">
+                                <Coins className="w-3 h-3" /> {CRAFT_COSTS.UNSTABLE} Scrap
+                            </div>
+                            <div className="mt-2 text-[10px] text-gray-500 group-hover:text-red-400/70">
+                                Risk of failure. Chance of <span className="text-purple-400 font-bold">EPIC</span> loot.
+                            </div>
                         </Button>
                     </div>
                 </div>
