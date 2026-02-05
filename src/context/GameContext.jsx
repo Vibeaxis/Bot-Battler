@@ -2,7 +2,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { initialBot, getStarterInventory } from '@/data/initialBot';
 import { STARTING_SCRAP } from '@/constants/gameConstants';
-import { getRandomPart, PART_TIERS, getPartById } from '@/data/parts';
+import { getRandomPart, PART_TIERS, getPartById, parts } from '@/data/parts';
 import { PART_SLOTS } from '@/data/parts';
 import { useToast } from '@/components/ui/use-toast';
 import { calculateBotStats } from '@/utils/statCalculator';
