@@ -200,10 +200,12 @@ const Battle = () => {
     const enemyStats = calculateBotStats(newEnemy);
     setEnemyHealth(enemyStats.MaxHealth || BASE_HEALTH);
     
-    // Reset Player Health
-    const playerStats = calculateBotStats(gameState.playerBot);
+   // Recalculate Player Health too just in case
+    const playerStats = calculateBotStats({
+        ...gameState.playerBot,
+        slotLevels: gameState.slotLevels
+    });
     setPlayerHealth(playerStats.MaxHealth || BASE_HEALTH);
-
     setBattleResult(null);
     setCurrentRound(0);
     setShowScavengeModal(false);
