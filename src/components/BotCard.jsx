@@ -7,23 +7,29 @@ import { cn } from '@/lib/utils';
 import { calculateBotStats } from '@/utils/statCalculator';
 import { useToast } from '@/components/ui/use-toast'; 
 
-// Enhanced Schematic with more "Tech" detail
+// --- SKELETON (Shoulder Adjustment) ---
 const SchematicSkeleton = () => (
   <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 0 }} viewBox="0 0 100 100" preserveAspectRatio="none">
-    {/* Background scanning lines */}
-    <line x1="0" y1="20" x2="100" y2="20" stroke="currentColor" strokeWidth="0.2" className="text-gray-800" />
-    <line x1="0" y1="50" x2="100" y2="50" stroke="currentColor" strokeWidth="0.2" className="text-gray-800" />
-    <line x1="0" y1="80" x2="100" y2="80" stroke="currentColor" strokeWidth="0.2" className="text-gray-800" />
+    {/* Central Spine */}
+    <path d="M 50 15 L 50 85" stroke="currentColor" strokeWidth="1.5" fill="none" className="text-gray-700 opacity-50" vectorEffect="non-scaling-stroke" />
     
-    {/* Central Spine with joints */}
-    <path d="M 50 10 L 50 90" stroke="currentColor" strokeWidth="1" fill="none" className="text-gray-800 opacity-40" vectorEffect="non-scaling-stroke" />
+    {/* Horizontal Bus (Arms) - Shortened to bring shoulders in */}
+    <path d="M 35 38 L 65 38" stroke="currentColor" strokeWidth="1.5" fill="none" className="text-gray-700 opacity-50" vectorEffect="non-scaling-stroke" />
     
-    {/* Shoulder Connection Lines */}
-    <path d="M 30 35 L 50 35 L 70 35" stroke="currentColor" strokeWidth="1" fill="none" className="text-gray-700 opacity-50" vectorEffect="non-scaling-stroke" />
+    {/* Nodes */}
+    {/* Head Node */}
+    <circle cx="50" cy="18" r="2.5" className="fill-gray-600" />
     
-    {/* Decorative Corner Brackets */}
-    <path d="M 5 5 L 15 5 M 5 5 L 5 15" stroke="currentColor" strokeWidth="0.5" className="text-gray-800" />
-    <path d="M 95 95 L 85 95 M 95 95 L 95 85" stroke="currentColor" strokeWidth="0.5" className="text-gray-800" />
+    {/* Core Node */}
+    <circle cx="50" cy="38" r="4" className="fill-black stroke-gray-500 stroke-2" />
+    <circle cx="50" cy="38" r="1.5" className="fill-[var(--accent-color)] animate-pulse" />
+    
+    {/* Arm Nodes (Shoulders) - Moved inward from 25/75 to 35/65 */}
+    <circle cx="35" cy="38" r="2.5" className="fill-gray-600" />
+    <circle cx="65" cy="38" r="2.5" className="fill-gray-600" />
+    
+    {/* Chassis Node */}
+    <circle cx="50" cy="82" r="2.5" className="fill-gray-600" />
   </svg>
 );
 
@@ -40,24 +46,22 @@ const BlueprintGrid = () => (
     />
 );
 
-const TechFrame = ({ children, className, isActive, colorClass = "text-gray-800", rarityColor }) => (
+const TechFrame = ({ children, className, isActive, colorClass = "text-gray-800" }) => (
   <div className={`relative ${className}`}>
     <svg className="absolute inset-0 w-full h-full pointer-events-none transition-all duration-300" style={{ zIndex: 0 }} viewBox="0 0 100 100" preserveAspectRatio="none">
-      {/* Outer Hex Frame */}
       <path 
-        d="M 0 12 L 12 0 L 88 0 L 100 12 L 100 88 L 88 100 L 12 100 L 0 88 Z" 
-        fill="#080808" 
+        d="M 0 8 L 8 0 L 92 0 L 100 8 L 100 92 L 92 100 L 8 100 L 0 92 Z" 
+        fill="none" 
         stroke="currentColor" 
         strokeWidth={isActive ? "2" : "1"} 
         vectorEffect="non-scaling-stroke"
-        className={isActive ? "text-[var(--accent-color)]" : "text-gray-800"}
+        className={isActive ? "text-[var(--accent-color)] drop-shadow-[0_0_5px_var(--accent-color)]" : "text-gray-700"}
       />
-      {/* Accent Corner for Rarity */}
-      {rarityColor && (
-         <path d="M 0 12 L 12 0 L 25 0 L 0 25 Z" fill={rarityColor} className="opacity-40" />
-      )}
     </svg>
-    <div className="relative z-10 w-full h-full flex flex-col items-center justify-center overflow-hidden">
+    <div 
+        className="relative z-10 w-full h-full flex flex-col items-center justify-center overflow-hidden"
+        style={{ clipPath: 'polygon(8% 0, 92% 0, 100% 8%, 100% 92%, 92% 100%, 8% 100%, 0 92%, 0 8%)' }}
+    >
         {children}
     </div>
   </div>
@@ -178,7 +182,7 @@ const BotCard = ({ bot, slotLevels, isAttacking, side = 'player', className = ''
         </div>
       </div>
       
-    {/* MAIN SCHEMATIC AREA */}
+      {/* MAIN SCHEMATIC AREA */}
       <div className="relative flex-1 px-6 py-8 flex flex-col justify-center">
         <SchematicSkeleton />
 
