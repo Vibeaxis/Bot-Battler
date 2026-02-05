@@ -378,7 +378,7 @@ const Battle = () => {
                 if (isCrit) setLeftToast(getRandomFlavor('HIT'));
             }
 
-          // --- UPDATED SOUND LOGIC ---
+        // --- UPDATED SOUND LOGIC ---
             if (damageAmount) {
                 // Determine which sound to play
                 let soundKey = 'HIT'; // Default heavy hit
@@ -407,7 +407,6 @@ const Battle = () => {
                 // Play Miss or Dodge sound
                 playSound(isDodge ? 'DODGE' : 'MISS');
             }
-            // ---------------------------
 
             await new Promise(r => setTimeout(r, 200 / battleSpeedRef.current));
         }
