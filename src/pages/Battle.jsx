@@ -32,10 +32,41 @@ import volcObs from '@/assets/volc_obs.jpg';
 import weapDepot from '@/assets/weap_depot.jpg';
 import arcadeGrave from '@/assets/arcade_grave.jpg';
 import rainBow from '@/assets/rain_bow.jpg';
-
-const BATTLE_ARENAS = [
-  rooftopRain, electricGrid, spaceStation, downFactory, iceShelf,
-  illumCenter, volcObs, weapDepot, arcadeGrave, rainBow
+import jungleBg from '@/assets/jungles_bg.jpg';
+import airportBg from '@/assets/airport_bg.jpg';
+import carnivalBg from '@/assets/carnival_bg.jpg';
+import crystalBg from '@/assets/crysa_bg.jpg';
+import digitalBg from '@/assets/digi_bg.jpg';
+import factoryBg from '@/assets/facto_bg.jpg';
+import icyBg from '@/assets/icy_bg.jpg';
+import serverBg from '@/assets/server_bg.jpg';
+import stationBg from '@/assets/station_bg.jpg';
+import terminalBg from '@/assets/term_bg.jpg';
+// --- CONSTANTS ---
+export const BATTLE_ARENAS = [
+  // Original Set
+  rooftopRain, 
+  electricGrid, 
+  spaceStation, 
+  downFactory, 
+  iceShelf,
+  illumCenter, 
+  volcObs, 
+  weapDepot, 
+  arcadeGrave, 
+  rainBow,
+  
+  // New Set
+  jungleBg,
+  airportBg,
+  carnivalBg,
+  crystalBg,
+  digitalBg,
+  factoryBg,
+  icyBg,
+  serverBg,
+  stationBg,
+  terminalBg
 ];
 
 const REROLL_COST = 10;
