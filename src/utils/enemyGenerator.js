@@ -87,7 +87,7 @@ const ENEMY_RARITIES = [
 ];
 
 const ARCHETYPES = {
-  BALANCED: { chance: 0.4, statPriority: null },
+  BALANCED: { chance: 0.4, statPriority: null }, // Spread points evenly
   AGGRO:    { chance: 0.3, statPriority: 'Damage' },
   TANK:     { chance: 0.2, statPriority: 'Armor' },
   SPEED:    { chance: 0.1, statPriority: 'Speed' }
@@ -137,6 +137,32 @@ const getPlayerAverageTier = (playerBot) => {
   return Math.round(totalTier / partIds.length);
 };
 
+// --- NEW: STAT DISTRIBUTION HELPER ---
+const distributeStats = (level, archetype) => {
+    // 3 points per level starting from level 2 (Level 1 has 0 bonus points)
+    const totalPoints = (level - 1) * 3;
+    const stats = { Damage: 0, Speed: 0, Armor: 0, Weight: 0 };
+    
+    if (totalPoints <= 0) return stats;
+
+    const keys = Object.keys(stats);
+
+    for (let i = 0; i < totalPoints; i++) {
+        let targetStat;
+        
+        // 50% chance to follow archetype priority, 50% random
+        if (archetype.statPriority && Math.random() < 0.5) {
+            targetStat = archetype.statPriority;
+        } else {
+            targetStat = keys[Math.floor(Math.random() * keys.length)];
+        }
+        
+        stats[targetStat]++;
+    }
+
+    return stats;
+};
+
 export const generateBalancedEnemy = (playerBot, currentWinStreak) => {
   const archetype = getEnemyArchetype();
   const playerAvgTier = getPlayerAverageTier(playerBot);
@@ -148,6 +174,19 @@ export const generateBalancedEnemy = (playerBot, currentWinStreak) => {
   if (isBossWave && (rarityConfig.id === 'common' || rarityConfig.id === 'uncommon' || rarityConfig.id === 'rare')) {
       rarityConfig = ENEMY_RARITIES.find(r => r.id === 'epic'); 
   }
+
+  // --- NEW: LEVEL CALCULATION ---
+  const playerLevel = playerBot.level || 1;
+  // Enemy level scales with streak. Every 3 wins adds +1 level relative to player.
+  const streakBonus = Math.floor(currentWinStreak / 3);
+  // Random variance (-1 to +1)
+  const levelVariance = Math.floor(Math.random() * 3) - 1;
+  
+  // Ensure enemy level is at least 1
+  const enemyLevel = Math.max(1, playerLevel + streakBonus + levelVariance);
+
+  // --- NEW: GENERATE BASE STATS ---
+  const baseStats = distributeStats(enemyLevel, archetype);
 
   const loadout = {
     [PART_SLOTS.HEAD]: null,
@@ -193,6 +232,9 @@ export const generateBalancedEnemy = (playerBot, currentWinStreak) => {
       rarityConfig = ENEMY_RARITIES.find(r => r.id === 'legendary');
   }
 
+  // Append Level for visibility
+  finalName = `${finalName} (Lvl ${enemyLevel})`;
+
   return {
     id: `enemy_${Date.now()}`,
     name: finalName,
@@ -202,11 +244,16 @@ export const generateBalancedEnemy = (playerBot, currentWinStreak) => {
     difficulty: currentWinStreak,
     archetype: archetype.statPriority || 'Balanced',
     rarity: rarityConfig.rarityName, 
-    rarityId: rarityConfig.id
+    rarityId: rarityConfig.id,
+    
+    // --- NEW FIELDS ---
+    level: enemyLevel,
+    baseStats: baseStats,
+    statPoints: 0
   };
 };
 
 export const generateEnemy = (winStreak) => {
-  const mockBot = { equipment: {} }; 
+  const mockBot = { equipment: {}, level: 1 }; 
   return generateBalancedEnemy(mockBot, winStreak);
 };
