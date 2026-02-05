@@ -145,8 +145,9 @@ export const SoundProvider = ({ children }) => {
           break;
 
         case 'GRAZE':
-          // A weak "Tink" (High pitch Triangle).
-          playTone('triangle', 2000, 1500, 0.08, 0.05);
+          // REFINED: Less "chirpy", more metallic "tink"
+          // Lower frequency start (1200), faster decay (0.05s)
+          playTone('triangle', 1200, 800, 0.05, 0.05);
           break;
 
         case 'LEVEL_UP':
