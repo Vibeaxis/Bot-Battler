@@ -537,8 +537,11 @@ const Battle = () => {
                     <BotCard
                         bot={enemy}
                         side="enemy"
+                        currentHealth={playerHealth} // Pass the dynamic battle health
+        maxHealth={playerMaxHealth}   // Pass the calculated max health
                         isAttacking={enemyAttacking}
                         isHit={playerAttacking}
+                        slotLevels={gameState.slotLevels}
                         className="scale-110 shadow-2xl border-red-500/50"
                     />
                     
