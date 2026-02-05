@@ -348,21 +348,47 @@ const recordBattle = (result) => {
     const randomPart = getRandomPart(tier);
     return randomPart;
   };
-
-  const performFusion = (itemId) => {
+const performFusion = (itemId) => {
+    // 1. Get the item details
     const itemInfo = getPartById(itemId);
-    if (!itemInfo || itemInfo.tier >= 4) return null;
+    if (!itemInfo) return null;
 
+    // 2. Logic: Tier 1 (Common) needs 4 copies. Tier 2+ needs 3 copies.
+    const requiredCount = itemInfo.tier === 1 ? 4 : 3;
+
+    // 3. Check if we have enough
     const count = gameState.inventory.filter(id => id === itemId).length;
-    if (count < 3) return null;
+    if (count < requiredCount) return null;
 
+    // 4. Determine Next Tier
     const nextTier = itemInfo.tier + 1;
-    const newItem = getRandomPart(nextTier);
+    // Cap at Tier 7 (Mythic)
+    if (nextTier > 7) {
+        console.warn("Max tier reached.");
+        return null; 
+    }
 
+    // 5. Find a valid upgrade in the SAME SLOT (e.g. Head -> Head)
+    // We filter the 'parts' array to find items of the next tier in the same slot
+    const possibleUpgrades = parts.filter(p => 
+        p.slot === itemInfo.slot && 
+        p.tier === nextTier
+    );
+
+    if (possibleUpgrades.length === 0) {
+        console.warn(`No Tier ${nextTier} items found for slot ${itemInfo.slot}`);
+        return null;
+    }
+
+    // 6. Select the result (Randomly pick one of the next-tier options)
+    const newItem = possibleUpgrades[Math.floor(Math.random() * possibleUpgrades.length)];
+
+    // 7. Update State (Remove Ingredients, Add Result)
     setGameState(prev => {
         let removedCount = 0;
         const newInventory = prev.inventory.filter(id => {
-            if (id === itemId && removedCount < 3) {
+            // Remove exactly 'requiredCount' instances of the source item
+            if (id === itemId && removedCount < requiredCount) {
                 removedCount++;
                 return false;
             }
