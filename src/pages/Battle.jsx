@@ -412,6 +412,20 @@ const Battle = () => {
             await new Promise(r => setTimeout(r, 200 / battleSpeedRef.current));
         }
 
+        if (result.healthTimeline && result.healthTimeline[i]) {
+            setPlayerHealth(result.healthTimeline[i].a);
+            setEnemyHealth(result.healthTimeline[i].b);
+        }
+
+        const delay = (damageAmount || isMiss) ? 600 : 50; 
+        await new Promise(r => setTimeout(r, delay / battleSpeedRef.current));
+
+        setPlayerAttacking(false);
+        setEnemyAttacking(false);
+        setPlayerFloatingText(null);
+        setEnemyFloatingText(null);
+    }
+
     // END BATTLE LOGIC
     const playerWon = result.winner.name === gameState.playerBot.name;
     addToLog(`ENGAGEMENT ENDED. WINNER: ${result.winner.name}`);
@@ -679,6 +693,6 @@ const Battle = () => {
       </div>
     </>
   );
-};
+}; // Added closing brace here
 
 export default Battle;
