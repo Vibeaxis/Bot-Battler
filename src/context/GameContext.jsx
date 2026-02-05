@@ -93,41 +93,46 @@ export const GameProvider = ({ children }) => {
     ladder: [], 
     completed: false
   });
-  const [gameState, setGameState] = useState(() => {
+const [gameState, setGameState] = useState(() => {
     const saved = localStorage.getItem('robotBattleGame');
     if (saved) {
       const parsed = JSON.parse(saved);
-      
 
-      // MIGRATION: Ensure slotLevels exists
+      // --- MIGRATION: Ensure slotLevels exists ---
       if (!parsed.slotLevels) {
         parsed.slotLevels = { head: 0, rightArm: 0, leftArm: 0, chassis: 0 };
       }
-      // MIGRATION: Ensure bot icon exists
-      if (!parsed.playerBot.icon) {
-        parsed.playerBot.icon = 'Cpu';
-      }
-      // MIGRATION: Ensure theme state exists
-      if (!parsed.currentTheme) {
-        parsed.currentTheme = 'Green';
-      }
-      if (!parsed.unlockedThemes) {
-        parsed.unlockedThemes = ['Green'];
-      }
+      
+      // --- MIGRATION: Ensure Icon & Theme exist ---
+      if (!parsed.playerBot.icon) parsed.playerBot.icon = 'Cpu';
+      if (!parsed.currentTheme) parsed.currentTheme = 'Green';
+      if (!parsed.unlockedThemes) parsed.unlockedThemes = ['Green'];
 
-      // MIGRATION: Hangar System
-      if (!parsed.playerBot.id) {
-        parsed.playerBot.id = generateId();
+      // --- MIGRATION: Hangar System ---
+      if (!parsed.playerBot.id) parsed.playerBot.id = generateId();
+      if (!parsed.hangar) parsed.hangar = [parsed.playerBot];
+
+      // --- CRITICAL FIX: Add Core Stats for Workshop ---
+      // Without this, your new Level Up/Stat Allocation system will crash
+      if (!parsed.playerBot.baseStats) {
+          parsed.playerBot.baseStats = { Damage: 0, Speed: 0, Armor: 0, Weight: 0 };
       }
-      if (!parsed.hangar) {
-        parsed.hangar = [parsed.playerBot];
-      }
+      if (typeof parsed.playerBot.level === 'undefined') parsed.playerBot.level = 1;
+      if (typeof parsed.playerBot.statPoints === 'undefined') parsed.playerBot.statPoints = 0;
+      // ----------------------------------------------------
 
       return parsed;
     }
     
-    // Initial State
-    const starterBot = { ...initialBot, id: generateId() };
+    // Initial State (New Game)
+    // Ensure starterBot also has these fields if initialBot doesn't
+    const starterBot = { 
+        ...initialBot, 
+        id: generateId(),
+        level: 1, 
+        statPoints: 0,
+        baseStats: { Damage: 0, Speed: 0, Armor: 0, Weight: 0 } 
+    };
     
     return {
       playerBot: starterBot,
