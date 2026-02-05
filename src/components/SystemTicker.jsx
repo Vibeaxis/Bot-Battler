@@ -69,12 +69,21 @@ const getPrefixStyle = (prefix) => {
 };
 
 const SystemTicker = () => {
-  const [index, setIndex] = useState(0);
+  // Start with a random tip immediately
+  const [index, setIndex] = useState(() => Math.floor(Math.random() * TIPS.length));
 
   useEffect(() => {
     const timer = setInterval(() => {
-      setIndex((prev) => (prev + 1) % TIPS.length);
+      setIndex((prev) => {
+        let next;
+        // Keep rolling until we get a new index (prevents same tip twice in a row)
+        do {
+            next = Math.floor(Math.random() * TIPS.length);
+        } while (next === prev && TIPS.length > 1);
+        return next;
+      });
     }, 6000); // Rotate every 6 seconds
+    
     return () => clearInterval(timer);
   }, []);
 
@@ -94,7 +103,7 @@ const SystemTicker = () => {
       <div className="flex-1 relative h-6">
         <AnimatePresence mode='wait'>
           <motion.div
-            key={index}
+            key={index} // Key change triggers the animation
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: -20, opacity: 0 }}
