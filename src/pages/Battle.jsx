@@ -168,7 +168,7 @@ const Battle = () => {
     setLeftToastState(null);
     setRightToastState(null);
 
-  }, [location.state, gameState.playerBot]); // Re-run if gauntlet state passes new enemy
+  }, [location.state, gameState.playerBot, gameState.slotLevels]);
 
   // Trigger Intro Toasts when enemy is set
   useEffect(() => {
