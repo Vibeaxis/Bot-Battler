@@ -139,15 +139,17 @@ export const SoundProvider = ({ children }) => {
 
         case 'MISS':
         case 'DODGE':
-          // A "Swoosh" sound. 
-          // High frequency Sine wave dropping rapidly to low frequency.
-          playTone('sine', 1500, 300, 0.15, 0.08); 
+          // "Woosh" - Switched to pure noise with low volume and medium duration.
+          // This sounds like air moving or a "whiff".
+          playNoise(0.2, 0.05); 
           break;
 
         case 'GRAZE':
-          // REFINED: Less "chirpy", more metallic "tink"
-          // Lower frequency start (1200), faster decay (0.05s)
-          playTone('triangle', 1200, 800, 0.05, 0.05);
+          // "Muffled Hit" - A low frequency thud + very quiet noise.
+          // 1. The body of the sound (Low Sawtooth, dull impact)
+          playTone('sawtooth', 100, 50, 0.1, 0.05);
+          // 2. The texture (Quiet noise, much softer than HIT)
+          playNoise(0.1, 0.03);
           break;
 
         case 'LEVEL_UP':
