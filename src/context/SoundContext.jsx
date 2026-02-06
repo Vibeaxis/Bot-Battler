@@ -94,7 +94,7 @@ export const SoundProvider = ({ children }) => {
 
     try {
       switch (key) {
-        // --- EXISTING SOUNDS (Unchanged) ---
+        // --- EXISTING SOUNDS ---
         case 'CLICK':
           playTone('sine', 800, null, 0.05, 0.05);
           break;
@@ -116,39 +116,36 @@ export const SoundProvider = ({ children }) => {
           playTone('sine', 1200, 400, 0.2, 0.1);
           playNoise(0.1, 0.05);
           break;
-        case 'VICTORY':
-          playTone('square', 440, 440, 0.1, 0.1);
-          setTimeout(() => playTone('square', 554, 554, 0.1, 0.1), 100);
-          setTimeout(() => playTone('square', 659, 659, 0.4, 0.1), 200);
-          break;
         case 'DEFEAT':
           playTone('sawtooth', 150, 30, 0.8, 0.15); 
           playNoise(0.5, 0.15); 
           break;
 
-        // --- UPDATED / NEW SOUNDS ---
+        // --- UPDATED SOUNDS ---
+
+        case 'VICTORY':
+          // CHANGED: Switched from 'square' to 'triangle' for a softer, bell-like chime.
+          // Reduced volume (0.1 -> 0.05/0.08) so it's pleasant, not piercing.
+          playTone('triangle', 440, 440, 0.1, 0.05); // A4
+          setTimeout(() => playTone('triangle', 554, 554, 0.1, 0.05), 100); // C#5
+          setTimeout(() => playTone('triangle', 659, 659, 0.4, 0.08), 200); // E5 (Sustain)
+          break;
 
         case 'FUSE':
-          // Layer 1: The rising energy (Triangle)
           playTone('triangle', 200, 600, 0.6, 0.15);
-          // Layer 2: The magical shimmer (Sine, delayed slightly)
           setTimeout(() => playTone('sine', 600, 1200, 0.4, 0.1), 100);
-          // Layer 3: The success "Ding" (High Sine at the end)
           setTimeout(() => playTone('sine', 1500, 1500, 0.3, 0.05), 500);
           break;
 
         case 'MISS':
         case 'DODGE':
-          // "Woosh" - Switched to pure noise with low volume and medium duration.
-          // This sounds like air moving or a "whiff".
+          // Air "Woosh"
           playNoise(0.2, 0.05); 
           break;
 
         case 'GRAZE':
-          // "Muffled Hit" - A low frequency thud + very quiet noise.
-          // 1. The body of the sound (Low Sawtooth, dull impact)
+          // Muffled Thud (Sawtooth + Quiet Noise)
           playTone('sawtooth', 100, 50, 0.1, 0.05);
-          // 2. The texture (Quiet noise, much softer than HIT)
           playNoise(0.1, 0.03);
           break;
 
