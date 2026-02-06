@@ -58,7 +58,7 @@ const generateGauntletEnemy = (rarity, floor, playerBot) => {
         'uncommon': PART_TIERS.TIER_2,
         'rare': PART_TIERS.TIER_3,
         'epic': PART_TIERS.TIER_4,
-        'legendary': PART_TIERS.TIER_4 // Or Tier 5 if you have it
+        'legendary': PART_TIERS.TIER_5 // Or Tier 5 if you have it
     };
     
     const tier = tierMap[rarity] || PART_TIERS.TIER_1;
