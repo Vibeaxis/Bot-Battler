@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import BotCard from '@/components/BotCard';
 import ScreenBackground from '@/components/ScreenBackground';
 import arenaBg from '@/assets/neon_bg.jpg'; // Reusing neon bg or add a new one
-
+import { generateGauntletEnemy } from '@/utils/enemyGenerator'; // Reusing this for now
 // --- FAKE GAMERTAG GENERATOR ---
 const GAMERTAGS = [
   "Shadow_Viper", "Null_Pointer", "Cyber_Chad", "Glitch_Witch", "Iron_Lotus", 

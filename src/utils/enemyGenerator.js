@@ -257,3 +257,100 @@ export const generateEnemy = (winStreak) => {
   const mockBot = { equipment: {}, level: 1 }; 
   return generateBalancedEnemy(mockBot, winStreak);
 };
+import { PARTS_DB } from '@/data/parts';
+
+// Helper to get random item from array
+const getRandom = (arr) => arr[Math.floor(Math.random() * arr.length)];
+
+// Helper to generate a random ID
+const generateId = () => Math.random().toString(36).substr(2, 9);
+
+/**
+ * Generates a complete Bot object with parts based on target rarity/level.
+ * @param {string} rarity - 'common', 'uncommon', 'rare', 'epic', 'legendary'
+ * @param {number} level - The level of the bot (scales stats)
+ * @param {object} options - Optional overrides
+ */
+export const generateGauntletEnemy = (rarity = 'common', level = 1, options = {}) => {
+  
+  // 1. Map text rarity to Tier number (1-5)
+  const tierMap = {
+    'common': 1,
+    'uncommon': 2,
+    'rare': 3,
+    'epic': 4,
+    'legendary': 5,
+    'omega': 6
+  };
+  
+  const targetTier = tierMap[rarity.toLowerCase()] || 1;
+
+  // 2. Filter parts by slot and tier
+  // We allow parts from targetTier AND targetTier - 1 (to simulate realistic builds)
+  const getPartForSlot = (slot) => {
+    const validParts = Object.values(PARTS_DB).filter(p => 
+      p.slot === slot && 
+      p.tier <= targetTier && 
+      p.tier >= Math.max(1, targetTier - 1)
+    );
+    return validParts.length > 0 ? getRandom(validParts) : null;
+  };
+
+  const head = getPartForSlot('Head');
+  const leftArm = getPartForSlot('Left Arm');
+  const rightArm = getPartForSlot('Right Arm');
+  const chassis = getPartForSlot('Chassis');
+
+  // 3. Calculate Stats based on parts + Level Scaling
+  const baseStats = {
+    Damage: 0,
+    Speed: 0,
+    Armor: 0,
+    Weight: 0,
+    Energy: 0
+  };
+
+  [head, leftArm, rightArm, chassis].forEach(part => {
+    if (part) {
+      baseStats.Damage += part.stats.Damage || 0;
+      baseStats.Speed += part.stats.Speed || 0;
+      baseStats.Armor += part.stats.Armor || 0;
+      baseStats.Weight += part.stats.Weight || 0;
+      baseStats.Energy += part.stats.Energy || 0; // Negative for weapons, Positive for chassis
+    }
+  });
+
+  // Level Scaling (bots get slightly stronger per level)
+  const levelMultiplier = 1 + ((level - 1) * 0.1); // 10% boost per level
+
+  const finalStats = {
+    Damage: Math.floor(baseStats.Damage * levelMultiplier),
+    Speed: Math.floor(baseStats.Speed * levelMultiplier),
+    Armor: Math.floor(baseStats.Armor * levelMultiplier),
+    Weight: baseStats.Weight, // Weight doesn't scale with level
+    Energy: baseStats.Energy
+  };
+
+  // 4. Return the formatted Bot Object
+  return {
+    id: generateId(),
+    name: options.name || `Unit-${Math.floor(Math.random()*1000)}`,
+    level: level,
+    icon: 'Cpu', // Default icon
+    rarity: rarity,
+    
+    // Loadout
+    head: head ? head.id : null,
+    leftArm: leftArm ? leftArm.id : null,
+    rightArm: rightArm ? rightArm.id : null,
+    chassis: chassis ? chassis.id : null,
+    
+    // Stats
+    baseStats: finalStats,
+    
+    // Combat State
+    health: 100 + (finalStats.Armor * 2), // Example HP calculation
+    maxHealth: 100 + (finalStats.Armor * 2),
+    ...options
+  };
+};
