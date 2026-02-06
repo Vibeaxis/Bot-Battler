@@ -102,7 +102,6 @@ const BotCard = ({ bot, currentHealth, maxHealth, slotLevels, isAttacking, side 
   const prevHealthRef = useRef(currentHealth);
 
   useEffect(() => {
-    // Flash if health drops, but not if we are already dead
     if (currentHealth !== undefined && prevHealthRef.current > currentHealth && currentHealth > 0) {
         setIsHit(true);
         const timer = setTimeout(() => setIsHit(false), 150);
@@ -144,7 +143,22 @@ const BotCard = ({ bot, currentHealth, maxHealth, slotLevels, isAttacking, side 
 
   // Visual Overrides for Dead State
   const isDead = systemStatus === 'dead';
-  const DisplayIcon = isDead ? IconMap.Skull : (IconMap[bot.icon] || IconMap.Cpu);
+  
+  // --- UPDATED ICON LOGIC ---
+  // Default to standard Lucide icon
+  let DisplayIcon = IconMap[bot.icon] || IconMap.Cpu;
+  let useDiceBear = false;
+
+  // Use DiceBear for Enemy bots if they are alive
+  if (side === 'enemy' && !isDead) {
+      useDiceBear = true;
+  }
+  // Override for death state (always Skull)
+  if (isDead) {
+      DisplayIcon = IconMap.Skull;
+      useDiceBear = false;
+  }
+
   const displayName = forceName || (isDead ? "FATAL EXCEPTION" : bot.name);
   let nameColorClass = 'text-white';
   
@@ -210,8 +224,16 @@ const BotCard = ({ bot, currentHealth, maxHealth, slotLevels, isAttacking, side 
              </span>
         </div>
         <div className="p-4 flex items-center gap-3">
-            <div className={cn("p-2 shrink-0 bg-black border border-gray-800 rounded-sm shadow-inner transition-colors", isDead && "border-red-900 bg-red-950/20")}>
-                 <DisplayIcon className={cn("w-6 h-6", isDead ? "text-red-600" : "text-[var(--accent-color)]")} />
+            <div className={cn("p-2 shrink-0 bg-black border border-gray-800 rounded-sm shadow-inner transition-colors overflow-hidden", isDead && "border-red-900 bg-red-950/20")}>
+                 {useDiceBear ? (
+                     <img 
+                        src={`https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(bot.name)}`}
+                        alt="Bot Avatar"
+                        className="w-6 h-6 object-contain"
+                     />
+                 ) : (
+                     <DisplayIcon className={cn("w-6 h-6", isDead ? "text-red-600" : "text-[var(--accent-color)]")} />
+                 )}
             </div>
             <div className="flex-1 min-w-0">
                 <h3 className={cn("text-lg font-black truncate font-mono uppercase tracking-tighter leading-none mb-1", nameColorClass)}>
