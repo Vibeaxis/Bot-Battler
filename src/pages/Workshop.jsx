@@ -211,70 +211,67 @@ const Workshop = () => {
     { key: PART_SLOTS.LEFT_ARM, label: 'Left Arm', internalKey: 'leftArm' },
     { key: PART_SLOTS.CHASSIS, label: 'Chassis', internalKey: 'chassis' }
   ];
-  
 return (
     <>
       <Helmet>
         <title>Workshop - Robot Battle Arena</title>
-        <meta name="description" content="Customize your battle bot with different parts and equipment." />
       </Helmet>
       
-      {/* BACKGROUND LAYER */}
-      <ScreenBackground image={weapDepot} opacity={0.4} />
+      {/* 1. BACKGROUND LAYER */}
+      <ScreenBackground image={workshopBg} opacity={0.4} />
 
-      {/* MAIN CONTENT */}
-      <div className="min-h-screen bg-transparent p-4 pb-12 font-mono text-[#e0e0e0] selection:bg-[var(--accent-color)] selection:text-black overflow-y-auto relative z-10">
+      {/* 2. MAIN CONTENT (Transparent BG to show image) */}
+      <div className="min-h-screen bg-transparent font-mono text-[#e0e0e0] flex flex-col overflow-y-auto relative z-10 pb-12">
         
-        <div className="relative max-w-7xl mx-auto">
-          
-          {/* HEADER BAR (Matching Hub Style) */}
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 border-b border-gray-800 pb-4 gap-4">
-             {/* Left: Title & Navigation */}
-             <div>
-                <div className="flex items-center gap-4 mb-1">
-                    <Button
-                      onClick={() => navigate('/hub')}
-                      variant="ghost"
-                      size="sm"
-                      className="text-gray-400 hover:text-[var(--accent-color)] hover:bg-transparent p-0 h-auto"
+        {/* HEADER SECTION (Copied & Adapted from Hub) */}
+        <div className="bg-black/80 border-b border-[var(--accent-color)] backdrop-blur-md sticky top-0 z-40">
+            <div className="max-w-7xl mx-auto p-4 flex flex-col md:flex-row justify-between items-center gap-4">
+                
+                {/* Title & Back Button */}
+                <div className="text-center md:text-left flex items-center gap-4">
+                    <Button 
+                        onClick={() => navigate('/hub')} 
+                        variant="ghost" 
+                        className="text-gray-400 hover:text-[var(--accent-color)] p-0 h-auto hover:bg-transparent"
                     >
-                      <ArrowLeft className="w-5 h-5" />
+                        <ArrowLeft className="w-6 h-6" />
                     </Button>
-                    <h1 className="text-3xl font-black uppercase tracking-tighter text-[var(--accent-color)] [text-shadow:0_0_15px_rgba(var(--accent-rgb),0.5)]">
-                        WORKSHOP
-                    </h1>
-                </div>
-                <div className="flex items-center gap-2 text-[10px] uppercase tracking-widest text-gray-500 pl-9">
-                    <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                    System Configuration
-                </div>
-             </div>
-
-             {/* Right: Stats/Currency */}
-             <div className="flex items-center gap-4">
-                <div className="bg-black/60 border border-yellow-900/30 px-4 py-2 flex items-center gap-3 min-w-[140px]">
-                    <LucideIcons.Coins className="w-4 h-4 text-yellow-500" />
                     <div>
-                        <div className="text-[10px] text-gray-500 uppercase tracking-wider leading-none mb-0.5">Scrap</div>
-                        <div className="text-lg font-bold text-yellow-500 leading-none font-mono">{gameState.scrap}</div>
+                        <h1 className="text-3xl font-black text-[var(--accent-color)] uppercase tracking-widest [text-shadow:0_0_15px_rgba(var(--accent-rgb),0.5)] leading-none">
+                            Workshop
+                        </h1>
+                        <div className="flex items-center gap-2 mt-1 justify-center md:justify-start">
+                            <span className="w-2 h-2 bg-green-500 animate-pulse rounded-full" />
+                            <p className="text-[10px] text-gray-500 uppercase tracking-[0.3em]">System Configuration</p>
+                        </div>
                     </div>
                 </div>
-                <Button variant="ghost" size="icon" className="text-gray-500 hover:text-white">
-                    <Settings className="w-5 h-5" />
-                </Button>
-             </div>
-          </div>
+
+                {/* COMPACT STATS BAR */}
+                <div className="flex items-center gap-4 md:gap-8 bg-[#050505] border border-gray-800 rounded-sm px-6 py-2">
+                    <div className="flex items-center gap-3">
+                        <Coins className="w-4 h-4 text-yellow-500" />
+                        <div className="flex flex-col">
+                            <span className="text-xs text-gray-500 uppercase tracking-wider">Scrap</span>
+                            <span className="text-lg font-bold text-yellow-500 leading-none">{gameState.scrap}</span>
+                        </div>
+                    </div>
+                    {/* Only show scrap here as it is the resource needed for upgrades */}
+                </div>
+            </div>
+        </div>
+
+        {/* WORKSHOP CONTENT */}
+        <div className="max-w-7xl mx-auto w-full p-4 md:p-8 space-y-6">
           
-          {/* 3. COMPACT IDENTITY SECTION - Centered for Workshop focus */}
+          {/* COMPACT IDENTITY SECTION */}
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mb-6 relative"
+            className="mb-2"
           >
-            {/* Reduced Padding (p-4) and Gap (gap-6) */}
-            <div className="flex flex-col md:flex-row items-center justify-center gap-6 bg-black/40 border border-gray-800 p-4 max-w-2xl mx-auto backdrop-blur-sm">
+            <div className="flex flex-col md:flex-row items-center justify-center gap-6 bg-black/60 border border-gray-800 p-4 max-w-2xl mx-auto backdrop-blur-md">
                 
-                {/* SMALLER AVATAR: w-20 h-20 -> w-16 h-16 */}
                 <div className="relative group cursor-pointer" onClick={() => setIsAvatarModalOpen(true)}>
                     <div className="w-16 h-16 border-2 border-[var(--accent-color)] flex items-center justify-center bg-black shadow-[0_0_20px_rgba(var(--accent-rgb),0.2)] group-hover:shadow-[0_0_30px_rgba(var(--accent-rgb),0.5)] transition-all">
                         <CurrentBotIcon className="w-8 h-8 text-[var(--accent-color)]" />
@@ -289,7 +286,6 @@ return (
                         <BotNameEditor />
                     </div>
 
-                    {/* Compact Theme Selector */}
                     <div className="flex flex-col md:flex-row items-center gap-3">
                         <div className="flex items-center gap-2 text-[10px] uppercase tracking-widest text-gray-500">
                             <Palette className="w-3 h-3" />
@@ -323,10 +319,10 @@ return (
             </div>
           </motion.div>
           
-          {/* Main Layout Grid - Reduced Gap */}
-          <div className="grid md:grid-cols-2 gap-4 mb-4">
+          {/* Main Layout Grid */}
+          <div className="grid md:grid-cols-2 gap-4">
             
-            {/* Equipment Column - Reduced Padding */}
+            {/* Equipment Column */}
             <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
@@ -404,7 +400,7 @@ return (
               </div>
             </motion.div>
             
-            {/* Stats Column - Reduced Padding */}
+            {/* Stats Column */}
             <motion.div
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
@@ -427,14 +423,13 @@ return (
             </motion.div>
           </div>
 
-          {/* 4. NEW SECTION: NOW VISIBLE */}
+          {/* FIRMWARE SECTION */}
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
             className="grid md:grid-cols-12 gap-4 border-t border-gray-800 pt-4"
           >
-              {/* LEFT: Firmware Upgrade */}
               <div className="md:col-span-4 bg-black/60 backdrop-blur-md border border-gray-800 p-4 flex flex-col justify-between">
                   <div>
                     <h3 className="text-sm font-bold text-white uppercase tracking-widest mb-1 flex items-center gap-2">
@@ -462,7 +457,6 @@ return (
                   </Button>
               </div>
 
-              {/* RIGHT: Core Optimization (Stats) */}
               <div className="md:col-span-8 bg-black/60 backdrop-blur-md border border-gray-800 p-4">
                   <div className="flex justify-between items-center mb-4 border-b border-gray-800 pb-2">
                     <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
