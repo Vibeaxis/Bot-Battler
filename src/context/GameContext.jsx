@@ -556,24 +556,22 @@ const performFusion = (itemId) => {
     localStorage.removeItem('robotBattleGame');
     window.location.reload();
   };
-  // --- GAUNTLET FUNCTIONS (NEW) ---
-
-  const startGauntlet = () => {
+ const startGauntlet = () => {
     const ladder = [];
-    // Define Difficulty Progression
+    
+    // UPDATED DIFFICULTY: Starts at Uncommon, ramps to double Legendary.
     const difficulties = [
-      { count: 3, rarity: 'common' },    // Floors 1-3
-      { count: 3, rarity: 'uncommon' },  // Floors 4-6
-      { count: 2, rarity: 'rare' },      // Floors 7-8
-      { count: 1, rarity: 'epic' },      // Floor 9 (Gatekeeper)
-      { count: 1, rarity: 'legendary' }  // Floor 10 (BOSS)
+      { count: 2, rarity: 'uncommon' },  // Floors 1-2: Warm up (but no Commons)
+      { count: 3, rarity: 'rare' },      // Floors 3-5: The Filter
+      { count: 3, rarity: 'epic' },      // Floors 6-8: High Tier
+      { count: 2, rarity: 'legendary' }  // Floors 9-10: TWIN BOSSES
     ];
 
     let floor = 1;
     difficulties.forEach(tier => {
       for (let i = 0; i < tier.count; i++) {
-        // Generate enemy for this specific floor/difficulty
-        const enemy = generateGauntletEnemy(tier.rarity, floor);
+        // Pass 'gameState.playerBot' so the enemy scales relative to YOUR level
+        const enemy = generateGauntletEnemy(tier.rarity, floor, gameState.playerBot);
         ladder.push(enemy);
         floor++;
       }
@@ -581,15 +579,16 @@ const performFusion = (itemId) => {
 
     setGauntletState({
       active: true,
-      currentFloor: 0, // Array index (0 is Floor 1)
+      currentFloor: 0,
       ladder: ladder,
       completed: false
     });
     
+    playSound('FUSE');
     toast({
         title: "GAUNTLET INITIALIZED",
-        description: "Survive 10 floors. No turning back.",
-        className: "border-red-500 text-red-500"
+        description: "Protocol: SURVIVAL. Difficulty: LETHAL.",
+        className: "bg-red-950 border-red-600 text-red-100 font-bold tracking-widest"
     });
   };
 
@@ -599,6 +598,15 @@ const performFusion = (itemId) => {
       
       // Check if victory (Finished all floors)
       if (nextFloor >= prev.ladder.length) {
+        // REWARD LOGIC: 300 Scrap
+        updateScrap(300);
+        playSound('VICTORY');
+        toast({
+            title: "GAUNTLET CONQUERED",
+            description: " reward: 300 SCRAP deposited.",
+            className: "bg-yellow-900 border-yellow-500 text-yellow-100"
+        });
+        
         return { ...prev, completed: true };
       }
       
