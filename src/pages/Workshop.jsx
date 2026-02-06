@@ -16,7 +16,8 @@ import RarityBadge from '@/components/RarityBadge';
 import { cn } from '@/lib/utils';
 import { calculateBotStats } from '@/utils/statCalculator';
 import BotNameEditor from '@/components/BotNameEditor';
-
+import ScreenBackground from '@/components/ScreenBackground';
+import weapDepot from '@/assets/weap_depot.jpg'; // Or factoryBg
 // --- STAT CONFIGURATION ---
 const STAT_CONFIG = {
   Damage: { icon: Zap, color: "text-red-500", label: "Core Output", desc: "Base Damage Bonus" },
@@ -211,51 +212,67 @@ const Workshop = () => {
     { key: PART_SLOTS.CHASSIS, label: 'Chassis', internalKey: 'chassis' }
   ];
   
-  return (
+return (
     <>
       <Helmet>
         <title>Workshop - Robot Battle Arena</title>
         <meta name="description" content="Customize your battle bot with different parts and equipment." />
       </Helmet>
       
-      {/* 1. TIGHTER CONTAINER: Reduced bottom padding from pb-32 to pb-12 */}
-      <div className="min-h-screen bg-[#0a0a12] p-4 pb-12 font-mono text-[#e0e0e0] selection:bg-[var(--accent-color)] selection:text-black overflow-y-auto">
-        
-        {/* 2. TIGHTER HEADER: Reduced py-8 to py-2 */}
-        <div className="relative max-w-6xl mx-auto py-2">
-          
-          {/* Top Bar */}
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="mb-4 flex justify-between items-center"
-          >
-            <Button
-              onClick={() => navigate('/hub')}
-              variant="outline"
-              size="sm"
-              className="bg-black text-[var(--accent-color)] border-[var(--accent-color)] hover:bg-[rgba(var(--accent-rgb),0.1)] rounded-none uppercase tracking-wider h-8 text-xs"
-            >
-              <ArrowLeft className="w-3 h-3 mr-2" />
-              Hub
-            </Button>
+      {/* BACKGROUND LAYER */}
+      <ScreenBackground image={workshopBg} opacity={0.4} />
 
-            <div className="bg-black/80 px-3 py-1 border border-yellow-500/50 text-yellow-500 font-bold font-mono tracking-wider rounded-none text-xs">
-              SCRAP: {gameState.scrap}
-            </div>
-          </motion.div>
+      {/* MAIN CONTENT */}
+      <div className="min-h-screen bg-transparent p-4 pb-12 font-mono text-[#e0e0e0] selection:bg-[var(--accent-color)] selection:text-black overflow-y-auto relative z-10">
+        
+        <div className="relative max-w-7xl mx-auto">
           
-          {/* 3. COMPACT IDENTITY SECTION */}
+          {/* HEADER BAR (Matching Hub Style) */}
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 border-b border-gray-800 pb-4 gap-4">
+             {/* Left: Title & Navigation */}
+             <div>
+                <div className="flex items-center gap-4 mb-1">
+                    <Button
+                      onClick={() => navigate('/hub')}
+                      variant="ghost"
+                      size="sm"
+                      className="text-gray-400 hover:text-[var(--accent-color)] hover:bg-transparent p-0 h-auto"
+                    >
+                      <ArrowLeft className="w-5 h-5" />
+                    </Button>
+                    <h1 className="text-3xl font-black uppercase tracking-tighter text-[var(--accent-color)] [text-shadow:0_0_15px_rgba(var(--accent-rgb),0.5)]">
+                        WORKSHOP
+                    </h1>
+                </div>
+                <div className="flex items-center gap-2 text-[10px] uppercase tracking-widest text-gray-500 pl-9">
+                    <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                    System Configuration
+                </div>
+             </div>
+
+             {/* Right: Stats/Currency */}
+             <div className="flex items-center gap-4">
+                <div className="bg-black/60 border border-yellow-900/30 px-4 py-2 flex items-center gap-3 min-w-[140px]">
+                    <LucideIcons.Coins className="w-4 h-4 text-yellow-500" />
+                    <div>
+                        <div className="text-[10px] text-gray-500 uppercase tracking-wider leading-none mb-0.5">Scrap</div>
+                        <div className="text-lg font-bold text-yellow-500 leading-none font-mono">{gameState.scrap}</div>
+                    </div>
+                </div>
+                <Button variant="ghost" size="icon" className="text-gray-500 hover:text-white">
+                    <Settings className="w-5 h-5" />
+                </Button>
+             </div>
+          </div>
+          
+          {/* 3. COMPACT IDENTITY SECTION - Centered for Workshop focus */}
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-center mb-6 relative"
+            className="mb-6 relative"
           >
-            <h1 className="text-3xl font-bold text-[var(--accent-color)] mb-1 uppercase tracking-widest [text-shadow:0_0_10px_var(--accent-color)]">Workshop</h1>
-            <p className="text-xs text-gray-500 uppercase tracking-[0.2em] mb-4">System Configuration</p>
-            
             {/* Reduced Padding (p-4) and Gap (gap-6) */}
-            <div className="flex flex-col md:flex-row items-center justify-center gap-6 bg-black/40 border border-gray-800 p-4 max-w-2xl mx-auto">
+            <div className="flex flex-col md:flex-row items-center justify-center gap-6 bg-black/40 border border-gray-800 p-4 max-w-2xl mx-auto backdrop-blur-sm">
                 
                 {/* SMALLER AVATAR: w-20 h-20 -> w-16 h-16 */}
                 <div className="relative group cursor-pointer" onClick={() => setIsAvatarModalOpen(true)}>
@@ -314,7 +331,7 @@ const Workshop = () => {
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.2 }}
-              className="bg-black/80 rounded-none p-4 border border-[var(--accent-color)] flex flex-col h-full"
+              className="bg-black/60 backdrop-blur-md rounded-none p-4 border border-[var(--accent-color)] flex flex-col h-full"
             >
               <h3 className="text-sm font-bold text-[#e0e0e0] mb-2 uppercase tracking-widest border-b border-gray-800 pb-2 text-center flex items-center justify-center gap-2">
                  <LucideIcons.Wrench className="w-4 h-4" /> Components
@@ -341,7 +358,7 @@ const Workshop = () => {
                         whileTap={{ scale: 0.98 }}
                         onClick={() => handleSlotClick(key)}
                         className={cn(
-                          "rounded-none p-2 border cursor-pointer transition-all h-24 flex flex-col items-center justify-center relative bg-black",
+                          "rounded-none p-2 border cursor-pointer transition-all h-24 flex flex-col items-center justify-center relative bg-black/80",
                           part ? colors.border : "border-gray-800 hover:border-[var(--accent-color)]",
                           part ? "hover:bg-[rgba(var(--accent-rgb),0.05)]" : "border-dashed"
                         )}
@@ -392,7 +409,7 @@ const Workshop = () => {
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.3 }}
-              className="bg-black/80 rounded-none p-4 border border-[var(--accent-color)] h-full flex flex-col"
+              className="bg-black/60 backdrop-blur-md rounded-none p-4 border border-[var(--accent-color)] h-full flex flex-col"
             >
               <h3 className="text-sm font-bold text-[#e0e0e0] mb-4 uppercase tracking-widest border-b border-gray-800 pb-2 flex items-center gap-2">
                  <LucideIcons.Activity className="w-4 h-4" /> Diagnostics
@@ -418,7 +435,7 @@ const Workshop = () => {
             className="grid md:grid-cols-12 gap-4 border-t border-gray-800 pt-4"
           >
               {/* LEFT: Firmware Upgrade */}
-              <div className="md:col-span-4 bg-black/40 border border-gray-800 p-4 flex flex-col justify-between">
+              <div className="md:col-span-4 bg-black/60 backdrop-blur-md border border-gray-800 p-4 flex flex-col justify-between">
                   <div>
                     <h3 className="text-sm font-bold text-white uppercase tracking-widest mb-1 flex items-center gap-2">
                         <Zap className="w-4 h-4 text-[var(--accent-color)]" />
@@ -446,7 +463,7 @@ const Workshop = () => {
               </div>
 
               {/* RIGHT: Core Optimization (Stats) */}
-              <div className="md:col-span-8 bg-black/40 border border-gray-800 p-4">
+              <div className="md:col-span-8 bg-black/60 backdrop-blur-md border border-gray-800 p-4">
                   <div className="flex justify-between items-center mb-4 border-b border-gray-800 pb-2">
                     <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
                         <Activity className="w-4 h-4" /> Optimization
