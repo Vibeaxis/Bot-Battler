@@ -288,7 +288,7 @@ export const generateGauntletEnemy = (rarity = 'common', level = 1, options = {}
   // 2. Filter parts by slot and tier
   // We allow parts from targetTier AND targetTier - 1 (to simulate realistic builds)
   const getPartForSlot = (slot) => {
-    const validParts = Object.values(PARTS_DB).filter(p => 
+    const validParts = Object.values(PARTS).filter(p => 
       p.slot === slot && 
       p.tier <= targetTier && 
       p.tier >= Math.max(1, targetTier - 1)
