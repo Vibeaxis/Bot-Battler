@@ -52,7 +52,7 @@ export const useGameContext = () => {
 const generateId = () => Math.random().toString(36).substr(2, 9);
 // --- HELPER: Generate Enemy for Gauntlet ---
 // This is a simplified version. You can import your main enemy generator if you have one.
-const generateGauntletEnemy = (rarity, floor) => {
+const generateGauntletEnemy = (rarity, floor, playerBot) => {
     const tierMap = {
         'common': PART_TIERS.TIER_1,
         'uncommon': PART_TIERS.TIER_2,
