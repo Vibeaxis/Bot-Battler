@@ -8,7 +8,7 @@ import { useSoundContext } from '@/context/SoundContext';
 import { Button } from '@/components/ui/button';
 import BotCard from '@/components/BotCard';
 import ScreenBackground from '@/components/ScreenBackground';
-import { generateGauntletEnemy } from '@/utils/enemyGenerator'; // Reusing this for now
+import { generateGauntletEnemy } from '@/components/enemyGenerator'; // Reusing this for now
 import arenaBg from '@/assets/neon_bg.jpg'; // Reusing neon bg or add a new one
 
 // --- FAKE GAMERTAG GENERATOR ---
