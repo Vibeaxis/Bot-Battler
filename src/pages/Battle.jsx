@@ -26,9 +26,9 @@ import electricGrid from '@/assets/electric_grid.jpg';
 import rooftopRain from '@/assets/rooftop_rain.jpg';
 import spaceStation from '@/assets/space_station.jpg';
 import downFactory from '@/assets/down_factory.jpg';
-import iceShelf from '@/assets/ice_shelf.jpg';
+
 import illumCenter from '@/assets/illum_center.jpg';
-import volcObs from '@/assets/volc_obs.jpg';
+
 import weapDepot from '@/assets/weap_depot.jpg';
 import arcadeGrave from '@/assets/arcade_grave.jpg';
 import rainBow from '@/assets/rain_bow.jpg';
@@ -36,37 +36,52 @@ import jungleBg from '@/assets/jungles_bg.jpg';
 import airportBg from '@/assets/airport_bg.jpg';
 import carnivalBg from '@/assets/carnival_bg.jpg';
 import crystalBg from '@/assets/crysa_bg.jpg';
-import digitalBg from '@/assets/digi_bg.jpg';
+
 import factoryBg from '@/assets/facto_bg.jpg';
 import icyBg from '@/assets/icy_bg.jpg';
 import serverBg from '@/assets/server_bg.jpg';
 import stationBg from '@/assets/station_bg.jpg';
 import terminalBg from '@/assets/term_bg.jpg';
+import teslaBg from '@/assets/tesla_bg.jpg';
+import neonBg from '@/assets/neon_bg.jpg';
+import junkBg from '@/assets/junk_bg.jpg';
+import foliBg from '@/assets/foli_bg.jpg';
+import forgeBg from '@/assets/forge_bg.jpg';
+import gauntletBg from '@/assets/gauntlet_bg.jpg';
 // --- CONSTANTS ---
+// --- UPDATED EXPORT ---
 export const BATTLE_ARENAS = [
   // Original Set
   rooftopRain, 
   electricGrid, 
   spaceStation, 
   downFactory, 
-  iceShelf,
+ 
   illumCenter, 
-  volcObs, 
+ 
   weapDepot, 
   arcadeGrave, 
   rainBow,
   
-  // New Set
+  // New Set 1
   jungleBg,
   airportBg,
   carnivalBg,
   crystalBg,
-  digitalBg,
+ 
   factoryBg,
   icyBg,
   serverBg,
   stationBg,
-  terminalBg
+  terminalBg,
+
+  // New Set 2 (High Fidelity)
+  teslaBg,    // The Quantum Core
+  neonBg,     // The Neon Slums
+  junkBg,     // The Scrapyard
+  foliBg,     // The Bio-Foundry
+  forgeBg,    // The Forge
+  gauntletBg  // The Gauntlet
 ];
 
 const REROLL_COST = 10;
