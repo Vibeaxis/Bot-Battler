@@ -1,7 +1,7 @@
 import { cn } from '@/lib/utils';
 import * as ToastPrimitives from '@radix-ui/react-toast';
 import { cva } from 'class-variance-authority';
-import { X, AlertTriangle, CheckCircle2, Info } from 'lucide-react'; // Added icons for flavor
+import { X, AlertTriangle, CheckCircle2, Info } from 'lucide-react'; 
 import React from 'react';
 
 const ToastProvider = ToastPrimitives.Provider;
@@ -10,8 +10,7 @@ const ToastViewport = React.forwardRef(({ className, ...props }, ref) => (
     <ToastPrimitives.Viewport
         ref={ref}
         className={cn(
-            // UPDATED POSITIONING:
-            // Fixed to Top Right, offset by top-20 to sit below the main Nav/Header
+            // Positioned Top-Right, below header
             'fixed top-0 z-[100] flex max-h-screen w-full flex-col-reverse p-4 sm:top-20 sm:right-4 sm:bottom-auto sm:flex-col md:max-w-[420px]',
             className
         )}
@@ -21,21 +20,19 @@ const ToastViewport = React.forwardRef(({ className, ...props }, ref) => (
 ToastViewport.displayName = ToastPrimitives.Viewport.displayName;
 
 const toastVariants = cva(
-    // UPDATED BASE STYLES:
-    // - Removed rounded corners
-    // - Added backdrop blur
-    // - Added 'skew' for a slight speed/italicized combat look
-    // - aggressive borders
-    'group relative pointer-events-auto flex w-full items-center justify-between space-x-4 overflow-hidden border-l-4 p-4 pr-8 shadow-[0_0_20px_rgba(0,0,0,0.5)] transition-all data-[swipe=move]:transition-none data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)] data-[swipe=cancel]:translate-x-0 data-[swipe=end]:translate-x-[var(--radix-toast-swipe-end-x)] data-[state=open]:animate-in data-[state=closed]:animate-out data-[swipe=end]:animate-out data-[state=closed]:fade-out-80 data-[state=open]:slide-in-from-top-full data-[state=open]:sm:slide-in-from-right-full data-[state=closed]:slide-out-to-right-full',
+    // ANIMATION UPDATES:
+    // - Changed 'slide-in-from-right-full' to 'zoom-in-95' and 'fade-in-0'
+    // - This creates a "Pop Up" effect rather than a "Slide In"
+    'group relative pointer-events-auto flex w-full items-center justify-between space-x-4 overflow-hidden border-l-4 p-4 pr-8 shadow-[0_0_20px_rgba(0,0,0,0.5)] transition-all data-[swipe=move]:transition-none data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)] data-[swipe=cancel]:translate-x-0 data-[swipe=end]:translate-x-[var(--radix-toast-swipe-end-x)] data-[state=open]:animate-in data-[state=closed]:animate-out data-[swipe=end]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 data-[state=closed]:zoom-out-95',
     {
         variants: {
             variant: {
                 default: 
-                    'bg-black/90 border-l-[var(--accent-color)] border-y border-r border-y-gray-800 border-r-gray-800 text-gray-100',
+                    'bg-black/95 border-l-[var(--accent-color)] border-y border-r border-y-gray-800 border-r-gray-800 text-gray-100',
                 destructive:
-                    'bg-red-950/90 border-l-red-500 border-y border-r border-red-900/50 text-red-100',
+                    'bg-red-950/95 border-l-red-500 border-y border-r border-red-900/50 text-red-100',
                 success: 
-                    'bg-green-950/90 border-l-green-500 border-y border-r border-green-900/50 text-green-100',
+                    'bg-green-950/95 border-l-green-500 border-y border-r border-green-900/50 text-green-100',
             },
         },
         defaultVariants: {
