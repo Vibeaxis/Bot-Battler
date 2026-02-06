@@ -25,7 +25,12 @@ const GauntletScreen = () => {
   if (!gauntletState || !gauntletState.active) {
       return null;
   }
-
+// Add this new effect to handle the Victory Sound
+  useEffect(() => {
+    if (gauntletState && gauntletState.completed) {
+      playSound('VICTORY');
+    }
+  }, [gauntletState, playSound]);
   const currentEnemy = gauntletState.ladder[gauntletState.currentFloor];
 
   const handleFight = () => {
