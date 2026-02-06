@@ -3,12 +3,11 @@ import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
 import { Swords, Trophy, Globe, Shield, RefreshCw, Crown, TrendingUp } from 'lucide-react';
-import { useGameContext } from '@/context/GameContext';
+import { useGameContext, generateGauntletEnemy } from '@/context/GameContext';
 import { useSoundContext } from '@/context/SoundContext';
 import { Button } from '@/components/ui/button';
 import BotCard from '@/components/BotCard';
 import ScreenBackground from '@/components/ScreenBackground';
-import { generateGauntletEnemy } from '@/components/enemyGenerator'; // Reusing this for now
 import arenaBg from '@/assets/neon_bg.jpg'; // Reusing neon bg or add a new one
 
 // --- FAKE GAMERTAG GENERATOR ---
