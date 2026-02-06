@@ -1,6 +1,5 @@
 import { parts, PART_SLOTS } from '@/data/parts';
 import { BASE_HEALTH } from '@/constants/gameConstants';
-import { parts } from '@/data/parts';
 // --- MODULAR NAME GENERATOR ---
 
 // --- EXPANDED MODULAR NAME POOL ---
