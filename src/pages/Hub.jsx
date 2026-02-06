@@ -18,24 +18,38 @@ import ScreenBackground from '@/components/ScreenBackground';
 import hubBg from '@/assets/hub_bg.jpg';
 
 const IconMap = { ...LucideIcons };
-
 const Hub = () => {
   const navigate = useNavigate();
-  // Ensure startGauntlet is grabbed here
-  const { gameState, factoryReset, startGauntlet } = useGameContext(); 
+  // Destructure startGauntlet here so we can use it
+  const { gameState, factoryReset, startGauntlet } = useGameContext();
   const { playSound } = useSoundContext();
   
-  // ... (other state definitions like isHangarOpen) ...
+  // --- STATE DEFINITIONS (These were missing) ---
+  const [isHangarOpen, setIsHangarOpen] = useState(false);
+  const [isLogOpen, setIsLogOpen] = useState(false);
+  
+  const lastBattle = gameState.battleHistory[0];
 
-  // --- RESTORE THIS MISSING FUNCTION ---
+  const currentIconId = gameState.playerBot.icon;
+  const isDiceBear = currentIconId === 'DiceBear';
+  const BotIcon = !isDiceBear ? (IconMap[currentIconId] || IconMap.Cpu) : null;
+
+  // --- HELPER FUNCTIONS ---
+  const handleFactoryReset = () => {
+    if (window.confirm("WARNING: This will wipe your save file permanently. Are you sure?")) {
+      playSound('FUSE');
+      factoryReset();
+    }
+  };
+
   const handleEnterGauntlet = () => {
       playSound('FUSE');
       if (startGauntlet) {
           startGauntlet();
+          navigate('/gauntlet');
       } else {
           console.error("startGauntlet function missing from GameContext");
       }
-      navigate('/gauntlet');
   };
 
   return (
