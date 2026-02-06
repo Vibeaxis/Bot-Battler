@@ -558,22 +558,22 @@ const performFusion = (itemId) => {
   };
   // --- GAUNTLET FUNCTIONS (NEW) ---
 
-  const startGauntlet = () => {
+const startGauntlet = () => {
     const ladder = [];
-    // Define Difficulty Progression
+    
+    // --- UPDATED DIFFICULTY CURVE (HARDER) ---
     const difficulties = [
-      { count: 3, rarity: 'common' },    // Floors 1-3
-      { count: 3, rarity: 'uncommon' },  // Floors 4-6
-      { count: 2, rarity: 'rare' },      // Floors 7-8
-      { count: 1, rarity: 'epic' },      // Floor 9 (Gatekeeper)
-      { count: 1, rarity: 'legendary' }  // Floor 10 (BOSS)
+      { count: 2, rarity: 'uncommon' },  // Floors 1-2 (No Commons allowed)
+      { count: 3, rarity: 'rare' },      // Floors 3-5
+      { count: 3, rarity: 'epic' },      // Floors 6-8
+      { count: 2, rarity: 'legendary' }  // Floors 9-10 (Double Boss)
     ];
 
     let floor = 1;
     difficulties.forEach(tier => {
       for (let i = 0; i < tier.count; i++) {
-        // Generate enemy for this specific floor/difficulty
-        const enemy = generateGauntletEnemy(tier.rarity, floor);
+        // Pass the player's current level so we can scale relative to it
+        const enemy = generateGauntletEnemy(tier.rarity, floor, gameState.playerBot);
         ladder.push(enemy);
         floor++;
       }
@@ -581,18 +581,18 @@ const performFusion = (itemId) => {
 
     setGauntletState({
       active: true,
-      currentFloor: 0, // Array index (0 is Floor 1)
+      currentFloor: 0, 
       ladder: ladder,
       completed: false
     });
     
+    playSound('FUSE'); // Intimidating start sound
     toast({
         title: "GAUNTLET INITIALIZED",
-        description: "Survive 10 floors. No turning back.",
-        className: "border-red-500 text-red-500"
+        description: "Warning: High-Level Hostiles Detected.",
+        className: "border-red-600 bg-red-950 text-white font-black tracking-widest"
     });
   };
-
   const advanceGauntlet = () => {
     setGauntletState(prev => {
       const nextFloor = prev.currentFloor + 1;
