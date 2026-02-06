@@ -144,16 +144,21 @@ const BotCard = ({ bot, currentHealth, maxHealth, slotLevels, isAttacking, side 
   // Visual Overrides for Dead State
   const isDead = systemStatus === 'dead';
   
-  // --- UPDATED ICON LOGIC ---
-  // Default to standard Lucide icon
+  // --- ICON RENDER LOGIC ---
   let DisplayIcon = IconMap[bot.icon] || IconMap.Cpu;
   let useDiceBear = false;
 
-  // Use DiceBear for Enemy bots if they are alive
+  // 1. Enemy? Use DiceBear unless Dead.
   if (side === 'enemy' && !isDead) {
       useDiceBear = true;
   }
-  // Override for death state (always Skull)
+  
+  // 2. Player selected 'DiceBear' ID? Use DiceBear unless Dead.
+  if (side === 'player' && bot.icon === 'DiceBear' && !isDead) {
+      useDiceBear = true;
+  }
+
+  // 3. Dead? Always use Skull.
   if (isDead) {
       DisplayIcon = IconMap.Skull;
       useDiceBear = false;
@@ -224,12 +229,12 @@ const BotCard = ({ bot, currentHealth, maxHealth, slotLevels, isAttacking, side 
              </span>
         </div>
         <div className="p-4 flex items-center gap-3">
-            <div className={cn("p-2 shrink-0 bg-black border border-gray-800 rounded-sm shadow-inner transition-colors overflow-hidden", isDead && "border-red-900 bg-red-950/20")}>
+            <div className={cn("p-2 shrink-0 bg-black border border-gray-800 rounded-sm shadow-inner transition-colors overflow-hidden h-10 w-10 flex items-center justify-center", isDead && "border-red-900 bg-red-950/20")}>
                  {useDiceBear ? (
                      <img 
                         src={`https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(bot.name)}`}
                         alt="Bot Avatar"
-                        className="w-6 h-6 object-contain"
+                        className="w-full h-full object-contain"
                      />
                  ) : (
                      <DisplayIcon className={cn("w-6 h-6", isDead ? "text-red-600" : "text-[var(--accent-color)]")} />
