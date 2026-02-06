@@ -1,15 +1,21 @@
 import React, { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import * as LucideIcons from 'lucide-react'; // Full import for dynamic icons
+import * as LucideIcons from 'lucide-react'; // 1. Full Import
 import { Button } from '@/components/ui/button';
-import { useSoundContext } from '@/context/SoundContext'; // <--- IMPORT THIS
+import { useSoundContext } from '@/context/SoundContext';
 import RarityBadge from '@/components/RarityBadge';
 import StatDisplay from '@/components/StatDisplay';
 import { RARITY_COLORS } from '@/constants/gameConstants';
 
+// 2. Helper to safely get the icon component
+const getIcon = (iconName) => {
+  return LucideIcons[iconName] || LucideIcons.Box; // Fallback to Box if not found
+};
+
 const PartCard = ({ part, index, className }) => {
   if (!part) return null;
   const colors = RARITY_COLORS[part.tier];
+  const Icon = getIcon(part.icon); // Dynamic Icon Lookup
   
   return (
     <motion.div
@@ -22,7 +28,8 @@ const PartCard = ({ part, index, className }) => {
     >
       <div className="flex flex-col items-center text-center gap-2">
         <div className={`w-12 h-12 rounded-full flex items-center justify-center bg-black/30 ${colors.text}`}>
-           <Hammer className="w-6 h-6" />
+           {/* Render the dynamic icon */}
+           <Icon className="w-6 h-6" />
         </div>
         
         <div>
@@ -37,6 +44,7 @@ const PartCard = ({ part, index, className }) => {
 const ResultCard = ({ part }) => {
   if (!part) return null;
   const colors = RARITY_COLORS[part.tier];
+  const Icon = getIcon(part.icon); // Dynamic Icon Lookup
 
   return (
     <motion.div
@@ -53,7 +61,8 @@ const ResultCard = ({ part }) => {
       
       <div className="relative z-10 flex flex-col items-center gap-4 text-center">
         <div className={`w-20 h-20 rounded-full flex items-center justify-center bg-black/40 ${colors.text} shadow-inner`}>
-          <Sparkles className="w-10 h-10 animate-pulse" />
+          {/* Render the dynamic icon */}
+          <Icon className="w-10 h-10 animate-pulse" />
         </div>
         
         <div>
@@ -68,29 +77,22 @@ const ResultCard = ({ part }) => {
 };
 
 const FusionInterface = ({ selectedItem, onFuse, isFusing, fusionResult, onReset }) => {
-  // --- 1. ACCESS SOUND CONTEXT ---
   const { playSound } = useSoundContext();
   
-  // Create 3 dummy copies for visualization
   const inputItems = selectedItem ? [selectedItem, selectedItem, selectedItem] : [];
 
-  // --- 2. SOUND TRIGGERS ---
-
-  // Trigger: Item Selection (Slotting in)
   useEffect(() => {
     if (selectedItem && !isFusing && !fusionResult) {
       playSound('EQUIP');
     }
   }, [selectedItem, isFusing, fusionResult, playSound]);
 
-  // Trigger: Success Result (Fanfare)
   useEffect(() => {
     if (fusionResult) {
-      playSound('VICTORY'); // Or 'LEVEL_UP' if you prefer a shorter sound
+      playSound('VICTORY'); 
     }
   }, [fusionResult, playSound]);
 
-  // Wrapper for the Fuse Button to play the machine noise
   const handleFuseClick = () => {
     playSound('FUSE');
     onFuse();
@@ -104,7 +106,6 @@ const FusionInterface = ({ selectedItem, onFuse, isFusing, fusionResult, onReset
   return (
     <div className="h-full flex flex-col items-center justify-center py-8 relative">
        
-      {/* Background Decorative Elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl animate-pulse" />
       </div>
@@ -136,7 +137,8 @@ const FusionInterface = ({ selectedItem, onFuse, isFusing, fusionResult, onReset
                 animate={{ opacity: 1 }}
                 className="text-center py-20 border-2 border-dashed border-gray-700 rounded-xl bg-gray-900/50 text-gray-500"
             >
-                <Hammer className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                {/* Static UI Icon */}
+                <LucideIcons.Hammer className="w-12 h-12 mx-auto mb-4 opacity-50" />
                 <p>Select an item from your inventory to begin fusion</p>
                 <p className="text-sm mt-2 opacity-60">Requires 3 duplicates</p>
             </motion.div>
@@ -147,13 +149,14 @@ const FusionInterface = ({ selectedItem, onFuse, isFusing, fusionResult, onReset
       {selectedItem && !fusionResult && (
         <Button 
             size="lg"
-            onClick={handleFuseClick} // Use wrapper handler
+            onClick={handleFuseClick} 
             disabled={isFusing}
             className="relative px-12 py-6 text-lg font-bold tracking-widest bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 shadow-lg hover:shadow-orange-500/20 transition-all transform hover:scale-105 active:scale-95"
         >
             {isFusing ? (
                 <span className="flex items-center gap-2">
-                    <Sparkles className="w-5 h-5 animate-spin" /> Fusing...
+                    {/* Static UI Icon */}
+                    <LucideIcons.Sparkles className="w-5 h-5 animate-spin" /> Fusing...
                 </span>
             ) : (
                 "FUSE ITEMS"
@@ -163,7 +166,7 @@ const FusionInterface = ({ selectedItem, onFuse, isFusing, fusionResult, onReset
 
       {fusionResult && (
          <Button 
-            onClick={handleResetClick} // Use wrapper handler
+            onClick={handleResetClick} 
             variant="outline"
             className="mt-4 border-gray-600 text-gray-300 hover:bg-gray-800 hover:text-white"
          >
