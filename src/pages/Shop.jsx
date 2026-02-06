@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { useGameContext, THEMES } from '@/context/GameContext';
 import { useSoundContext } from '@/context/SoundContext';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Package, Coins, Palette, Check, Trash2, Box, ShieldCheck, ShoppingCart } from 'lucide-react';
+import { ArrowLeft, Package, Coins, Palette, Check, Trash2, Box, ShieldCheck } from 'lucide-react';
 import { MYSTERY_CRATE_COST, RARITY_COLORS } from '@/constants/gameConstants';
 import { getPartById } from '@/data/parts';
 import * as LucideIcons from 'lucide-react';
@@ -13,7 +13,7 @@ import { toast } from '@/components/ui/use-toast';
 import RarityBadge from '@/components/RarityBadge';
 import { cn } from '@/lib/utils';
 import ScreenBackground from '@/components/ScreenBackground';
-import shopBg from '@/assets/facto_bg.jpg'; // Using Factory/Industrial BG
+import shopBg from '@/assets/factory_bg.jpg'; 
 
 // Create a safe map of icons to avoid computed namespace access issues
 const IconMap = { ...LucideIcons };
@@ -74,7 +74,7 @@ const Shop = () => {
   const handleSell = (itemId, itemName) => {
     const value = sellItem(itemId);
     if (value) {
-      playSound('EQUIP'); // Reusing a mechanical sound for selling
+      playSound('EQUIP'); 
       toast({
         title: "Item Sold",
         description: `Sold ${itemName} for ${value} Scrap`,
@@ -138,55 +138,58 @@ const Shop = () => {
       <ScreenBackground image={shopBg} opacity={0.4} />
 
       {/* 2. MAIN CONTENT */}
-      <div className="h-screen overflow-y-auto bg-transparent p-4 font-mono text-[#e0e0e0] selection:bg-[var(--accent-color)] selection:text-black scroll-smooth relative z-10">
-        <div className="max-w-7xl mx-auto py-2 pb-32">
-          
-          {/* HEADER BAR (Matching Hub Style) */}
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 border-b border-gray-800 pb-4 gap-4 bg-black/60 backdrop-blur-md p-4 rounded-b-lg">
-             {/* Left: Title & Navigation */}
-             <div>
-                <div className="flex items-center gap-4 mb-1">
-                    <Button
-                      onClick={() => navigate('/hub')}
-                      variant="ghost"
-                      size="sm"
-                      className="text-gray-400 hover:text-[var(--accent-color)] hover:bg-transparent p-0 h-auto"
+      <div className="h-screen overflow-y-auto bg-transparent font-mono text-[#e0e0e0] flex flex-col relative z-10 pb-12">
+        
+        {/* HEADER SECTION (Unified Hub Style) */}
+        <div className="bg-black/80 border-b border-[var(--accent-color)] backdrop-blur-md sticky top-0 z-40">
+            <div className="max-w-7xl mx-auto p-4 flex flex-col md:flex-row justify-between items-center gap-4">
+                
+                {/* Title & Back Button */}
+                <div className="text-center md:text-left flex items-center gap-4">
+                    <Button 
+                        onClick={() => navigate('/hub')} 
+                        variant="ghost" 
+                        className="text-gray-400 hover:text-[var(--accent-color)] p-0 h-auto hover:bg-transparent"
                     >
-                      <ArrowLeft className="w-5 h-5" />
+                        <ArrowLeft className="w-6 h-6" />
                     </Button>
-                    <h1 className="text-3xl font-black uppercase tracking-tighter text-[var(--accent-color)] [text-shadow:0_0_15px_rgba(var(--accent-rgb),0.5)]">
-                        SUPPLY DEPOT
-                    </h1>
-                </div>
-                <div className="flex items-center gap-2 text-[10px] uppercase tracking-widest text-gray-500 pl-9">
-                    <span className="w-2 h-2 rounded-full bg-yellow-500 animate-pulse" />
-                    Acquisitions & Liquidations
-                </div>
-             </div>
-
-             {/* Right: Stats/Currency */}
-             <div className="flex items-center gap-4">
-                <div className="bg-black/80 border border-yellow-900/30 px-4 py-2 flex items-center gap-3 min-w-[140px] rounded-sm">
-                    <Coins className="w-4 h-4 text-yellow-500" />
                     <div>
-                        <div className="text-[10px] text-gray-500 uppercase tracking-wider leading-none mb-0.5">Scrap</div>
-                        <div className="text-lg font-bold text-yellow-500 leading-none font-mono">{gameState.scrap}</div>
+                        <h1 className="text-3xl font-black text-[var(--accent-color)] uppercase tracking-widest [text-shadow:0_0_15px_rgba(var(--accent-rgb),0.5)] leading-none">
+                            Supply Depot
+                        </h1>
+                        <div className="flex items-center gap-2 mt-1 justify-center md:justify-start">
+                            <span className="w-2 h-2 bg-yellow-500 animate-pulse rounded-full" />
+                            <p className="text-[10px] text-gray-500 uppercase tracking-[0.3em]">Acquisitions & Liquidations</p>
+                        </div>
                     </div>
                 </div>
-             </div>
-          </div>
+
+                {/* COMPACT STATS BAR */}
+                <div className="flex items-center gap-4 md:gap-8 bg-[#050505] border border-gray-800 rounded-sm px-6 py-2">
+                    <div className="flex items-center gap-3">
+                        <Coins className="w-4 h-4 text-yellow-500" />
+                        <div className="flex flex-col">
+                            <span className="text-xs text-gray-500 uppercase tracking-wider">Scrap</span>
+                            <span className="text-lg font-bold text-yellow-500 leading-none">{gameState.scrap}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div className="max-w-7xl mx-auto w-full p-4 md:p-8 space-y-8">
           
           {/* SECTION 1: PURCHASING (Tightened Layout) */}
-          <div className="grid md:grid-cols-2 gap-4 mb-8">
+          <div className="grid md:grid-cols-2 gap-4">
             
             {/* Mystery Crate - Reduced Padding */}
             <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.2 }}
-              className="bg-black/60 backdrop-blur-md rounded-none p-6 border border-[var(--accent-color)]"
+              className="bg-black/60 backdrop-blur-md rounded-none p-5 border border-[var(--accent-color)] flex flex-col justify-between"
             >
-              <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-3">
                   <div className="p-2 border border-purple-500 bg-purple-500/10 rounded-sm">
                       <Package className="w-6 h-6 text-purple-400" />
@@ -225,7 +228,7 @@ const Shop = () => {
               <Button
                 onClick={handlePurchase}
                 disabled={gameState.scrap < MYSTERY_CRATE_COST}
-                className="w-full h-12 bg-purple-900/20 border border-purple-500 text-purple-400 hover:bg-purple-900/40 hover:text-purple-300 text-sm rounded-sm uppercase tracking-[0.2em] font-bold shadow-[0_0_15px_rgba(168,85,247,0.1)] hover:shadow-[0_0_20px_rgba(168,85,247,0.3)] transition-all"
+                className="w-full h-10 bg-purple-900/20 border border-purple-500 text-purple-400 hover:bg-purple-900/40 hover:text-purple-300 text-xs rounded-sm uppercase tracking-[0.2em] font-bold shadow-[0_0_15px_rgba(168,85,247,0.1)] hover:shadow-[0_0_20px_rgba(168,85,247,0.3)] transition-all"
               >
                 Purchase Crate
               </Button>
@@ -236,9 +239,9 @@ const Shop = () => {
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.3 }}
-              className="bg-black/60 backdrop-blur-md rounded-none p-6 border border-[var(--accent-color)] flex flex-col"
+              className="bg-black/60 backdrop-blur-md rounded-none p-5 border border-[var(--accent-color)] flex flex-col h-[220px]"
             >
-               <div className="flex items-center justify-between mb-4">
+               <div className="flex items-center justify-between mb-4 flex-shrink-0">
                  <div className="flex items-center gap-3">
                     <div className="p-2 border border-[var(--accent-color)] bg-[rgba(var(--accent-rgb),0.1)] rounded-sm">
                        <Palette className="w-6 h-6 text-[var(--accent-color)]" />
@@ -250,7 +253,7 @@ const Shop = () => {
                  </div>
                </div>
 
-               <div className="flex-1 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-700 max-h-[140px] space-y-2">
+               <div className="flex-1 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-700 space-y-2">
                  {purchasableThemes.map((theme) => {
                    const isOwned = gameState.unlockedThemes.includes(theme.name);
                    return (
@@ -283,7 +286,6 @@ const Shop = () => {
              <motion.div
                initial={{ opacity: 0, y: 20 }}
                animate={{ opacity: 1, y: 0 }}
-               className="mb-8"
              >
                 <h3 className="flex items-center gap-2 text-sm font-bold text-gray-400 mb-4 uppercase tracking-widest border-b border-gray-800 pb-2">
                    <ShieldCheck className="w-4 h-4" /> Active Loadout <span className="text-[10px] text-gray-600 ml-2">(Cannot Sell Equipped Items)</span>
@@ -388,8 +390,8 @@ const Shop = () => {
                           </div>
                         </div>
 
-                        {/* HOVER STATS (Behind the sell button now) */}
-                        <div className="absolute inset-0 top-0 h-[60%] bg-black/95 p-2 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-center text-[9px] font-mono border-b border-gray-800 pointer-events-none z-20">
+                        {/* HOVER STATS (Covers Image, NOT sell button) */}
+                        <div className="absolute inset-x-0 top-0 h-[65%] bg-black/95 p-2 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-center text-[9px] font-mono border-b border-gray-800 pointer-events-none z-20">
                           <div className="flex justify-between mb-1"><span>DMG:</span> <span className="text-red-400">{part.stats.Damage}</span></div>
                           <div className="flex justify-between mb-1"><span>SPD:</span> <span className="text-yellow-400">{part.stats.Speed}</span></div>
                           <div className="flex justify-between"><span>ARM:</span> <span className="text-green-400">{part.stats.Armor}</span></div>
