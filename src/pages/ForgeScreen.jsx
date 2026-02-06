@@ -3,18 +3,21 @@ import { Helmet } from 'react-helmet';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Hammer, Plus, Coins, Zap } from 'lucide-react';
+import * as LucideIcons from 'lucide-react'; // Full import for dynamic icons
 import { useGameContext } from '@/context/GameContext';
 import { getPartById, parts } from '@/data/parts'; 
 import { Button } from '@/components/ui/button';
-import { useToast } from '@/components/ui/use-toast'; // CHANGED: Import the hook
+import { useToast } from '@/components/ui/use-toast';
 import { RARITY_COLORS } from '@/constants/gameConstants';
 import RarityBadge from '@/components/RarityBadge';
 import FusionInterface from '@/components/FusionInterface';
 import { cn } from '@/lib/utils';
+import ScreenBackground from '@/components/ScreenBackground';
+import forgeBg from '@/assets/forge_bg.jpg'; 
 
 const ForgeScreen = () => {
   const navigate = useNavigate();
-  const { toast } = useToast(); // CHANGED: Initialize the hook
+  const { toast } = useToast();
   const { gameState, performFusion, setGameState } = useGameContext();
   const [selectedItemId, setSelectedItemId] = useState(null);
   const [isFusing, setIsFusing] = useState(false);
@@ -41,7 +44,7 @@ const ForgeScreen = () => {
         const part = getPartById(id);
         return part ? { ...part, count } : null;
       })
-     .filter(item => item && item.tier < 7)
+      .filter(item => item && item.tier < 7)
       .sort((a, b) => a.tier - b.tier || a.name.localeCompare(b.name));
   }, [gameState.inventory]);
 
@@ -94,7 +97,6 @@ const ForgeScreen = () => {
           return;
         }
 
-        // Safety check for parts array
         if (!parts || !Array.isArray(parts)) {
             console.error("Parts data is missing or invalid");
             return;
@@ -109,7 +111,6 @@ const ForgeScreen = () => {
 
         const randomPart = possibleParts[Math.floor(Math.random() * possibleParts.length)];
 
-        // Safety check for setGameState
         if (typeof setGameState !== 'function') {
             throw new Error("Game Context Error: setGameState is missing");
         }
@@ -127,7 +128,6 @@ const ForgeScreen = () => {
         });
     } catch (err) {
         console.error("Crafting Error:", err);
-        // Fallback alert if toast fails
         if (typeof toast !== 'function') alert("Crafting Failed: " + err.message);
     }
   };
@@ -154,11 +154,11 @@ const ForgeScreen = () => {
              const fallback = common[Math.floor(Math.random() * common.length)];
              
              setGameState(prev => ({
-                  ...prev,
-                  scrap: prev.scrap - CRAFT_COSTS.UNSTABLE,
-                  inventory: [...prev.inventory, fallback.id]
-              }));
-              return;
+                 ...prev,
+                 scrap: prev.scrap - CRAFT_COSTS.UNSTABLE,
+                 inventory: [...prev.inventory, fallback.id]
+             }));
+             return;
            }
 
           const randomPart = possibleParts[Math.floor(Math.random() * possibleParts.length)];
@@ -206,38 +206,55 @@ const ForgeScreen = () => {
         <meta name="description" content="Fuse duplicate parts to create powerful upgraded equipment." />
       </Helmet>
 
-      <div className="min-h-screen bg-[#0a0a12] text-[#e0e0e0] font-mono selection:bg-[var(--accent-color)] selection:text-black flex flex-col">
-        {/* Header */}
-        <div className="bg-black/80 border-b border-[var(--accent-color)] p-4 sticky top-0 z-20 shadow-[0_0_15px_rgba(var(--accent-rgb),0.1)] backdrop-blur-md">
-          <div className="max-w-7xl mx-auto flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Button 
-                onClick={() => navigate('/hub')} 
-                variant="ghost" 
-                className="text-gray-400 hover:text-[var(--accent-color)] hover:bg-[rgba(var(--accent-rgb),0.1)] rounded-none"
-              >
-                <ArrowLeft className="w-5 h-5 mr-2" />
-                Hub
-              </Button>
-              <h1 className="text-2xl font-bold flex items-center gap-2 uppercase tracking-widest text-[var(--accent-color)] [text-shadow:0_0_10px_var(--accent-color)]">
-                <Hammer className="w-6 h-6" />
-                The Forge
-              </h1>
+      {/* 1. BACKGROUND LAYER */}
+      <ScreenBackground image={forgeBg} opacity={0.4} />
+
+      {/* 2. MAIN CONTENT */}
+      <div className="min-h-screen bg-transparent font-mono text-[#e0e0e0] flex flex-col relative z-10 pb-12 overflow-y-auto">
+        
+        {/* HEADER SECTION (Unified Hub Style) */}
+        <div className="bg-black/80 border-b border-[var(--accent-color)] backdrop-blur-md sticky top-0 z-40">
+            <div className="max-w-7xl mx-auto p-4 flex flex-col md:flex-row justify-between items-center gap-4">
+                
+                {/* Title & Back Button */}
+                <div className="text-center md:text-left flex items-center gap-4">
+                    <Button 
+                        onClick={() => navigate('/hub')} 
+                        variant="ghost" 
+                        className="text-gray-400 hover:text-[var(--accent-color)] p-0 h-auto hover:bg-transparent"
+                    >
+                        <ArrowLeft className="w-6 h-6" />
+                    </Button>
+                    <div>
+                        <h1 className="text-3xl font-black text-[var(--accent-color)] uppercase tracking-widest [text-shadow:0_0_15px_rgba(var(--accent-rgb),0.5)] leading-none">
+                            The Forge
+                        </h1>
+                        <div className="flex items-center gap-2 mt-1 justify-center md:justify-start">
+                            <span className="w-2 h-2 bg-purple-500 animate-pulse rounded-full" />
+                            <p className="text-[10px] text-gray-500 uppercase tracking-[0.3em]">Part Fusion & Fabrication</p>
+                        </div>
+                    </div>
+                </div>
+
+                {/* COMPACT STATS BAR */}
+                <div className="flex items-center gap-4 md:gap-8 bg-[#050505] border border-gray-800 rounded-sm px-6 py-2">
+                    <div className="flex items-center gap-3">
+                        <Coins className="w-4 h-4 text-yellow-500" />
+                        <div className="flex flex-col">
+                            <span className="text-xs text-gray-500 uppercase tracking-wider">Scrap</span>
+                            <span className="text-lg font-bold text-yellow-500 leading-none">{gameState.scrap}</span>
+                        </div>
+                    </div>
+                </div>
             </div>
-            
-            <div className="flex items-center gap-2 px-4 py-2 bg-black border border-gray-800">
-               <Coins className="w-4 h-4 text-yellow-500" />
-               <span className="text-yellow-500 font-bold">{gameState.scrap}</span>
-            </div>
-          </div>
         </div>
 
         <div className="flex-1 max-w-7xl mx-auto w-full p-4 grid grid-cols-1 lg:grid-cols-3 gap-6">
             
             {/* Left Panel: Inventory */}
-            <div className="lg:col-span-1 bg-black/40 rounded-none border border-gray-800 p-4 h-[calc(100vh-140px)] flex flex-col">
-                <h2 className="text-sm font-bold mb-4 text-[var(--accent-color)] uppercase tracking-widest border-b border-gray-800 pb-2">
-                    Fusion Candidates
+            <div className="lg:col-span-1 bg-black/60 backdrop-blur-md rounded-none border border-gray-800 p-4 h-[calc(100vh-140px)] flex flex-col">
+                <h2 className="text-sm font-bold mb-4 text-[var(--accent-color)] uppercase tracking-widest border-b border-gray-800 pb-2 flex items-center gap-2">
+                    <Hammer className="w-4 h-4" /> Fusion Candidates
                 </h2>
                 
                 <div className="flex-1 overflow-y-auto pr-2 space-y-2 scrollbar-thin scrollbar-thumb-gray-800">
@@ -285,11 +302,10 @@ const ForgeScreen = () => {
             <div className="lg:col-span-2 flex flex-col gap-6">
                 
                 {/* 1. Fusion Interface (Moved to TOP) */}
-                {/* FIXED: Added h-[600px] to prevent layout shift when card appears */}
-                <div className="bg-black/40 border border-gray-800 p-6 relative flex flex-col items-center justify-center h-[600px]">
+                <div className="bg-black/60 backdrop-blur-md border border-gray-800 p-6 relative flex flex-col items-center justify-center h-[500px]">
                       <h2 className="absolute top-6 left-6 text-sm font-bold text-[var(--accent-color)] uppercase tracking-widest flex items-center gap-2">
-                        <Hammer className="w-4 h-4" /> Fusion Chamber
-                    </h2>
+                        <Zap className="w-4 h-4" /> Fusion Chamber
+                      </h2>
 
                     <FusionInterface 
                         selectedItem={selectedItem}
@@ -301,7 +317,7 @@ const ForgeScreen = () => {
                 </div>
 
                 {/* 2. Crafting Station (Moved to BOTTOM) */}
-                <div className="bg-black/40 border border-gray-800 p-6 relative overflow-hidden">
+                <div className="bg-black/60 backdrop-blur-md border border-gray-800 p-6 relative overflow-hidden">
                     <div className="absolute top-0 right-0 p-4 opacity-10">
                         <Zap className="w-32 h-32 text-[var(--accent-color)]" />
                     </div>
