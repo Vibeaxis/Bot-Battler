@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Hammer, Sparkles } from 'lucide-react';
+import * as LucideIcons from 'lucide-react'; // Full import for dynamic icons
 import { Button } from '@/components/ui/button';
 import { useSoundContext } from '@/context/SoundContext'; // <--- IMPORT THIS
 import RarityBadge from '@/components/RarityBadge';
