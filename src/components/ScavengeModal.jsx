@@ -3,11 +3,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Package, Sword, ArrowLeft, Hexagon } from 'lucide-react';
 import BotCard from './BotCard';
-import { RARITY_COLORS } from '@/constants/gameConstants';
+import { RARITY_COLORS, THEMES } from '@/constants/gameConstants';
 import RarityBadge from './RarityBadge';
 import { getPartById } from '@/data/parts';
 import * as LucideIcons from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useGameContext } from '@/context/GameContext';
 
 const IconMap = { ...LucideIcons };
 
@@ -23,7 +24,7 @@ const LootCard = ({ icon: DefaultIcon, name, quantity, tier = 1, delay, partId }
       animate={{ opacity: 1, x: 0 }}
       transition={{ delay, type: "spring", stiffness: 100 }}
       className={cn(
-        "relative group flex items-center gap-4 p-3 pr-6 rounded-sm border bg-black/60 overflow-hidden hover:bg-white/5 transition-colors shrink-0", // Added shrink-0
+        "relative group flex items-center gap-4 p-3 pr-6 rounded-sm border bg-black/60 overflow-hidden hover:bg-white/5 transition-colors shrink-0 max-w-full",
         colors.border
       )}
     >
@@ -35,19 +36,19 @@ const LootCard = ({ icon: DefaultIcon, name, quantity, tier = 1, delay, partId }
          <Icon className={cn("w-6 h-6", colors.text)} />
       </div>
 
-      {/* Info */}
-      <div className="flex-1 min-w-0 flex flex-col items-start overflow-hidden">
-         <span className={cn("text-xs font-mono font-bold uppercase tracking-wider text-gray-500 truncate w-full")}>
-            Recovered Item
+      {/* Info - Fixed truncation issues */}
+      <div className="flex-1 min-w-0 flex flex-col items-start">
+         <span className="text-xs font-mono font-bold uppercase tracking-wider text-gray-500 truncate w-full">
+           Recovered Item
          </span>
          <span className={cn("text-sm font-black uppercase truncate w-full", colors.text)}>
-            {name}
+           {name}
          </span>
       </div>
 
       {/* Quantity Badge */}
       {!partId && (
-        <div className="flex flex-col items-end shrink-0">
+        <div className="flex flex-col items-end shrink-0 ml-2">
              <span className="text-[10px] text-gray-500 font-mono">QTY</span>
              <span className="text-lg font-mono font-bold text-white">x{quantity}</span>
         </div>
@@ -55,7 +56,7 @@ const LootCard = ({ icon: DefaultIcon, name, quantity, tier = 1, delay, partId }
       
       {/* Part Tier Badge */}
       {partId && (
-         <RarityBadge tier={tier} className="scale-75 origin-right shrink-0" />
+         <RarityBadge tier={tier} className="scale-75 origin-right shrink-0 ml-2" />
       )}
       
       {/* Scanline Effect */}
@@ -65,6 +66,13 @@ const LootCard = ({ icon: DefaultIcon, name, quantity, tier = 1, delay, partId }
 };
 
 const ScavengeModal = ({ isOpen, onNextBattle, onReturn, enemy, rewards }) => {
+  const { gameState } = useGameContext();
+  
+  // Get active theme or fallback to Green
+  const themeKey = gameState?.settings?.theme || 'Green';
+  const currentTheme = THEMES[themeKey] || THEMES['Green'];
+  const accentHex = currentTheme.hex;
+
   if (!isOpen) return null;
 
   return (
@@ -79,7 +87,7 @@ const ScavengeModal = ({ isOpen, onNextBattle, onReturn, enemy, rewards }) => {
           onClick={(e) => e.stopPropagation()}
         >
              <div className="absolute inset-0 opacity-10" 
-                 style={{ backgroundImage: 'linear-gradient(#333 1px, transparent 1px), linear-gradient(90deg, #333 1px, transparent 1px)', backgroundSize: '40px 40px' }} 
+                  style={{ backgroundImage: 'linear-gradient(#333 1px, transparent 1px), linear-gradient(90deg, #333 1px, transparent 1px)', backgroundSize: '40px 40px' }} 
              />
         </motion.div>
 
@@ -90,8 +98,14 @@ const ScavengeModal = ({ isOpen, onNextBattle, onReturn, enemy, rewards }) => {
           exit={{ opacity: 0, scale: 0.95, y: 10 }}
           className="relative z-10 w-full max-w-5xl h-auto md:h-[600px] flex flex-col md:flex-row bg-[#080808] border border-gray-800 shadow-2xl overflow-hidden"
         >
-           {/* Top Border Accent */}
-           <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-orange-500 via-red-500 to-orange-500" />
+           {/* Top Border Accent - Uses Theme Color */}
+           <div 
+             className="absolute top-0 left-0 right-0 h-1" 
+             style={{ 
+               background: `linear-gradient(90deg, ${accentHex}, transparent, ${accentHex})`,
+               boxShadow: `0 0 20px ${accentHex}40`
+             }} 
+           />
 
           {/* --- LEFT SIDE: THE CASUALTY --- */}
           <div className="w-full md:w-1/2 p-8 relative flex flex-col items-center justify-center bg-black/40 border-b md:border-b-0 md:border-r border-gray-800">
@@ -103,19 +117,15 @@ const ScavengeModal = ({ isOpen, onNextBattle, onReturn, enemy, rewards }) => {
                 transition={{ delay: 0.2 }}
                 className="relative z-10 scale-90 md:scale-100"
              >
-                {/* NOTE: We pass currentHealth={0} to trigger the red "Dead" visuals,
-                    but we pass forceName={enemy.name} so it still shows WHO we killed 
-                    instead of "FATAL EXCEPTION".
-                */}
                 <BotCard 
                     bot={enemy} 
                     currentHealth={0} 
                     maxHealth={100}
-                    forceName={enemy.name} // <--- Requires BotCard update to support this prop
+                    forceName={enemy.name} 
                     className="pointer-events-none shadow-2xl grayscale-[0.5]" 
                 />
                 
-                {/* "DESTROYED" STAMP OVERLAY */}
+                {/* "DESTROYED" STAMP */}
                 <motion.div 
                    initial={{ scale: 2, opacity: 0, rotate: -25 }}
                    animate={{ scale: 1, opacity: 1, rotate: -12 }}
@@ -133,19 +143,25 @@ const ScavengeModal = ({ isOpen, onNextBattle, onReturn, enemy, rewards }) => {
           </div>
 
           {/* --- RIGHT SIDE: THE REWARD --- */}
-          <div className="w-full md:w-1/2 p-8 flex flex-col relative h-full min-h-0"> {/* Added min-h-0 for flex scroll fix */}
+          <div className="w-full md:w-1/2 p-8 flex flex-col relative h-full min-h-0 overflow-hidden">
              
              {/* Header */}
              <div className="mb-6 shrink-0">
                 <motion.div 
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="flex items-center gap-2 mb-2"
+                   initial={{ opacity: 0, y: -10 }}
+                   animate={{ opacity: 1, y: 0 }}
+                   className="flex items-center gap-2 mb-2"
                 >
-                    <Hexagon className="w-4 h-4 text-orange-500 fill-orange-500 animate-pulse" />
-                    <span className="text-orange-500 font-mono text-xs font-bold tracking-widest uppercase">
-                        Mission Successful
-                    </span>
+                   <Hexagon 
+                     className="w-4 h-4 animate-pulse" 
+                     style={{ color: accentHex, fill: accentHex }} 
+                   />
+                   <span 
+                     className="font-mono text-xs font-bold tracking-widest uppercase"
+                     style={{ color: accentHex }}
+                   >
+                       Mission Successful
+                   </span>
                 </motion.div>
                 
                 <motion.h2 
@@ -157,39 +173,42 @@ const ScavengeModal = ({ isOpen, onNextBattle, onReturn, enemy, rewards }) => {
                    VICTORY
                 </motion.h2>
                 <motion.div 
-                    initial={{ w: 0 }}
-                    animate={{ w: "100%" }}
-                    transition={{ delay: 0.3, duration: 0.5 }}
-                    className="h-px bg-gray-800 w-full mt-4" 
+                   initial={{ w: 0 }}
+                   animate={{ w: "100%" }}
+                   transition={{ delay: 0.3, duration: 0.5 }}
+                   className="h-px w-full mt-4 bg-gray-800"
+                   style={{ 
+                     backgroundImage: `linear-gradient(90deg, ${accentHex}, transparent)` 
+                   }}
                 />
              </div>
 
-             {/* Loot Grid - Fixed Scrolling */}
-             <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar min-h-0 w-full">
-                <div className="flex flex-col gap-3 pb-2"> {/* Added inner wrapper for padding */}
-                    <span className="text-[10px] text-gray-500 font-mono uppercase mb-1 sticky top-0 bg-[#080808] z-10 py-1">
-                        Salvage Manifest:
-                    </span>
-                    
-                    {/* Always show Scrap */}
-                    <LootCard 
+             {/* Loot Grid - Fixed Scrolling & Overflow */}
+             <div className="flex-1 overflow-y-auto overflow-x-hidden pr-2 custom-scrollbar min-h-0 w-full">
+                <div className="flex flex-col gap-3 pb-2">
+                   <span className="text-[10px] text-gray-500 font-mono uppercase mb-1 sticky top-0 bg-[#080808] z-10 py-1">
+                       Salvage Manifest:
+                   </span>
+                   
+                   {/* Always show Scrap */}
+                   <LootCard 
                        icon={Package} 
                        name="Scrap Metal" 
                        quantity={rewards.scrap} 
                        tier={1}
                        delay={0.3} 
-                    />
+                   />
 
-                    {/* Show Parts if any */}
-                    {rewards.parts && rewards.parts.map((partId, i) => (
-                        <LootCard 
-                            key={i}
-                            partId={partId}
-                            tier={getPartById(partId)?.tier || 2}
-                            name={getPartById(partId)?.name || "Unknown Part"}
-                            delay={0.4 + (i * 0.1)}
-                        />
-                    ))}
+                   {/* Show Parts if any */}
+                   {rewards.parts && rewards.parts.map((partId, i) => (
+                       <LootCard 
+                           key={i}
+                           partId={partId}
+                           tier={getPartById(partId)?.tier || 2}
+                           name={getPartById(partId)?.name || "Unknown Part"}
+                           delay={0.4 + (i * 0.1)}
+                       />
+                   ))}
                 </div>
              </div>
 
