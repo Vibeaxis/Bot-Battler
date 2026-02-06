@@ -218,7 +218,7 @@ return (
       </Helmet>
       
       {/* 1. BACKGROUND LAYER */}
-      <ScreenBackground image={workshopBg} opacity={0.4} />
+      <ScreenBackground image={weapDepot} opacity={0.4} />
 
       {/* 2. MAIN CONTENT (Transparent BG to show image) */}
       <div className="min-h-screen bg-transparent font-mono text-[#e0e0e0] flex flex-col overflow-y-auto relative z-10 pb-12">
