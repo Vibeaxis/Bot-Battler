@@ -13,7 +13,7 @@ import { toast } from '@/components/ui/use-toast';
 import RarityBadge from '@/components/RarityBadge';
 import { cn } from '@/lib/utils';
 import ScreenBackground from '@/components/ScreenBackground';
-import shopBg from '@/assets/factory_bg.jpg'; 
+import shopBg from '@/assets/facto_bg.jpg'; 
 
 // Create a safe map of icons to avoid computed namespace access issues
 const IconMap = { ...LucideIcons };
