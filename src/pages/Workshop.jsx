@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { useGameContext, THEMES } from '@/context/GameContext';
 import { useSoundContext } from '@/context/SoundContext';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, ChevronUp, Palette, X, Zap, Activity, Shield, Weight, Plus, Settings, Coins } from 'lucide-react';
+import { ArrowLeft, ChevronUp, Palette, Zap, Activity, Shield, Weight, Plus, Coins } from 'lucide-react';
 import { getPartById, PART_SLOTS } from '@/data/parts';
 import * as LucideIcons from 'lucide-react';
 import PartModal from '@/components/PartModal';
@@ -17,7 +17,9 @@ import { cn } from '@/lib/utils';
 import { calculateBotStats } from '@/utils/statCalculator';
 import BotNameEditor from '@/components/BotNameEditor';
 import ScreenBackground from '@/components/ScreenBackground';
-import weapDepot from '@/assets/weap_depot.jpg'; // Or factoryBg
+import weapDepot from '@/assets/weap_depot.jpg'; 
+import AvatarSelectionModal from '@/components/AvatarSelectionModal'; // IMPORT THE NEW MODAL
+
 // --- STAT CONFIGURATION ---
 const STAT_CONFIG = {
   Damage: { icon: Zap, color: "text-red-500", label: "Core Output", desc: "Base Damage Bonus" },
@@ -26,78 +28,11 @@ const STAT_CONFIG = {
   Weight: { icon: Weight, color: "text-amber-500", label: "Hydraulics", desc: "Max Weight Capacity" }
 };
 
-// --- 1. CURATED AVATAR LIST ---
-const AVATAR_ICONS = [
-  { id: 'Bot', icon: LucideIcons.Bot, label: 'Droid' },
-  { id: 'Cpu', icon: LucideIcons.Cpu, label: 'Core' },
-  { id: 'Skull', icon: LucideIcons.Skull, label: 'Reaper' },
-  { id: 'Ghost', icon: LucideIcons.Ghost, label: 'Phantom' },
-  { id: 'Zap', icon: LucideIcons.Zap, label: 'Volt' },
-  { id: 'Shield', icon: LucideIcons.Shield, label: 'Guardian' },
-  { id: 'Crosshair', icon: LucideIcons.Crosshair, label: 'Sniper' },
-  { id: 'Swords', icon: LucideIcons.Swords, label: 'Brawler' },
-  { id: 'Gamepad2', icon: LucideIcons.Gamepad2, label: 'Pilot' },
-  { id: 'Radio', icon: LucideIcons.Radio, label: 'Comms' },
-  { id: 'Fingerprint', icon: LucideIcons.Fingerprint, label: 'ID' },
-  { id: 'Eye', icon: LucideIcons.Eye, label: 'Watcher' },
-];
-
 const IconMap = { ...LucideIcons };
-
-// --- 2. AVATAR SELECTOR MODAL ---
-const AvatarModal = ({ isOpen, onClose, currentIcon, onSelect }) => {
-  if (!isOpen) return null;
-
-  return (
-    <AnimatePresence>
-      <motion.div 
-        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-        className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
-        onClick={onClose}
-      >
-        <motion.div 
-          initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }}
-          className="bg-[#0a0a0a] border border-[var(--accent-color)] w-full max-w-md p-6 relative shadow-[0_0_50px_rgba(0,0,0,0.8)]"
-          onClick={e => e.stopPropagation()}
-        >
-          <div className="flex justify-between items-center mb-6 border-b border-gray-800 pb-4">
-            <h2 className="text-xl font-bold text-white uppercase tracking-widest flex items-center gap-2">
-              <LucideIcons.ScanFace className="text-[var(--accent-color)]" /> Select Avatar
-            </h2>
-            <button onClick={onClose} className="text-gray-500 hover:text-white"><X /></button>
-          </div>
-
-          <div className="grid grid-cols-4 gap-4">
-            {AVATAR_ICONS.map((item) => {
-              const Icon = item.icon;
-              const isSelected = currentIcon === item.id;
-              
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => onSelect(item.id)}
-                  className={cn(
-                    "aspect-square flex flex-col items-center justify-center gap-2 border transition-all duration-200 group",
-                    isSelected 
-                      ? "bg-[var(--accent-color)] border-[var(--accent-color)] text-black" 
-                      : "bg-black border-gray-800 text-gray-500 hover:border-[var(--accent-color)] hover:text-[var(--accent-color)]"
-                  )}
-                >
-                  <Icon className="w-8 h-8" />
-                  <span className="text-[9px] uppercase font-bold tracking-wider">{item.label}</span>
-                </button>
-              );
-            })}
-          </div>
-        </motion.div>
-      </motion.div>
-    </AnimatePresence>
-  );
-};
 
 const Workshop = () => {
   const navigate = useNavigate();
-  const { gameState, setGameState, equipPart, unequipPart, upgradeSlot, setCurrentTheme, updateBotIcon } = useGameContext();
+  const { gameState, setGameState, equipPart, unequipPart, upgradeSlot, setCurrentTheme, updateBotIcon, updateBotName } = useGameContext();
   const { playSound } = useSoundContext();
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -108,7 +43,10 @@ const Workshop = () => {
     slotLevels: gameState.slotLevels
   });
   
-  const CurrentBotIcon = IconMap[gameState.playerBot.icon] || IconMap.Cpu;
+  // --- ICON RENDER LOGIC ---
+  const currentIconId = gameState.playerBot.icon;
+  const isDiceBear = currentIconId === 'DiceBear';
+  const CurrentIconComponent = !isDiceBear ? (IconMap[currentIconId] || IconMap.Cpu) : null;
 
   // --- LEVELING LOGIC ---
   const currentLevel = gameState.playerBot?.level || 1;
@@ -199,8 +137,22 @@ const Workshop = () => {
     }
   };
 
-  const handleAvatarSelect = (iconId) => {
-    updateBotIcon(iconId);
+  const handleProfileSave = (newName, newIconId) => {
+    // 1. Update Icon
+    updateBotIcon(newIconId);
+    
+    // 2. Update Name (You might need to expose updateBotName in GameContext or just do it manually here)
+    // Assuming updateBotName doesn't exist, we do it manually via setGameState
+    if (newName !== gameState.playerBot.name) {
+        setGameState(prev => ({
+            ...prev,
+            playerBot: {
+                ...prev.playerBot,
+                name: newName
+            }
+        }));
+    }
+
     playSound('CLICK');
     setIsAvatarModalOpen(false);
   };
@@ -211,7 +163,8 @@ const Workshop = () => {
     { key: PART_SLOTS.LEFT_ARM, label: 'Left Arm', internalKey: 'leftArm' },
     { key: PART_SLOTS.CHASSIS, label: 'Chassis', internalKey: 'chassis' }
   ];
-return (
+
+  return (
     <>
       <Helmet>
         <title>Workshop - Robot Battle Arena</title>
@@ -220,14 +173,13 @@ return (
       {/* 1. BACKGROUND LAYER */}
       <ScreenBackground image={weapDepot} opacity={0.4} />
 
-      {/* 2. MAIN CONTENT (Transparent BG to show image) */}
+      {/* 2. MAIN CONTENT */}
       <div className="min-h-screen bg-transparent font-mono text-[#e0e0e0] flex flex-col overflow-y-auto relative z-10 pb-12">
         
-        {/* HEADER SECTION (Copied & Adapted from Hub) */}
+        {/* HEADER SECTION */}
         <div className="bg-black/80 border-b border-[var(--accent-color)] backdrop-blur-md sticky top-0 z-40">
             <div className="max-w-7xl mx-auto p-4 flex flex-col md:flex-row justify-between items-center gap-4">
                 
-                {/* Title & Back Button */}
                 <div className="text-center md:text-left flex items-center gap-4">
                     <Button 
                         onClick={() => navigate('/hub')} 
@@ -247,7 +199,6 @@ return (
                     </div>
                 </div>
 
-                {/* COMPACT STATS BAR */}
                 <div className="flex items-center gap-4 md:gap-8 bg-[#050505] border border-gray-800 rounded-sm px-6 py-2">
                     <div className="flex items-center gap-3">
                         <Coins className="w-4 h-4 text-yellow-500" />
@@ -256,7 +207,6 @@ return (
                             <span className="text-lg font-bold text-yellow-500 leading-none">{gameState.scrap}</span>
                         </div>
                     </div>
-                    {/* Only show scrap here as it is the resource needed for upgrades */}
                 </div>
             </div>
         </div>
@@ -273,17 +223,32 @@ return (
             <div className="flex flex-col md:flex-row items-center justify-center gap-6 bg-black/60 border border-gray-800 p-4 max-w-2xl mx-auto backdrop-blur-md">
                 
                 <div className="relative group cursor-pointer" onClick={() => setIsAvatarModalOpen(true)}>
-                    <div className="w-16 h-16 border-2 border-[var(--accent-color)] flex items-center justify-center bg-black shadow-[0_0_20px_rgba(var(--accent-rgb),0.2)] group-hover:shadow-[0_0_30px_rgba(var(--accent-rgb),0.5)] transition-all">
-                        <CurrentBotIcon className="w-8 h-8 text-[var(--accent-color)]" />
+                    <div className="w-16 h-16 border-2 border-[var(--accent-color)] flex items-center justify-center bg-black shadow-[0_0_20px_rgba(var(--accent-rgb),0.2)] group-hover:shadow-[0_0_30px_rgba(var(--accent-rgb),0.5)] transition-all overflow-hidden">
+                        {isDiceBear ? (
+                             <img 
+                                src={`https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(gameState.playerBot.name)}`}
+                                alt="Bot Avatar"
+                                className="w-full h-full object-contain"
+                             />
+                        ) : (
+                             <CurrentIconComponent className="w-8 h-8 text-[var(--accent-color)]" />
+                        )}
                     </div>
                     <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-[var(--accent-color)] text-black text-[8px] font-bold px-2 py-0.5 uppercase opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                        Change
+                        Edit Profile
                     </div>
                 </div>
 
                 <div className="flex-1 space-y-2 w-full md:w-auto text-left">
                     <div className="flex justify-center md:justify-start">
-                        <BotNameEditor />
+                        {/* We removed BotNameEditor here because the Modal handles editing now. 
+                            We just display the name nicely. */}
+                        <div 
+                            onClick={() => setIsAvatarModalOpen(true)}
+                            className="text-2xl font-black uppercase tracking-widest text-white hover:text-[var(--accent-color)] cursor-pointer transition-colors border-b border-transparent hover:border-[var(--accent-color)]"
+                        >
+                            {gameState.playerBot.name}
+                        </div>
                     </div>
 
                     <div className="flex flex-col md:flex-row items-center gap-3">
@@ -509,12 +474,14 @@ return (
         </div>
       </div>
       
-      {/* Modals */}
-      <AvatarModal 
+      {/* 4. MODALS */}
+      {/* Use the new unified modal */}
+      <AvatarSelectionModal 
         isOpen={isAvatarModalOpen} 
         onClose={() => setIsAvatarModalOpen(false)} 
+        currentName={gameState.playerBot.name}
         currentIcon={gameState.playerBot.icon}
-        onSelect={handleAvatarSelect}
+        onSave={handleProfileSave}
       />
 
       {selectedSlot && (
