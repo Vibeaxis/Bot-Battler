@@ -3,12 +3,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Package, Sword, ArrowLeft, Hexagon } from 'lucide-react';
 import BotCard from './BotCard';
-import { RARITY_COLORS, THEMES } from '@/constants/gameConstants';
+import { RARITY_COLORS } from '@/constants/gameConstants';
 import RarityBadge from './RarityBadge';
 import { getPartById } from '@/data/parts';
 import * as LucideIcons from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useGameContext } from '@/context/GameContext';
+import { useGameContext, THEMES } from '@/context/GameContext';
 
 const IconMap = { ...LucideIcons };
 
