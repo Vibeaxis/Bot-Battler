@@ -199,50 +199,49 @@ const Hub = () => {
                 </div>
             </div>
 
-            {/* SECTION 2: COMBAT OPERATIONS */}
-            <div>
-                <h3 className="text-sm font-bold text-gray-500 uppercase tracking-widest mb-4 flex items-center gap-2">
-                    <Crosshair className="w-4 h-4" /> Combat Operations
-                </h3>
-                <div className="grid md:grid-cols-2 gap-4">
-                    
-                    {/* STANDARD BATTLE */}
-                    <button 
-                        onClick={() => navigate('/battle')}
-                        className="relative h-32 bg-black/60 backdrop-blur-md border border-gray-800 hover:border-green-500 group transition-all flex items-center px-8 overflow-hidden"
-                    >
-                        <div className="absolute inset-0 bg-green-500/5 translate-x-[-100%] group-hover:translate-x-0 transition-transform duration-500" />
-                        <Swords className="w-12 h-12 text-gray-700 group-hover:text-green-500 transition-colors mr-6" />
-                        <div className="text-left relative z-10">
-                            <h4 className="text-2xl font-black text-white italic tracking-tighter uppercase group-hover:text-green-500 transition-colors">Battle Arena</h4>
-                            <p className="text-xs text-gray-500 font-mono mt-1">Standard Scavenge Operations</p>
-                        </div>
-                    </button>
-<Button 
+     {/* --- COMBAT OPERATIONS --- */}
+<div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+  
+  {/* 1. BATTLE ARENA (Standard - White/Gray) */}
+  <Button 
+    variant="outline" 
+    onClick={() => navigate('/battle')}
+    className="h-32 border-white/20 hover:border-white/60 hover:bg-white/5 flex flex-col items-center justify-center gap-2 group transition-all"
+  >
+    <Swords className="w-8 h-8 text-gray-400 group-hover:text-white transition-colors" />
+    <div className="text-center">
+      <span className="block text-xl font-black italic text-white tracking-tighter">BATTLE ARENA</span>
+      <span className="text-xs text-gray-500 font-mono group-hover:text-gray-300">STANDARD OPS • SCAVENGE</span>
+    </div>
+  </Button>
+
+  {/* 2. THE GAUNTLET (Hardcore - Red) */}
+  <Button 
+    variant="outline"
+    onClick={() => navigate('/gauntlet')}
+    className="h-32 border-red-500/30 hover:border-red-500/80 hover:bg-red-900/10 flex flex-col items-center justify-center gap-2 group transition-all"
+  >
+    <Trophy className="w-8 h-8 text-red-500 group-hover:scale-110 transition-transform" />
+    <div className="text-center">
+      <span className="block text-xl font-black italic text-white tracking-tighter">THE GAUNTLET</span>
+      <span className="text-xs text-red-500/70 font-mono group-hover:text-red-400">HIGH STAKES • TOURNAMENT</span>
+    </div>
+  </Button>
+
+  {/* 3. ARENA LEAGUE (Competitive - Cyan) */}
+  <Button 
     variant="outline"
     onClick={() => { playSound('CLICK'); navigate('/arena'); }}
-    className="h-32 border-cyan-500/30 hover:border-cyan-500/80 hover:bg-cyan-900/10 flex flex-col items-center justify-center gap-2 group"
->
+    className="h-32 border-cyan-500/30 hover:border-cyan-500/80 hover:bg-cyan-900/10 flex flex-col items-center justify-center gap-2 group transition-all"
+  >
     <Globe className="w-8 h-8 text-cyan-500 group-hover:scale-110 transition-transform" />
-    <span className="text-xl font-black italic text-white">ARENA LEAGUE</span>
-    <span className="text-xs text-cyan-400 font-mono">ASYNC PVP • RANKED</span>
-</Button>
-                    {/* GAUNTLET MODE */}
-                    <button 
-                        onClick={handleEnterGauntlet}
-                        className="relative h-32 bg-black/60 backdrop-blur-md border border-red-900/50 hover:border-red-500 group transition-all flex items-center px-8 overflow-hidden"
-                    >
-                         <div className="absolute inset-0 bg-red-600/10 translate-x-[-100%] group-hover:translate-x-0 transition-transform duration-500" />
-                         <div className="p-3 bg-red-900/20 border border-red-500/30 mr-6 group-hover:scale-110 transition-transform">
-                            <Trophy className="w-8 h-8 text-red-600 group-hover:text-red-400 transition-colors" />
-                         </div>
-                         <div className="text-left relative z-10">
-                            <h4 className="text-2xl font-black text-red-600 italic tracking-tighter uppercase group-hover:text-red-400 transition-colors">The Gauntlet</h4>
-                            <p className="text-xs text-red-800 font-mono mt-1 group-hover:text-red-400/70">High Stakes Tournament // 10 Floors</p>
-                        </div>
-                    </button>
-                </div>
-            </div>
+    <div className="text-center">
+      <span className="block text-xl font-black italic text-white tracking-tighter">ARENA LEAGUE</span>
+      <span className="text-xs text-cyan-500/70 font-mono group-hover:text-cyan-400">ASYNC PVP • RANKED</span>
+    </div>
+  </Button>
+
+</div>
 
             {/* SECTION 3: ENGINEERING & LOGISTICS */}
             <div>
