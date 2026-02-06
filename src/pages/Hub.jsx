@@ -218,7 +218,15 @@ const Hub = () => {
                             <p className="text-xs text-gray-500 font-mono mt-1">Standard Scavenge Operations</p>
                         </div>
                     </button>
-
+<Button 
+    variant="outline"
+    onClick={() => { playSound('CLICK'); navigate('/arena'); }}
+    className="h-32 border-cyan-500/30 hover:border-cyan-500/80 hover:bg-cyan-900/10 flex flex-col items-center justify-center gap-2 group"
+>
+    <Globe className="w-8 h-8 text-cyan-500 group-hover:scale-110 transition-transform" />
+    <span className="text-xl font-black italic text-white">ARENA LEAGUE</span>
+    <span className="text-xs text-cyan-400 font-mono">ASYNC PVP • RANKED</span>
+</Button>
                     {/* GAUNTLET MODE */}
                     <button 
                         onClick={handleEnterGauntlet}

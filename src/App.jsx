@@ -14,6 +14,7 @@ import ForgeScreen from './pages/ForgeScreen';
 import SettingsButton from './components/SettingsButton';
 import SettingsPanel from './components/SettingsPanel';
 import GauntletScreen from '@/pages/GauntletScreen'; // <--- IMPORT THIS
+import ArenaScreen from '@/pages/ArenaScreen';
 // Wrapper component to apply settings styles
 const AppContent = () => {
   const { settings } = useSettingsContext();
@@ -50,6 +51,7 @@ const AppContent = () => {
             <Route path="/forge" element={<ForgeScreen />} />
             {/* <--- ADD THIS ROUTE */}
               <Route path="/gauntlet" element={<GauntletScreen />} />
+              <Route path="/arena" element={<ArenaScreen />} />
           </Routes>
           <Toaster />
         </Router>
