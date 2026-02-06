@@ -14,6 +14,8 @@ import ProfileModal from '@/components/ProfileModal';
 import CombatLogModal from '@/components/CombatLogModal';
 import SystemTicker from '@/components/SystemTicker';
 import { cn } from '@/lib/utils';
+import ScreenBackground from '@/components/ScreenBackground';
+import hubBg from '@/assets/hub_bg.jpg';
 
 const ICON_COMPONENTS = { Cpu, Skull, Zap, Shield, Bot };
 
@@ -46,10 +48,14 @@ const Hub = () => {
         <title>Hub - Robot Battle Arena</title>
       </Helmet>
       
+      {/* 1. BACKGROUND LAYER */}
+      <ScreenBackground image={hubBg} opacity={0.35} />
+
       <ProfileModal isOpen={isHangarOpen} onClose={() => setIsHangarOpen(false)} />
       <CombatLogModal isOpen={isLogOpen} onClose={() => setIsLogOpen(false)} battle={lastBattle} />
 
-      <div className="min-h-screen bg-[#0a0a12] font-mono text-[#e0e0e0] flex flex-col pb-12">
+      {/* 2. MAIN CONTENT (Transparent BG to show image) */}
+      <div className="min-h-screen bg-transparent font-mono text-[#e0e0e0] flex flex-col pb-12 relative z-10">
         
         {/* HEADER SECTION */}
         <div className="bg-black/80 border-b border-[var(--accent-color)] backdrop-blur-md sticky top-0 z-40">
@@ -116,7 +122,7 @@ const Hub = () => {
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     onClick={() => setIsHangarOpen(true)}
-                    className="lg:col-span-1 bg-black border border-[var(--accent-color)] relative cursor-pointer group hover:bg-[rgba(var(--accent-rgb),0.05)] transition-all min-h-[180px] flex items-center p-6 gap-6"
+                    className="lg:col-span-1 bg-black/60 backdrop-blur-md border border-[var(--accent-color)] relative cursor-pointer group hover:bg-[rgba(var(--accent-rgb),0.05)] transition-all min-h-[180px] flex items-center p-6 gap-6"
                 >
                     <div className="absolute top-0 left-0 bg-[var(--accent-color)] text-black text-[9px] font-bold px-2 py-0.5 uppercase tracking-widest">
                         Active Unit
@@ -147,7 +153,7 @@ const Hub = () => {
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             onClick={() => setIsLogOpen(true)}
-                            className="h-full bg-black/40 border border-gray-800 p-6 cursor-pointer group hover:border-[var(--accent-color)] transition-all flex flex-col justify-center"
+                            className="h-full bg-black/40 backdrop-blur-md border border-gray-800 p-6 cursor-pointer group hover:border-[var(--accent-color)] transition-all flex flex-col justify-center"
                         >
                             <div className="flex justify-between items-center mb-4 border-b border-gray-800 pb-2">
                                 <div className="flex items-center gap-2 text-gray-500 group-hover:text-[var(--accent-color)] transition-colors">
@@ -189,7 +195,7 @@ const Hub = () => {
                     {/* STANDARD BATTLE */}
                     <button 
                         onClick={() => navigate('/battle')}
-                        className="relative h-32 bg-black border border-gray-800 hover:border-green-500 group transition-all flex items-center px-8 overflow-hidden"
+                        className="relative h-32 bg-black/60 backdrop-blur-md border border-gray-800 hover:border-green-500 group transition-all flex items-center px-8 overflow-hidden"
                     >
                         <div className="absolute inset-0 bg-green-500/5 translate-x-[-100%] group-hover:translate-x-0 transition-transform duration-500" />
                         <Swords className="w-12 h-12 text-gray-700 group-hover:text-green-500 transition-colors mr-6" />
@@ -202,7 +208,7 @@ const Hub = () => {
                     {/* GAUNTLET MODE */}
                     <button 
                         onClick={handleEnterGauntlet}
-                        className="relative h-32 bg-black border border-red-900/50 hover:border-red-500 group transition-all flex items-center px-8 overflow-hidden"
+                        className="relative h-32 bg-black/60 backdrop-blur-md border border-red-900/50 hover:border-red-500 group transition-all flex items-center px-8 overflow-hidden"
                     >
                          <div className="absolute inset-0 bg-red-600/10 translate-x-[-100%] group-hover:translate-x-0 transition-transform duration-500" />
                          <div className="p-3 bg-red-900/20 border border-red-500/30 mr-6 group-hover:scale-110 transition-transform">
@@ -233,7 +239,7 @@ const Hub = () => {
                             <button 
                                 key={item.title}
                                 onClick={() => navigate(item.path)}
-                                className={`h-24 bg-black border border-gray-800 ${item.border} group transition-all flex items-center justify-center gap-4`}
+                                className={`h-24 bg-black/60 backdrop-blur-md border border-gray-800 ${item.border} group transition-all flex items-center justify-center gap-4`}
                             >
                                 <Icon className={`w-6 h-6 text-gray-600 group-hover:${item.color} transition-colors`} />
                                 <div className="text-left">
