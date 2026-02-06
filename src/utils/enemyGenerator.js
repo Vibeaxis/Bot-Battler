@@ -1,6 +1,6 @@
 import { parts, PART_SLOTS } from '@/data/parts';
 import { BASE_HEALTH } from '@/constants/gameConstants';
-
+import { PARTS } from '@/data/parts';
 // --- MODULAR NAME GENERATOR ---
 
 // --- EXPANDED MODULAR NAME POOL ---
@@ -257,7 +257,7 @@ export const generateEnemy = (winStreak) => {
   const mockBot = { equipment: {}, level: 1 }; 
   return generateBalancedEnemy(mockBot, winStreak);
 };
-import { PARTS_DB } from '@/data/parts';
+
 
 // Helper to get random item from array
 const getRandom = (arr) => arr[Math.floor(Math.random() * arr.length)];

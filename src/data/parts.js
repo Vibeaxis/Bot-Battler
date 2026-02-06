@@ -278,6 +278,7 @@ const originalParts = [
   ...CHASSIS_PARTS.map(p => ({ ...p, slot: PART_SLOTS.CHASSIS }))
 ];
 
+// Combine with expansion parts (Ensure parts_expansion.js exists, or remove this import if not)
 export const parts = [...originalParts, ...expansionParts];
 
 export const getPartById = (id) => parts.find(part => part.id === id);
@@ -286,26 +287,38 @@ export const getPartsBySlot = (slot) => parts.filter(part => part.slot === slot)
 
 export const getPartsByTier = (tier) => parts.filter(part => part.tier === tier);
 
+// --- REFACTORED: Now uses TIER_WEIGHTS properly ---
 export const getRandomPart = (forcedTier = null) => {
   let tier = forcedTier;
 
+  // If no tier forced, calculate based on Global Drop Weights
   if (!tier) {
-    const roll = Math.random();
-    // Adjusted probability logic for 7 Tiers
-    // This assumes TIER_WEIGHTS is updated elsewhere, but we provide fallback math here just in case
-    // Common: 40%, Uncommon: 30%, Rare: 15%, Epic: 10%, Legendary: 4%, Omega: 1%
-    if (roll < 0.40) tier = 1;
-    else if (roll < 0.70) tier = 2;
-    else if (roll < 0.85) tier = 3;
-    else if (roll < 0.95) tier = 4;
-    else if (roll < 0.99) tier = 5;
-    else tier = 6; // Tier 7 (Mythic) usually craft only, but can be a 0.1% drop
+    const roll = Math.random(); // 0.0 to 1.0
+    let cumulativeWeight = 0;
+    
+    // Default to Tier 1 if math fails
+    tier = 1; 
+
+    // Loop through our imported weights
+    // Example: Tier 1 (0.45) -> 0 to 0.45
+    //          Tier 2 (0.30) -> 0.45 to 0.75
+    for (const [t, weight] of Object.entries(TIER_WEIGHTS)) {
+      cumulativeWeight += weight;
+      if (roll < cumulativeWeight) {
+        tier = parseInt(t); // Convert string key "1" to number 1
+        break;
+      }
+    }
   }
 
+  // Get parts for that tier
   const availableParts = getPartsByTier(tier);
+  
+  // Safety Fallback: If we rolled a tier that has no parts (e.g., Mythic/Tier 7),
+  // drop down one tier recursively until we find something.
   if (availableParts.length === 0) {
-    // Fallback to lower tier if empty
-    return getPartsByTier(tier - 1)[0] || parts[0];
+    if (tier > 1) return getRandomPart(tier - 1);
+    return parts[0]; // Ultimate fallback (Rusty Box/Head)
   }
 
   return availableParts[Math.floor(Math.random() * availableParts.length)];
