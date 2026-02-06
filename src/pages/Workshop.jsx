@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { useGameContext, THEMES } from '@/context/GameContext';
 import { useSoundContext } from '@/context/SoundContext';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, ChevronUp, Palette, X, Zap, Activity, Shield, Weight, Plus } from 'lucide-react';
+import { ArrowLeft, ChevronUp, Palette, X, Zap, Activity, Shield, Weight, Plus, Settings } from 'lucide-react';
 import { getPartById, PART_SLOTS } from '@/data/parts';
 import * as LucideIcons from 'lucide-react';
 import PartModal from '@/components/PartModal';
