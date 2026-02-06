@@ -30,7 +30,6 @@ import downFactory from '@/assets/down_factory.jpg';
 import illumCenter from '@/assets/illum_center.jpg';
 
 import weapDepot from '@/assets/weap_depot.jpg';
-import arcadeGrave from '@/assets/arcade_grave.jpg';
 import rainBow from '@/assets/rain_bow.jpg';
 import jungleBg from '@/assets/jungles_bg.jpg';
 import airportBg from '@/assets/airport_bg.jpg';
@@ -60,7 +59,6 @@ export const BATTLE_ARENAS = [
   illumCenter, 
  
   weapDepot, 
-  arcadeGrave, 
   rainBow,
   
   // New Set 1
