@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
 import { Swords, Trophy, Globe, Shield, RefreshCw, Crown, TrendingUp } from 'lucide-react';
-import { useGameContext, generateGauntletEnemy } from '@/context/GameContext';
+import { useGameContext } from '@/context/GameContext';
 import { useSoundContext } from '@/context/SoundContext';
 import { Button } from '@/components/ui/button';
 import BotCard from '@/components/BotCard';
