@@ -152,7 +152,24 @@ const [gameState, setGameState] = useState(() => {
   useEffect(() => {
     localStorage.setItem('robotBattleGame', JSON.stringify(gameState));
   }, [gameState]);
+// Add this function
+  const resetSave = () => {
+    localStorage.removeItem('robotBattleGame');
+    setGameState(getStarterState()); // Assuming you have a helper for initial state
+    toast({
+        title: "SYSTEM RESET",
+        description: "Profile data wiped successfully.",
+        variant: "destructive"
+    });
+  };
 
+  // Add setTheme to context if not already there
+  const setTheme = (themeName) => {
+      setGameState(prev => ({
+          ...prev,
+          currentTheme: themeName
+      }));
+  };
   // Apply Theme CSS Variables
   useEffect(() => {
     const theme = THEMES[gameState.currentTheme] || THEMES['Green'];
@@ -653,7 +670,9 @@ const performFusion = (itemId) => {
     gauntletState,
     startGauntlet,
     advanceGauntlet,
-    exitGauntlet
+    exitGauntlet,
+    resetSave, // <--- Add this
+        setTheme   // <--- Add this
   };
   
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>;
