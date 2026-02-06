@@ -232,8 +232,8 @@ export const generateBalancedEnemy = (playerBot, currentWinStreak) => {
       rarityConfig = ENEMY_RARITIES.find(r => r.id === 'legendary');
   }
 
-  // Append Level for visibility
-  finalName = `${finalName} (Lvl ${enemyLevel})`;
+  // REMOVED: finalName = `${finalName} (Lvl ${enemyLevel})`;
+  // The level is now passed separately in the object, preventing the double display in the UI.
 
   return {
     id: `enemy_${Date.now()}`,
