@@ -584,7 +584,7 @@ const performFusion = (itemId) => {
       completed: false
     });
     
-    playSound('FUSE');
+   
     toast({
         title: "GAUNTLET INITIALIZED",
         description: "Protocol: SURVIVAL. Difficulty: LETHAL.",

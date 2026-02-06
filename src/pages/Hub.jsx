@@ -42,7 +42,7 @@ const Hub = () => {
   };
 
   const handleEnterGauntlet = () => {
-      playSound('CLICK');
+      playSound('FUSE');
       startGauntlet();
       navigate('/gauntlet');
   };
