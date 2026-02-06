@@ -7,7 +7,7 @@ import { useSoundContext } from '@/context/SoundContext';
 import { Button } from '@/components/ui/button';
 import { 
   Wrench, ShoppingCart, Swords, Trophy, Flame, Coins, Hammer, 
-  Trash2, FileText, ChevronRight, Crosshair, Zap
+  Trash2, FileText, ChevronRight, Crosshair, Zap, Globe
 } from 'lucide-react';
 import * as LucideIcons from 'lucide-react'; // 1. FULL IMPORT FOR AVATARS
 import ProfileModal from '@/components/ProfileModal';
