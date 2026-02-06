@@ -107,24 +107,32 @@ const Shop = () => {
 
   const commonItemsCount = inventoryParts.filter(p => p.tier === 1).length;
   
-  const purchasableThemes = [
-    // Standard
+const purchasableThemes = [
+    // --- TIER 1: COLORS (Cheap?) ---
     { name: 'Cyber Blue', color: THEMES['Cyber Blue'].hex },
     { name: 'Crimson Red', color: THEMES['Crimson Red'].hex },
     { name: 'Midas Gold', color: THEMES['Midas Gold'].hex },
-    { name: 'Amber Terminal', color: THEMES['Amber Terminal'].hex },
-    // Neon
-    { name: 'Neon Violet', color: THEMES['Neon Violet'].hex },
-    { name: 'Toxic Acid', color: THEMES['Toxic Acid'].hex },
     { name: 'Hot Pink', color: THEMES['Hot Pink'].hex },
     { name: 'Electric Orange', color: THEMES['Electric Orange'].hex },
-    // High Tech
-    { name: 'Ice White', color: THEMES['Ice White'].hex },
+
+    // --- TIER 2: NEON & TECH (Mid-Range?) ---
+    { name: 'Neon Violet', color: THEMES['Neon Violet'].hex },
+    { name: 'Toxic Acid', color: THEMES['Toxic Acid'].hex },
     { name: 'Plasma Teal', color: THEMES['Plasma Teal'].hex },
+    { name: 'Solar Flare', color: THEMES['Solar Flare'].hex },     // NEW
+    { name: 'Amber Terminal', color: THEMES['Amber Terminal'].hex },
+
+    // --- TIER 3: TACTICAL (cool dark modes) ---
+    { name: 'Stealth Grey', color: THEMES['Stealth Grey'].hex },   // NEW
+    { name: 'Night Ops', color: THEMES['Night Ops'].hex },         // NEW
+    { name: 'Blood Moon', color: THEMES['Blood Moon'].hex },       // NEW
     { name: 'Matrix Code', color: THEMES['Matrix Code'].hex },
-    // Luxury
+
+    // --- TIER 4: LUXURY (Expensive status symbols) ---
+    { name: 'Ice White', color: THEMES['Ice White'].hex },
     { name: 'Royal Purple', color: THEMES['Royal Purple'].hex },
     { name: 'Rose Gold', color: THEMES['Rose Gold'].hex },
+    { name: 'Obsidian', color: THEMES['Obsidian'].hex },           // NEW
     { name: 'Void', color: THEMES['Void'].hex },
   ];
 
