@@ -21,21 +21,21 @@ const IconMap = { ...LucideIcons };
 
 const Hub = () => {
   const navigate = useNavigate();
-  const { gameState, factoryReset, startGauntlet } = useGameContext();
+  // Ensure startGauntlet is grabbed here
+  const { gameState, factoryReset, startGauntlet } = useGameContext(); 
   const { playSound } = useSoundContext();
-  const [isHangarOpen, setIsHangarOpen] = useState(false);
-  const [isLogOpen, setIsLogOpen] = useState(false);
-  const lastBattle = gameState.battleHistory[0];
+  
+  // ... (other state definitions like isHangarOpen) ...
 
-  const currentIconId = gameState.playerBot.icon;
-  const isDiceBear = currentIconId === 'DiceBear';
-  const BotIcon = !isDiceBear ? (IconMap[currentIconId] || IconMap.Cpu) : null;
-
-  const handleFactoryReset = () => {
-    if (window.confirm("WARNING: This will wipe your save file permanently. Are you sure?")) {
+  // --- RESTORE THIS MISSING FUNCTION ---
+  const handleEnterGauntlet = () => {
       playSound('FUSE');
-      factoryReset();
-    }
+      if (startGauntlet) {
+          startGauntlet();
+      } else {
+          console.error("startGauntlet function missing from GameContext");
+      }
+      navigate('/gauntlet');
   };
 
   return (
