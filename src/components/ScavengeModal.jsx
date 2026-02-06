@@ -3,12 +3,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Package, Sword, ArrowLeft, Hexagon } from 'lucide-react';
 import BotCard from './BotCard';
-import { RARITY_COLORS } from '@/constants/gameConstants';
+import { RARITY_COLORS, THEMES } from '@/constants/gameConstants'; // Ensure THEMES is imported from here
 import RarityBadge from './RarityBadge';
 import { getPartById } from '@/data/parts';
 import * as LucideIcons from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useGameContext, THEMES } from '@/context/GameContext';
+import { useGameContext } from '@/context/GameContext';
 
 const IconMap = { ...LucideIcons };
 
@@ -36,7 +36,7 @@ const LootCard = ({ icon: DefaultIcon, name, quantity, tier = 1, delay, partId }
          <Icon className={cn("w-6 h-6", colors.text)} />
       </div>
 
-      {/* Info - Fixed truncation issues */}
+      {/* Info */}
       <div className="flex-1 min-w-0 flex flex-col items-start">
          <span className="text-xs font-mono font-bold uppercase tracking-wider text-gray-500 truncate w-full">
            Recovered Item
@@ -68,8 +68,9 @@ const LootCard = ({ icon: DefaultIcon, name, quantity, tier = 1, delay, partId }
 const ScavengeModal = ({ isOpen, onNextBattle, onReturn, enemy, rewards }) => {
   const { gameState } = useGameContext();
   
-  // Get active theme or fallback to Green
-  const themeKey = gameState?.settings?.theme || 'Green';
+  // --- FIX: Correct path to theme state ---
+  // In GameContext, it is at the root (gameState.currentTheme), not inside settings.
+  const themeKey = gameState?.currentTheme || 'Green';
   const currentTheme = THEMES[themeKey] || THEMES['Green'];
   const accentHex = currentTheme.hex;
 
@@ -125,7 +126,7 @@ const ScavengeModal = ({ isOpen, onNextBattle, onReturn, enemy, rewards }) => {
                     className="pointer-events-none shadow-2xl grayscale-[0.5]" 
                 />
                 
-                {/* "DESTROYED" STAMP */}
+                {/* "DESTROYED" STAMP - Kept RED because it represents the enemy status */}
                 <motion.div 
                    initial={{ scale: 2, opacity: 0, rotate: -25 }}
                    animate={{ scale: 1, opacity: 1, rotate: -12 }}
@@ -169,6 +170,7 @@ const ScavengeModal = ({ isOpen, onNextBattle, onReturn, enemy, rewards }) => {
                    animate={{ opacity: 1, x: 0 }}
                    transition={{ delay: 0.1 }}
                    className="text-5xl md:text-6xl font-black text-white italic tracking-tighter"
+                   style={{ textShadow: `0 0 40px ${accentHex}30` }}
                 >
                    VICTORY
                 </motion.h2>
@@ -183,14 +185,13 @@ const ScavengeModal = ({ isOpen, onNextBattle, onReturn, enemy, rewards }) => {
                 />
              </div>
 
-             {/* Loot Grid - Fixed Scrolling & Overflow */}
+             {/* Loot Grid */}
              <div className="flex-1 overflow-y-auto overflow-x-hidden pr-2 custom-scrollbar min-h-0 w-full">
                 <div className="flex flex-col gap-3 pb-2">
                    <span className="text-[10px] text-gray-500 font-mono uppercase mb-1 sticky top-0 bg-[#080808] z-10 py-1">
                        Salvage Manifest:
                    </span>
                    
-                   {/* Always show Scrap */}
                    <LootCard 
                        icon={Package} 
                        name="Scrap Metal" 
@@ -199,7 +200,6 @@ const ScavengeModal = ({ isOpen, onNextBattle, onReturn, enemy, rewards }) => {
                        delay={0.3} 
                    />
 
-                   {/* Show Parts if any */}
                    {rewards.parts && rewards.parts.map((partId, i) => (
                        <LootCard 
                            key={i}
@@ -221,7 +221,8 @@ const ScavengeModal = ({ isOpen, onNextBattle, onReturn, enemy, rewards }) => {
              >
                 <Button 
                    onClick={onNextBattle}
-                   className="h-16 bg-white text-black hover:bg-gray-200 font-black text-lg uppercase tracking-wider relative overflow-hidden group clip-path-slant"
+                   className="h-16 text-black hover:opacity-90 font-black text-lg uppercase tracking-wider relative overflow-hidden group clip-path-slant"
+                   style={{ backgroundColor: accentHex }}
                 >
                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-black/10 to-transparent -translate-x-full group-hover:animate-[shimmer_1s_infinite]" />
                    <span className="flex items-center gap-3 relative z-10">
