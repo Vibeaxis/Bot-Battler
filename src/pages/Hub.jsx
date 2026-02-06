@@ -209,18 +209,18 @@ const Hub = () => {
                     </div>
                 </Button>
 
-                {/* THE GAUNTLET */}
-                <Button 
-                    variant="outline"
-                    onClick={() => navigate('/gauntlet')}
-                    className="h-40 border-red-500/20 hover:border-red-500/60 hover:bg-red-900/5 flex flex-col items-center justify-center gap-3 group transition-all"
-                >
-                    <Trophy className="w-10 h-10 text-red-900 group-hover:text-red-500 transition-colors" />
-                    <div className="text-center space-y-1">
-                        <span className="block text-2xl font-black italic text-white tracking-tighter group-hover:scale-105 transition-transform">THE GAUNTLET</span>
-                        <span className="text-xs text-red-900 font-mono group-hover:text-red-400 uppercase tracking-widest">High Stakes • Survival</span>
-                    </div>
-                </Button>
+              {/* 2. THE GAUNTLET (Hardcore - Red) */}
+<Button 
+    variant="outline"
+    onClick={handleEnterGauntlet} // <--- FIX: Use the helper, don't just navigate!
+    className="h-40 border-red-500/20 hover:border-red-500/60 hover:bg-red-900/5 flex flex-col items-center justify-center gap-3 group transition-all"
+>
+    <Trophy className="w-10 h-10 text-red-900 group-hover:text-red-500 transition-colors" />
+    <div className="text-center space-y-1">
+        <span className="block text-2xl font-black italic text-white tracking-tighter group-hover:scale-105 transition-transform">THE GAUNTLET</span>
+        <span className="text-xs text-red-900 font-mono group-hover:text-red-400 uppercase tracking-widest">High Stakes • Survival</span>
+    </div>
+</Button>
 
                 {/* ARENA LEAGUE */}
                 <Button 
