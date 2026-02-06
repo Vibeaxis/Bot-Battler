@@ -7,9 +7,9 @@ import { useSoundContext } from '@/context/SoundContext';
 import { Button } from '@/components/ui/button';
 import { 
   Wrench, ShoppingCart, Swords, Trophy, Flame, Coins, Hammer, 
-  Cpu, Skull, Zap, Shield, Bot, Trash2, FileText, ChevronRight,
-  Crosshair
+  Trash2, FileText, ChevronRight, Crosshair, Zap
 } from 'lucide-react';
+import * as LucideIcons from 'lucide-react'; // 1. FULL IMPORT FOR AVATARS
 import ProfileModal from '@/components/ProfileModal';
 import CombatLogModal from '@/components/CombatLogModal';
 import SystemTicker from '@/components/SystemTicker';
@@ -17,7 +17,8 @@ import { cn } from '@/lib/utils';
 import ScreenBackground from '@/components/ScreenBackground';
 import hubBg from '@/assets/hub_bg.jpg';
 
-const ICON_COMPONENTS = { Cpu, Skull, Zap, Shield, Bot };
+// 2. Create Map for dynamic lookup
+const IconMap = { ...LucideIcons };
 
 const Hub = () => {
   const navigate = useNavigate();
@@ -27,7 +28,11 @@ const Hub = () => {
   const [isLogOpen, setIsLogOpen] = useState(false);
   const lastBattle = gameState.battleHistory[0];
 
-  const BotIcon = ICON_COMPONENTS[gameState.playerBot.icon] || ICON_COMPONENTS.Cpu;
+  // 3. NEW ICON LOGIC
+  const currentIconId = gameState.playerBot.icon;
+  const isDiceBear = currentIconId === 'DiceBear';
+  // Fallback to 'Cpu' if icon not found in library
+  const BotIcon = !isDiceBear ? (IconMap[currentIconId] || IconMap.Cpu) : null;
 
   const handleFactoryReset = () => {
     if (window.confirm("WARNING: This will wipe your save file permanently. Are you sure?")) {
@@ -48,13 +53,13 @@ const Hub = () => {
         <title>Hub - Robot Battle Arena</title>
       </Helmet>
       
-      {/* 1. BACKGROUND LAYER */}
+      {/* BACKGROUND LAYER */}
       <ScreenBackground image={hubBg} opacity={0.35} />
 
       <ProfileModal isOpen={isHangarOpen} onClose={() => setIsHangarOpen(false)} />
       <CombatLogModal isOpen={isLogOpen} onClose={() => setIsLogOpen(false)} battle={lastBattle} />
 
-      {/* 2. MAIN CONTENT (Transparent BG to show image) */}
+      {/* MAIN CONTENT */}
       <div className="min-h-screen bg-transparent font-mono text-[#e0e0e0] flex flex-col pb-12 relative z-10">
         
         {/* HEADER SECTION */}
@@ -128,12 +133,21 @@ const Hub = () => {
                         Active Unit
                     </div>
                     
-                    <div className="p-3 border-2 border-[var(--accent-color)] bg-black shadow-[0_0_15px_rgba(var(--accent-rgb),0.3)] group-hover:scale-105 transition-transform">
-                        <BotIcon className="w-10 h-10 text-[var(--accent-color)]" />
+                    {/* AVATAR RENDERER */}
+                    <div className="p-3 border-2 border-[var(--accent-color)] bg-black shadow-[0_0_15px_rgba(var(--accent-rgb),0.3)] group-hover:scale-105 transition-transform overflow-hidden w-20 h-20 flex items-center justify-center">
+                        {isDiceBear ? (
+                             <img 
+                                src={`https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(gameState.playerBot.name)}`}
+                                alt="Bot Avatar"
+                                className="w-full h-full object-contain"
+                             />
+                        ) : (
+                             <BotIcon className="w-12 h-12 text-[var(--accent-color)]" />
+                        )}
                     </div>
                     
-                    <div>
-                        <h2 className="text-2xl font-black text-white uppercase tracking-widest group-hover:text-[var(--accent-color)] transition-colors">
+                    <div className="flex-1">
+                        <h2 className="text-2xl font-black text-white uppercase tracking-widest group-hover:text-[var(--accent-color)] transition-colors truncate">
                             {gameState.playerBot.name}
                         </h2>
                         <div className="flex items-center gap-2 mt-1 text-xs text-gray-500 font-mono">
