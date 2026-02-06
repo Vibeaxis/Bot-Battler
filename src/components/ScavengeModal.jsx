@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Package, Sword, ArrowLeft, Hexagon } from 'lucide-react';
 import BotCard from './BotCard';
-import { RARITY_COLORS } from '@/constants/gameConstants'; // Ensure THEMES is imported from here
+import { RARITY_COLORS } from '@/constants/gameConstants';
 import RarityBadge from './RarityBadge';
 import { getPartById } from '@/data/parts';
 import * as LucideIcons from 'lucide-react';
@@ -68,8 +68,7 @@ const LootCard = ({ icon: DefaultIcon, name, quantity, tier = 1, delay, partId }
 const ScavengeModal = ({ isOpen, onNextBattle, onReturn, enemy, rewards }) => {
   const { gameState } = useGameContext();
   
-  // --- FIX: Correct path to theme state ---
-  // In GameContext, it is at the root (gameState.currentTheme), not inside settings.
+  // Theme logic
   const themeKey = gameState?.currentTheme || 'Green';
   const currentTheme = THEMES[themeKey] || THEMES['Green'];
   const accentHex = currentTheme.hex;
@@ -99,12 +98,11 @@ const ScavengeModal = ({ isOpen, onNextBattle, onReturn, enemy, rewards }) => {
           exit={{ opacity: 0, scale: 0.95, y: 10 }}
           className="relative z-10 w-full max-w-5xl h-auto md:h-[600px] flex flex-col md:flex-row bg-[#080808] border border-gray-800 shadow-2xl overflow-hidden"
         >
-           {/* Top Border Accent - Uses Theme Color */}
+           {/* Top Border Accent - Clean Gradient, No Shadow/Glow */}
            <div 
              className="absolute top-0 left-0 right-0 h-1" 
              style={{ 
-               background: `linear-gradient(90deg, ${accentHex}, transparent, ${accentHex})`,
-               boxShadow: `0 0 20px ${accentHex}40`
+               background: `linear-gradient(90deg, ${accentHex}, transparent, ${accentHex})`
              }} 
            />
 
@@ -126,7 +124,7 @@ const ScavengeModal = ({ isOpen, onNextBattle, onReturn, enemy, rewards }) => {
                     className="pointer-events-none shadow-2xl grayscale-[0.5]" 
                 />
                 
-                {/* "DESTROYED" STAMP - Kept RED because it represents the enemy status */}
+                {/* "DESTROYED" STAMP */}
                 <motion.div 
                    initial={{ scale: 2, opacity: 0, rotate: -25 }}
                    animate={{ scale: 1, opacity: 1, rotate: -12 }}
@@ -165,12 +163,12 @@ const ScavengeModal = ({ isOpen, onNextBattle, onReturn, enemy, rewards }) => {
                    </span>
                 </motion.div>
                 
+                {/* Clean VICTORY text - No Glow/Shadow */}
                 <motion.h2 
                    initial={{ opacity: 0, x: 20 }}
                    animate={{ opacity: 1, x: 0 }}
                    transition={{ delay: 0.1 }}
                    className="text-5xl md:text-6xl font-black text-white italic tracking-tighter"
-                   style={{ textShadow: `0 0 40px ${accentHex}30` }}
                 >
                    VICTORY
                 </motion.h2>
@@ -219,10 +217,14 @@ const ScavengeModal = ({ isOpen, onNextBattle, onReturn, enemy, rewards }) => {
                 transition={{ delay: 0.6 }}
                 className="mt-6 grid grid-cols-1 gap-3 shrink-0"
              >
+                {/* Clean Button - Solid Color, No Glow */}
                 <Button 
                    onClick={onNextBattle}
-                   className="h-16 text-black hover:opacity-90 font-black text-lg uppercase tracking-wider relative overflow-hidden group clip-path-slant"
-                   style={{ backgroundColor: accentHex }}
+                   className="h-16 font-black text-lg uppercase tracking-wider relative overflow-hidden group clip-path-slant"
+                   style={{ 
+                       backgroundColor: accentHex,
+                       color: 'black' // Force black text for readability
+                   }}
                 >
                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-black/10 to-transparent -translate-x-full group-hover:animate-[shimmer_1s_infinite]" />
                    <span className="flex items-center gap-3 relative z-10">
