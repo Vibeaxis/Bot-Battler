@@ -309,7 +309,15 @@ const [gameState, setGameState] = useState(() => {
       inventory: [...prev.inventory, partId]
     }));
   };
-  
+  // --- ARENA / BATTLE SETUP ---
+  const [currentEnemy, setCurrentEnemy] = useState(null);
+  const [battleMode, setBattleMode] = useState('campaign'); // 'campaign', 'gauntlet', 'arena'
+
+  const startArenaBattle = (enemyBot) => {
+    setCurrentEnemy(enemyBot);
+    setBattleMode('arena');
+    // Note: You might want to deduct an "Arena Ticket" or Energy here later
+  };
   const removeFromInventory = (partId) => {
     setGameState(prev => {
       const newInventory = [...prev.inventory];
