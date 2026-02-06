@@ -6,7 +6,7 @@ import { useSoundContext } from '@/context/SoundContext';
 import { useGameContext } from '@/context/GameContext'; // Need this for Theme & Reset
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
-import { THEMES } from '@/components/GameContext'; // Import your themes
+import { THEMES } from '@/context/GameContext'; // Import your themes
 import { cn } from '@/lib/utils';
 
 // --- SUB-COMPONENTS ---
