@@ -220,7 +220,7 @@ return (
       </Helmet>
       
       {/* BACKGROUND LAYER */}
-      <ScreenBackground image={workshopBg} opacity={0.4} />
+      <ScreenBackground image={weapDepot} opacity={0.4} />
 
       {/* MAIN CONTENT */}
       <div className="min-h-screen bg-transparent p-4 pb-12 font-mono text-[#e0e0e0] selection:bg-[var(--accent-color)] selection:text-black overflow-y-auto relative z-10">
