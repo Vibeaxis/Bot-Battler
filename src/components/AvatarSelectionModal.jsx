@@ -4,7 +4,7 @@ import {
   X, Save, User, UserCog, Bot, Zap, Skull, Crown, 
   Crosshair, Shield, Sword, Ghost, Terminal, Cpu, 
   Code, Eye, VenetianMask, Hexagon, ScanFace, 
-  Fingerprint, Radio, Radar, Bug, Dna
+  Fingerprint, Radio, Radar, Bug, Dna, Sparkles
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -52,6 +52,10 @@ const AvatarSelectionModal = ({ isOpen, onClose, currentName, currentIcon, onSav
       onClose();
     }
   };
+
+  // Helper to generate the DiceBear URL
+  const getDiceBearUrl = (seed) => 
+    `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(seed || 'placeholder')}`;
 
   return (
     <AnimatePresence>
@@ -110,10 +114,41 @@ const AvatarSelectionModal = ({ isOpen, onClose, currentName, currentIcon, onSav
 
               {/* Icon Grid */}
               <div className="space-y-2">
-                <label className="text-[10px] font-mono text-gray-500 uppercase tracking-wider">
-                  Avatar Selection
+                <label className="text-[10px] font-mono text-gray-500 uppercase tracking-wider flex justify-between">
+                  <span>Avatar Selection</span>
+                  {selectedIcon === 'DiceBear' && <span className="text-[var(--accent-color)] animate-pulse">NEURAL GENERATION ACTIVE</span>}
                 </label>
                 <div className="grid grid-cols-5 gap-2 max-h-[240px] overflow-y-auto pr-1 custom-scrollbar">
+                  
+                  {/* 1. NEURAL ID (Generative Slot) */}
+                  <button
+                    onClick={() => setSelectedIcon('DiceBear')}
+                    className={cn(
+                      "aspect-square flex flex-col items-center justify-center border transition-all duration-200 group relative overflow-hidden",
+                      selectedIcon === 'DiceBear'
+                        ? "bg-[var(--accent-color)]/10 border-[var(--accent-color)]" 
+                        : "bg-black border-gray-800 hover:border-purple-500"
+                    )}
+                    title="Generate unique avatar from name"
+                  >
+                     <img 
+                       src={getDiceBearUrl(name)} 
+                       alt="Generated" 
+                       className="w-8 h-8 object-contain z-10"
+                     />
+                     <span className="absolute bottom-1 text-[7px] font-mono uppercase font-bold text-gray-500 group-hover:text-purple-400">Neural</span>
+                     {/* Shiny background effect for the generator */}
+                     <div className="absolute inset-0 bg-gradient-to-tr from-purple-500/10 to-transparent opacity-50" />
+                     
+                     {selectedIcon === 'DiceBear' && (
+                        <motion.div 
+                            layoutId="selected-check"
+                            className="absolute top-1 right-1 w-1.5 h-1.5 bg-[var(--accent-color)] rounded-full z-20 shadow-[0_0_5px_var(--accent-color)]" 
+                        />
+                     )}
+                  </button>
+
+                  {/* 2. STANDARD ICONS */}
                   {AVATAR_ICONS.map(({ id, icon: Icon }) => {
                     const isSelected = selectedIcon === id;
                     return (
@@ -129,7 +164,6 @@ const AvatarSelectionModal = ({ isOpen, onClose, currentName, currentIcon, onSav
                       >
                         <Icon className="w-6 h-6" />
                         
-                        {/* Selected Corner Indicator */}
                         {isSelected && (
                             <motion.div 
                                 layoutId="selected-check"
