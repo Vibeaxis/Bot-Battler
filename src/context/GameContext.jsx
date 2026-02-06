@@ -342,13 +342,23 @@ const recordBattle = (result) => {
       };
     });
   };
-  
   const purchaseMysteryBox = () => {
     const tierRoll = Math.random();
-    let tier = PART_TIERS.TIER_1;
+    let tier = PART_TIERS.TIER_1; // Default to Common (55% chance)
     
-    if (tierRoll < 0.1) tier = PART_TIERS.TIER_3;
-    else if (tierRoll < 0.4) tier = PART_TIERS.TIER_2;
+    // Check against thresholds from rarest to most common
+    if (tierRoll < 0.05) {
+        // 5% Chance (0.00 to 0.05)
+        tier = PART_TIERS.TIER_4;
+    } 
+    else if (tierRoll < 0.15) {
+        // 10% Chance (0.05 to 0.15)
+        tier = PART_TIERS.TIER_3;
+    } 
+    else if (tierRoll < 0.45) {
+        // 30% Chance (0.15 to 0.45)
+        tier = PART_TIERS.TIER_2;
+    }
     
     const randomPart = getRandomPart(tier);
     return randomPart;
