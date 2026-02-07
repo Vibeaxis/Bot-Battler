@@ -7,69 +7,91 @@ import { cn } from '@/lib/utils';
 import { calculateBotStats } from '@/utils/statCalculator';
 import { useToast } from '@/components/ui/use-toast'; 
 
-// --- 1. ANIMATIONS (Subtler Version) ---
+// --- 1. ANIMATIONS (UPGRADED) ---
 const injectStyles = () => {
   if (typeof document === 'undefined') return;
   const styleId = 'bot-card-animations';
+  
+  // Clean up old styles if re-injecting to prevent duplicates
   const existing = document.getElementById(styleId);
   if (existing) existing.remove();
 
   const style = document.createElement('style');
   style.id = styleId;
   style.innerHTML = `
-    /* Movement */
-    @keyframes lunge-right { 0% { transform: translateX(0); } 50% { transform: translateX(30px); } 100% { transform: translateX(0); } }
-    @keyframes lunge-left { 0% { transform: translateX(0); } 50% { transform: translateX(-30px); } 100% { transform: translateX(0); } }
+    /* --- MOVEMENT --- */
+    @keyframes lunge-right { 0% { transform: translateX(0) scale(1); } 50% { transform: translateX(40px) scale(1.1); } 100% { transform: translateX(0) scale(1); } }
+    @keyframes lunge-left { 0% { transform: translateX(0) scale(1); } 50% { transform: translateX(-40px) scale(1.1); } 100% { transform: translateX(0) scale(1); } }
     
-    /* Subtle Red Pulse for Low HP (No massive ring) */
-    @keyframes death-pulse {
-      0% { border-color: #7f1d1d; box-shadow: 0 0 5px rgba(220, 38, 38, 0.2); }
-      50% { border-color: #ef4444; box-shadow: 0 0 15px rgba(220, 38, 38, 0.4); } 
-      100% { border-color: #7f1d1d; box-shadow: 0 0 5px rgba(220, 38, 38, 0.2); }
+    /* --- DAMAGE EFFECTS --- */
+    
+    /* 1. The "Red Ring of Death" Shockwave */
+    @keyframes death-shockwave {
+      0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+      70% { box-shadow: 0 0 0 20px rgba(239, 68, 68, 0); } 
+      100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
     }
 
-    /* Electrical Short */
+    /* 2. Electrical Short (Jerky motion + Yellow Flash) */
     @keyframes electrical-short {
-      0% { transform: translate(0, 0); border-color: #ef4444; }
-      20% { transform: translate(-2px, 2px); border-color: #facc15; }
-      40% { transform: translate(2px, -2px); border-color: #ef4444; }
-      60% { transform: translate(-2px, -2px); opacity: 0.9; }
-      80% { transform: translate(2px, 2px); border-color: #facc15; }
-      100% { transform: translate(0, 0); border-color: inherit; }
+      0% { transform: translate(0, 0) skew(0deg); border-color: #ef4444; }
+      20% { transform: translate(-2px, 2px) skew(-1deg); border-color: #facc15; box-shadow: 0 0 10px #facc15; } /* Yellow Flash */
+      40% { transform: translate(2px, -2px) skew(1deg); border-color: #ef4444; }
+      60% { transform: translate(-2px, -2px) skew(-1deg); opacity: 0.8; }
+      80% { transform: translate(2px, 2px) skew(1deg); border-color: #facc15; }
+      100% { transform: translate(0, 0) skew(0deg); border-color: inherit; }
     }
 
-    /* Static Noise Overlay */
+    /* 3. CRT Static Noise (Overlay) */
     @keyframes static-noise {
       0% { background-position: 0 0; }
       100% { background-position: 100% 100%; }
     }
 
-    /* White Hit Flash */
+    /* 4. White Flash (Impact) */
     @keyframes hit-flash {
-      0% { filter: brightness(2) contrast(1.2); background-color: rgba(255,255,255,0.1); }
+      0% { filter: brightness(3) contrast(2); background-color: white; }
+      50% { filter: brightness(2) contrast(1.5); }
       100% { filter: brightness(1) contrast(1); background-color: transparent; }
     }
 
-    .animate-attack-right { animation: lunge-right 0.2s ease-out !important; }
-    .animate-attack-left { animation: lunge-left 0.2s ease-out !important; }
+    /* --- CLASS UTILITIES --- */
+    .animate-attack-right { animation: lunge-right 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important; }
+    .animate-attack-left { animation: lunge-left 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important; }
     
-    /* Much subtler dying state */
+    /* Use this for when HP < 30% */
     .animate-dying { 
-      animation: death-pulse 2s infinite ease-in-out !important; 
+      animation: death-shockwave 1.5s infinite ease-out !important; 
+      border: 1px solid #ef4444 !important;
     }
     
-    .animate-short-circuit { animation: electrical-short 0.4s ease-in-out !important; }
-    .animate-hit { animation: hit-flash 0.15s ease-out !important; }
+    /* Use this for Critical Hits */
+    .animate-short-circuit { 
+      animation: electrical-short 0.4s ease-in-out !important; 
+    }
+    
+    /* Use this for Standard Hits */
+    .animate-hit { 
+      animation: hit-flash 0.15s ease-out !important; 
+    }
 
+    /* Optional: Add this class to a child div for "Sparks" */
     .spark-overlay {
-      position: absolute; inset: 0; opacity: 0.15; pointer-events: none;
-      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+      position: absolute;
+      inset: 0;
+      opacity: 0.1;
+      pointer-events: none;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
       animation: static-noise 0.2s infinite steps(4);
-      display: none;
+      display: none; /* Toggle this via JS */
+    }
+    .animate-short-circuit .spark-overlay {
+      display: block;
     }
   `;
   document.head.appendChild(style);
 };
+injectStyles();
 
 // --- 2. SKELETON (HUD Style) ---
 const SchematicSkeleton = ({ status = 'healthy' }) => {
@@ -235,36 +257,49 @@ const BotCard = ({ bot, currentHealth, maxHealth, slotLevels, isAttacking, side 
       });
   };
 
-  return (
+ return (
     <div className={cn(
-      "flex flex-col shrink-0 w-80 h-[480px] bg-[#030303] border shadow-[0_0_50px_-15px_rgba(0,0,0,0.9)] relative z-10 transition-all duration-300",
-      statusBorder,
-      // 1. FLASH ON HIT
+      "flex flex-col shrink-0 w-80 h-[480px] bg-[#030303] relative z-10 transition-all duration-300 overflow-hidden",
+      // BORDER LOGIC: 
+      // If Dead -> Solid Red Border
+      // If Critical -> Pulsing Red Border (The "Glow" you wanted)
+      // Default -> Standard Dark Border
+      isDead ? "border-2 border-red-900 shadow-[0_0_30px_rgba(220,38,38,0.2)]" : 
+      (systemStatus === 'critical' ? "border-2 border-red-500 animate-pulse shadow-[0_0_20px_rgba(239,68,68,0.4)]" : "border border-gray-800 shadow-[0_0_50px_-15px_rgba(0,0,0,0.9)]"),
+      
+      // HIT ANIMATION
       isHit ? "animate-hit" : "",
-      // 2. RED SHOCKWAVE WHEN CRITICAL (The "Dying" State)
+      
+      // SHOCKWAVE ANIMATION (Only when critical and alive)
       (systemStatus === 'critical' && !isDead) ? "animate-dying" : "",
       className
     )}>
       
-      {/* --- NEW: SPARK/GLITCH OVERLAY --- */}
-      {/* This uses the CSS we just injected to show static noise when damaged/critical */}
+      {/* 1. SPARK OVERLAY (Kept this, it works well) */}
       <div 
-        className="spark-overlay" 
+        className="spark-overlay z-50" 
         style={{ display: (systemStatus === 'critical' || isHit) ? 'block' : 'none' }} 
       />
 
-   
-
-      {/* Background Grid - Now extremely subtle (10% opacity) */}
-      <div className={cn(
-          "absolute inset-0 pointer-events-none transition-colors duration-500", 
-          (systemStatus === 'critical' || isDead) ? "bg-red-950/10" : "opacity-5" // Changed /40 to /10
-        )} 
-        style={{ backgroundImage: 'radial-gradient(#ffffff 1px, transparent 1px)', backgroundSize: '16px 16px' }} 
-      />
+      {/* 2. BACKGROUND (Replaced Grid with subtle Vignette + Scanlines) */}
+      <div className="absolute inset-0 pointer-events-none z-0">
+          {/* A. Dark Vignette to focus eyes on the center */}
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,rgba(0,0,0,0.8)_100%)]" />
+          
+          {/* B. Scanlines (Optional, adds texture without the "Math" look) */}
+          <div className="absolute inset-0 opacity-10" 
+               style={{ background: 'linear-gradient(to bottom, rgba(255,255,255,0.05) 50%, transparent 50%)', backgroundSize: '100% 4px' }} 
+          />
+          
+          {/* C. CRITICAL STATE RED WASH (Stronger now, per request) */}
+          <div className={cn(
+            "absolute inset-0 transition-opacity duration-300",
+            (systemStatus === 'critical' || isDead) ? "bg-red-900/30 opacity-100" : "opacity-0"
+          )} />
+      </div>
 
       {/* HEADER */}
-      <div className="flex flex-col relative bg-[#080808] border-b border-gray-800">
+      <div className="flex flex-col relative z-10 bg-[#080808] border-b border-gray-800">
         <div className="flex justify-between items-center px-3 py-1 bg-black/50 border-b border-gray-900 text-[9px] font-mono text-gray-600">
              <span>UNIT_ID: {bot.id ? bot.id.substring(0,6).toUpperCase() : 'UNK_ID'}</span>
              <span className={cn("flex items-center gap-1.5 transition-colors duration-300", isDead ? "text-red-600 font-black" : (systemStatus === 'critical' ? "text-red-500 font-bold" : ""))}>
@@ -298,9 +333,11 @@ const BotCard = ({ bot, currentHealth, maxHealth, slotLevels, isAttacking, side 
         </div>
       </div>
       
-      {/* SCHEMATIC */}
-      <div className="relative flex-1 px-4 py-6 flex flex-col justify-center">
+      {/* SCHEMATIC (The Centerpiece) */}
+      <div className="relative flex-1 px-4 py-6 flex flex-col justify-center z-10">
+        {/* We keep the Skeleton lines because they connect the parts visually */}
         <SchematicSkeleton status={systemStatus} />
+        
         <div className={cn("grid grid-cols-2 gap-y-6 gap-x-2 relative z-10", isDead && "opacity-50 grayscale")}>
             {slots.map(({ key, partId, gridClass }, index) => {
                 const part = partId ? getPartById(partId) : null;
@@ -317,7 +354,7 @@ const BotCard = ({ bot, currentHealth, maxHealth, slotLevels, isAttacking, side 
                     >
                         <HolographicFrame className="w-full h-16 cursor-pointer" isActive={shouldAnimateArm || (hoveredPart && hoveredPart.id === part?.id)}>
                             <Icon className={cn("w-9 h-9 transition-all duration-300 drop-shadow-[0_4px_4px_rgba(0,0,0,0.5)]", part ? colors.text : "text-gray-800 opacity-30", (hoveredPart && hoveredPart.id === part?.id) ? "scale-110 brightness-150" : "")} />
-                            <span className="absolute -top-3 text-[8px] font-mono text-gray-600 font-bold uppercase tracking-widest bg-[#030303] px-1">{key.replace('Arm', '')}</span>
+                            <span className="absolute -top-3 text-[8px] font-mono text-gray-600 font-bold uppercase tracking-widest bg-[#030303] px-1 border border-gray-900">{key.replace('Arm', '')}</span>
                             {part && (<RarityBadge tier={tier} className="scale-[0.6] origin-center absolute -bottom-2 border border-black/50 bg-black" />)}
                         </HolographicFrame>
                     </div>
@@ -327,7 +364,7 @@ const BotCard = ({ bot, currentHealth, maxHealth, slotLevels, isAttacking, side 
       </div>
       
       {/* FOOTER */}
-      <div className="bg-[#050505] border-t border-gray-800">
+      <div className="bg-[#050505] border-t border-gray-800 relative z-10">
          <div className={cn("grid grid-cols-4 divide-x divide-gray-900/50", isDead && "opacity-50")}>
              <StatBox label="DMG" value={stats.Damage} icon={IconMap.Zap} colorClass="text-red-500" />
              <StatBox label="SPD" value={stats.Speed} icon={IconMap.Activity} colorClass="text-cyan-400" />
