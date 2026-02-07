@@ -264,20 +264,30 @@ const originalParts = [
   ...CHASSIS_PARTS.map(p => ({ ...p, slot: PART_SLOTS.CHASSIS }))
 ];
 
-// Combine with expansion parts (Ensure parts_expansion.js exists, or remove this import if not)
-export const parts = [...originalParts, ...expansionParts];
+// --- 1. COMBINE ALL ARRAYS INTO ONE MASTER LIST ---
+// This is what the Shop needs to generate "Daily Deals"
+export const ALL_PARTS = [
+  ...HEAD_PARTS, 
+  ...RIGHT_ARM_PARTS, 
+  ...LEFT_ARM_PARTS, 
+  ...CHASSIS_PARTS,
+  ...expansionParts // Ensure this array is defined or imported above!
+];
 
-export const getPartById = (id) => parts.find(part => part.id === id);
+// --- 2. HELPER FUNCTIONS ---
 
-export const getPartsBySlot = (slot) => parts.filter(part => part.slot === slot);
+export const getPartById = (id) => ALL_PARTS.find(part => part.id === id);
 
-export const getPartsByTier = (tier) => parts.filter(part => part.tier === tier);
+export const getPartsBySlot = (slot) => ALL_PARTS.filter(part => part.slot === slot);
 
-// --- REFACTORED: Now uses TIER_WEIGHTS properly ---
+export const getPartsByTier = (tier) => ALL_PARTS.filter(part => part.tier === tier);
+
+// --- 3. LOOT ROLLING LOGIC ---
 export const getRandomPart = (forcedTier = null) => {
   let tier = forcedTier;
 
   // If no tier forced, calculate based on Global Drop Weights
+  // (Ensure TIER_WEIGHTS is imported or defined in your constants)
   if (!tier) {
     const roll = Math.random(); // 0.0 to 1.0
     let cumulativeWeight = 0;
@@ -285,26 +295,27 @@ export const getRandomPart = (forcedTier = null) => {
     // Default to Tier 1 if math fails
     tier = 1; 
 
-    // Loop through our imported weights
+    // Determine tier based on weights
     // Example: Tier 1 (0.45) -> 0 to 0.45
     //          Tier 2 (0.30) -> 0.45 to 0.75
+    //          Tier 3 (0.15) -> 0.75 to 0.90, etc.
     for (const [t, weight] of Object.entries(TIER_WEIGHTS)) {
       cumulativeWeight += weight;
       if (roll < cumulativeWeight) {
-        tier = parseInt(t); // Convert string key "1" to number 1
+        tier = parseInt(t); 
         break;
       }
     }
   }
 
-  // Get parts for that tier
+  // Get parts for that tier from the master list
   const availableParts = getPartsByTier(tier);
   
-  // Safety Fallback: If we rolled a tier that has no parts (e.g., Mythic/Tier 7),
+  // Safety Fallback: If we rolled a tier that has no parts (e.g., rolled Mythic but none exist yet),
   // drop down one tier recursively until we find something.
   if (availableParts.length === 0) {
     if (tier > 1) return getRandomPart(tier - 1);
-    return parts[0]; // Ultimate fallback (Rusty Box/Head)
+    return ALL_PARTS[0]; // Ultimate fallback (Rusty Box/Head) to prevent crashes
   }
 
   return availableParts[Math.floor(Math.random() * availableParts.length)];
