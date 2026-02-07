@@ -267,48 +267,6 @@ const originalParts = [
 // Combine with expansion parts (Ensure parts_expansion.js exists, or remove this import if not)
 export const parts = [...originalParts, ...expansionParts];
 
-export const getPartById = (id) => parts.find(part => part.id === id);
-
-export const getPartsBySlot = (slot) => parts.filter(part => part.slot === slot);
-
-export const getPartsByTier = (tier) => parts.filter(part => part.tier === tier);
-
-// --- REFACTORED: Now uses TIER_WEIGHTS properly ---
-export const getRandomPart = (forcedTier = null) => {
-  let tier = forcedTier;
-
-  // If no tier forced, calculate based on Global Drop Weights
-  if (!tier) {
-    const roll = Math.random(); // 0.0 to 1.0
-    let cumulativeWeight = 0;
-    
-    // Default to Tier 1 if math fails
-    tier = 1; 
-
-    // Loop through our imported weights
-    // Example: Tier 1 (0.45) -> 0 to 0.45
-    //          Tier 2 (0.30) -> 0.45 to 0.75
-    for (const [t, weight] of Object.entries(TIER_WEIGHTS)) {
-      cumulativeWeight += weight;
-      if (roll < cumulativeWeight) {
-        tier = parseInt(t); // Convert string key "1" to number 1
-        break;
-      }
-    }
-  }
-
-  // Get parts for that tier
-  const availableParts = getPartsByTier(tier);
-  
-  // Safety Fallback: If we rolled a tier that has no parts (e.g., Mythic/Tier 7),
-  // drop down one tier recursively until we find something.
-  if (availableParts.length === 0) {
-    if (tier > 1) return getRandomPart(tier - 1);
-    return parts[0]; // Ultimate fallback (Rusty Box/Head)
-  }
-
-  return availableParts[Math.floor(Math.random() * availableParts.length)];
-};
 // --- 1. COMBINE ALL ARRAYS INTO ONE MASTER LIST ---
 // This is what the Shop needs to generate "Daily Deals"
 export const ALL_PARTS = [
