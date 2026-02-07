@@ -7,7 +7,7 @@ import { useSoundContext } from '@/context/SoundContext';
 import { Button } from '@/components/ui/button';
 import { 
   ArrowLeft, Package, Coins, Palette, Trash2, Box, 
-  ShieldCheck, X, Zap, Activity
+  ShieldCheck, X, Zap, Activity, RefreshCw
 } from 'lucide-react';
 import { MYSTERY_CRATE_COST, RARITY_COLORS } from '@/constants/gameConstants';
 import { getPartById, ALL_PARTS } from '@/data/parts';
