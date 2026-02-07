@@ -267,15 +267,9 @@ const originalParts = [
 // Combine with expansion parts (Ensure parts_expansion.js exists, or remove this import if not)
 export const parts = [...originalParts, ...expansionParts];
 
-// --- 1. COMBINE ALL ARRAYS INTO ONE MASTER LIST ---
-// This is what the Shop needs to generate "Daily Deals"
-export const ALL_PARTS = [
-  ...HEAD_PARTS, 
-  ...RIGHT_ARM_PARTS, 
-  ...LEFT_ARM_PARTS, 
-  ...CHASSIS_PARTS,
-  ...expansionParts // Ensure this array is defined or imported above!
-];
+// --- FIX: USE THE 'parts' ARRAY THAT HAS SLOTS DEFINED ---
+// The raw arrays (HEAD_PARTS etc) don't have the 'slot' property added yet!
+export const ALL_PARTS = parts;
 
 // --- 2. HELPER FUNCTIONS ---
 
