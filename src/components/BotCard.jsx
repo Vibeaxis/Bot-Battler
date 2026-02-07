@@ -253,7 +253,7 @@ const BotCard = ({ bot, currentHealth, maxHealth, slotLevels, isAttacking, side 
         style={{ display: (systemStatus === 'critical' || isHit) ? 'block' : 'none' }} 
       />
 
-     // ... inside BotCard return ...
+   
 
       {/* Background Grid - Now extremely subtle (10% opacity) */}
       <div className={cn(
