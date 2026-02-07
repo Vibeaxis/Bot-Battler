@@ -244,8 +244,8 @@ const Hub = () => {
                 >
                     <Globe className="w-10 h-10 text-cyan-900 group-hover:text-cyan-500 transition-colors" />
                     <div className="text-center space-y-1">
-                        <span className="block text-2xl font-black italic text-white tracking-tighter group-hover:scale-105 transition-transform">ARENA LEAGUE</span>
-                        <span className="text-xs text-cyan-900 font-mono group-hover:text-cyan-400 uppercase tracking-widest">Async PVP • Ranked</span>
+                        <span className="block text-2xl font-black italic text-white tracking-tighter group-hover:scale-105 transition-transform">SYNDICATE WARS</span>
+                        <span className="text-xs text-cyan-900 font-mono group-hover:text-cyan-400 uppercase tracking-widest">RANKED PVP • Reputation</span>
                     </div>
                 </Button>
             </div>
@@ -254,8 +254,8 @@ const Hub = () => {
             <div className="grid md:grid-cols-3 gap-6">
                 {[
                     { title: 'Workshop', desc: 'Config & Loadout', icon: Wrench, path: '/workshop' },
-                    { title: 'The Forge', desc: 'Part Fusion', icon: Hammer, path: '/forge' },
-                    { title: 'Supply Depot', desc: 'Acquisition', icon: ShoppingCart, path: '/shop' }
+                    { title: 'The Forge', desc: 'Illegal Part Fusion', icon: Hammer, path: '/forge' },
+                    { title: 'Supply Depot', desc: 'Contraband Parts', icon: ShoppingCart, path: '/shop' }
                 ].map((item) => {
                     const Icon = item.icon;
                     return (
