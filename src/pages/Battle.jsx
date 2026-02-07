@@ -16,7 +16,7 @@ import ProtocolSelector from '@/components/ProtocolSelector';
 import BattleSpeedToggle from '@/components/BattleSpeedToggle';
 import { toast } from '@/components/ui/use-toast';
 import SpeechToast from '@/components/SpeechToast';
-import { getRandomFlavor } from '@/data/flavor';
+import { getSmartFlavor } from '@/data/flavor';
 import CombatTextOverlay from '@/components/CombatTextOverlay';
 import { ScreenFlash, ImpactParticles } from '@/components/CombatEffects';
 import { calculateBotStats } from '@/utils/statCalculator';
@@ -214,15 +214,18 @@ const Battle = () => {
 
   }, [location.state, gameState.playerBot, gameState.slotLevels]);
 
-  // Trigger Intro Toasts when enemy is set
+// Trigger Intro Toasts when enemy is set
   useEffect(() => {
     if (enemy && !isBattling && !battleResult) {
-      const t1 = setTimeout(() => setLeftToast(getRandomFlavor('INTRO')), 500);
-      const t2 = setTimeout(() => setRightToast(getRandomFlavor('INTRO')), 1200);
+      // Player speaks first (Left Toast) -> Uses Player Stats
+      const t1 = setTimeout(() => setLeftToast(getSmartFlavor(gameState.playerBot, enemy, 'INTRO')), 500);
+      
+      // Enemy speaks second (Right Toast) -> Uses Enemy Stats
+      const t2 = setTimeout(() => setRightToast(getSmartFlavor(enemy, gameState.playerBot, 'INTRO')), 1200);
+      
       timersRef.current.push(t1, t2);
     }
   }, [enemy]);
-
   // Cleanup timers
   useEffect(() => {
     return () => {
@@ -374,7 +377,7 @@ const Battle = () => {
                     setEnemyFloatingText({ id: i, content: missText, type: isDodge ? 'dodge' : 'miss' });
                     addToLog(`${gameState.playerBot.name} misses.`);
                 }
-                if (isCrit) setRightToast(getRandomFlavor('HIT'));
+              if (isCrit) setRightToast(getSmartFlavor(enemy, gameState.playerBot, 'HIT'));
 
             } else if (isEnemyAction) {
                 setEnemyAttacking(true);
@@ -388,7 +391,7 @@ const Battle = () => {
                     setPlayerFloatingText({ id: i, content: missText, type: isDodge ? 'dodge' : 'miss' });
                     addToLog(`${enemy.name} misses.`);
                 }
-                if (isCrit) setLeftToast(getRandomFlavor('HIT'));
+            if (isCrit) setLeftToast(getSmartFlavor(gameState.playerBot, enemy, 'HIT'));
             }
 
    // --- UPDATED SOUND LOGIC ---
@@ -462,8 +465,9 @@ const Battle = () => {
         playSound('VICTORY');
         setFlashType('VICTORY');
         setTimeout(() => setFlashType(null), 800); 
-        setLeftToast(getRandomFlavor('VICTORY'));
-        setRightToast(getRandomFlavor('DEFEAT'));
+      // Player gloats (VICTORY)
+        setLeftToast(getSmartFlavor(gameState.playerBot, enemy, 'VICTORY'));
+       setRightToast(getSmartFlavor(enemy, gameState.playerBot, 'DEFEAT'));
         
         // --- GAUNTLET VICTORY LOGIC ---
         if (isGauntlet) {
@@ -478,8 +482,8 @@ const Battle = () => {
         playSound('DEFEAT');
         setFlashType('DEFEAT');
         setTimeout(() => setFlashType(null), 800); 
-        setLeftToast(getRandomFlavor('DEFEAT'));
-        setRightToast(getRandomFlavor('VICTORY'));
+setLeftToast(getSmartFlavor(gameState.playerBot, enemy, 'DEFEAT'));
+setRightToast(getSmartFlavor(enemy, gameState.playerBot, 'VICTORY'));
         
         toast({ 
             title: "💀 SYSTEM FAILURE", 
