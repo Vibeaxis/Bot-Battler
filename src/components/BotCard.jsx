@@ -7,37 +7,87 @@ import { cn } from '@/lib/utils';
 import { calculateBotStats } from '@/utils/statCalculator';
 import { useToast } from '@/components/ui/use-toast'; 
 
-// --- 1. ANIMATIONS ---
+// --- 1. ANIMATIONS (UPGRADED) ---
 const injectStyles = () => {
   if (typeof document === 'undefined') return;
   const styleId = 'bot-card-animations';
-  if (document.getElementById(styleId)) return;
+  
+  // Clean up old styles if re-injecting to prevent duplicates
+  const existing = document.getElementById(styleId);
+  if (existing) existing.remove();
+
   const style = document.createElement('style');
   style.id = styleId;
   style.innerHTML = `
-    @keyframes lunge-right { 0% { transform: translateX(0); } 20% { transform: translateX(-10px); } 40% { transform: translateX(30px); } 100% { transform: translateX(0); } }
-    @keyframes lunge-left { 0% { transform: translateX(0); } 20% { transform: translateX(10px); } 40% { transform: translateX(-30px); } 100% { transform: translateX(0); } }
+    /* --- MOVEMENT --- */
+    @keyframes lunge-right { 0% { transform: translateX(0) scale(1); } 50% { transform: translateX(40px) scale(1.1); } 100% { transform: translateX(0) scale(1); } }
+    @keyframes lunge-left { 0% { transform: translateX(0) scale(1); } 50% { transform: translateX(-40px) scale(1.1); } 100% { transform: translateX(0) scale(1); } }
     
-    @keyframes glitch-pulse {
-      0% { opacity: 1; } 20% { opacity: 0.8; } 40% { opacity: 0.9; } 60% { opacity: 0.2; } 80% { opacity: 1; } 100% { opacity: 1; }
-    }
+    /* --- DAMAGE EFFECTS --- */
     
-    /* Random Yellow Flicker for Damaged State */
-    @keyframes power-flicker {
-      0% { opacity: 1; } 95% { opacity: 1; } 96% { opacity: 0.6; } 97% { opacity: 1; } 98% { opacity: 0.4; } 100% { opacity: 1; }
+    /* 1. The "Red Ring of Death" Shockwave */
+    @keyframes death-shockwave {
+      0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+      70% { box-shadow: 0 0 0 20px rgba(239, 68, 68, 0); } 
+      100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
     }
 
-    /* White Flash on Hit */
+    /* 2. Electrical Short (Jerky motion + Yellow Flash) */
+    @keyframes electrical-short {
+      0% { transform: translate(0, 0) skew(0deg); border-color: #ef4444; }
+      20% { transform: translate(-2px, 2px) skew(-1deg); border-color: #facc15; box-shadow: 0 0 10px #facc15; } /* Yellow Flash */
+      40% { transform: translate(2px, -2px) skew(1deg); border-color: #ef4444; }
+      60% { transform: translate(-2px, -2px) skew(-1deg); opacity: 0.8; }
+      80% { transform: translate(2px, 2px) skew(1deg); border-color: #facc15; }
+      100% { transform: translate(0, 0) skew(0deg); border-color: inherit; }
+    }
+
+    /* 3. CRT Static Noise (Overlay) */
+    @keyframes static-noise {
+      0% { background-position: 0 0; }
+      100% { background-position: 100% 100%; }
+    }
+
+    /* 4. White Flash (Impact) */
     @keyframes hit-flash {
-      0% { background-color: rgba(255, 255, 255, 0.3); border-color: white; }
-      100% { background-color: transparent; border-color: inherit; }
+      0% { filter: brightness(3) contrast(2); background-color: white; }
+      50% { filter: brightness(2) contrast(1.5); }
+      100% { filter: brightness(1) contrast(1); background-color: transparent; }
     }
 
-    .animate-attack-right { animation: lunge-right 0.3s ease-out !important; }
-    .animate-attack-left { animation: lunge-left 0.3s ease-out !important; }
-    .animate-glitch { animation: glitch-pulse 0.3s infinite steps(3, end) !important; }
-    .animate-flicker { animation: power-flicker 3s infinite linear !important; }
-    .animate-hit { animation: hit-flash 0.15s ease-out !important; }
+    /* --- CLASS UTILITIES --- */
+    .animate-attack-right { animation: lunge-right 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important; }
+    .animate-attack-left { animation: lunge-left 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important; }
+    
+    /* Use this for when HP < 30% */
+    .animate-dying { 
+      animation: death-shockwave 1.5s infinite ease-out !important; 
+      border: 1px solid #ef4444 !important;
+    }
+    
+    /* Use this for Critical Hits */
+    .animate-short-circuit { 
+      animation: electrical-short 0.4s ease-in-out !important; 
+    }
+    
+    /* Use this for Standard Hits */
+    .animate-hit { 
+      animation: hit-flash 0.15s ease-out !important; 
+    }
+
+    /* Optional: Add this class to a child div for "Sparks" */
+    .spark-overlay {
+      position: absolute;
+      inset: 0;
+      opacity: 0.1;
+      pointer-events: none;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+      animation: static-noise 0.2s infinite steps(4);
+      display: none; /* Toggle this via JS */
+    }
+    .animate-short-circuit .spark-overlay {
+      display: block;
+    }
   `;
   document.head.appendChild(style);
 };
@@ -211,20 +261,34 @@ const BotCard = ({ bot, currentHealth, maxHealth, slotLevels, isAttacking, side 
     <div className={cn(
       "flex flex-col shrink-0 w-80 h-[480px] bg-[#030303] border shadow-[0_0_50px_-15px_rgba(0,0,0,0.9)] relative z-10 transition-all duration-300",
       statusBorder,
+      // 1. FLASH ON HIT
       isHit ? "animate-hit" : "",
+      // 2. RED SHOCKWAVE WHEN CRITICAL (The "Dying" State)
+      (systemStatus === 'critical' && !isDead) ? "animate-dying" : "",
       className
     )}>
       
-      {/* Background Grid - Tinted Red if Critical/Dead */}
-      <div className={cn("absolute inset-0 pointer-events-none transition-colors duration-500", (systemStatus === 'critical' || isDead) ? "bg-red-950/30" : "opacity-5")} 
-           style={{ backgroundImage: 'radial-gradient(#ffffff 1px, transparent 1px)', backgroundSize: '16px 16px' }} />
+      {/* --- NEW: SPARK/GLITCH OVERLAY --- */}
+      {/* This uses the CSS we just injected to show static noise when damaged/critical */}
+      <div 
+        className="spark-overlay" 
+        style={{ display: (systemStatus === 'critical' || isHit) ? 'block' : 'none' }} 
+      />
+
+      {/* Background Grid - Pulses Red if Critical/Dead */}
+      <div className={cn(
+          "absolute inset-0 pointer-events-none transition-colors duration-500", 
+          (systemStatus === 'critical' || isDead) ? "bg-red-950/40 animate-pulse" : "opacity-5"
+        )} 
+        style={{ backgroundImage: 'radial-gradient(#ffffff 1px, transparent 1px)', backgroundSize: '16px 16px' }} 
+      />
 
       {/* HEADER */}
       <div className="flex flex-col relative bg-[#080808] border-b border-gray-800">
         <div className="flex justify-between items-center px-3 py-1 bg-black/50 border-b border-gray-900 text-[9px] font-mono text-gray-600">
              <span>UNIT_ID: {bot.id ? bot.id.substring(0,6).toUpperCase() : 'UNK_ID'}</span>
              <span className={cn("flex items-center gap-1.5 transition-colors duration-300", isDead ? "text-red-600 font-black" : (systemStatus === 'critical' ? "text-red-500 font-bold" : ""))}>
-                <span className={`w-1.5 h-1.5 rounded-full ${statusColor}`} /> 
+                <span className={`w-1.5 h-1.5 rounded-full ${statusColor} ${systemStatus === 'critical' ? 'animate-ping' : ''}`} /> 
                 {statusText}
              </span>
         </div>
