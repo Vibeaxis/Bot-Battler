@@ -7,91 +7,69 @@ import { cn } from '@/lib/utils';
 import { calculateBotStats } from '@/utils/statCalculator';
 import { useToast } from '@/components/ui/use-toast'; 
 
-// --- 1. ANIMATIONS (UPGRADED) ---
+// --- 1. ANIMATIONS (Subtler Version) ---
 const injectStyles = () => {
   if (typeof document === 'undefined') return;
   const styleId = 'bot-card-animations';
-  
-  // Clean up old styles if re-injecting to prevent duplicates
   const existing = document.getElementById(styleId);
   if (existing) existing.remove();
 
   const style = document.createElement('style');
   style.id = styleId;
   style.innerHTML = `
-    /* --- MOVEMENT --- */
-    @keyframes lunge-right { 0% { transform: translateX(0) scale(1); } 50% { transform: translateX(40px) scale(1.1); } 100% { transform: translateX(0) scale(1); } }
-    @keyframes lunge-left { 0% { transform: translateX(0) scale(1); } 50% { transform: translateX(-40px) scale(1.1); } 100% { transform: translateX(0) scale(1); } }
+    /* Movement */
+    @keyframes lunge-right { 0% { transform: translateX(0); } 50% { transform: translateX(30px); } 100% { transform: translateX(0); } }
+    @keyframes lunge-left { 0% { transform: translateX(0); } 50% { transform: translateX(-30px); } 100% { transform: translateX(0); } }
     
-    /* --- DAMAGE EFFECTS --- */
-    
-    /* 1. The "Red Ring of Death" Shockwave */
-    @keyframes death-shockwave {
-      0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
-      70% { box-shadow: 0 0 0 20px rgba(239, 68, 68, 0); } 
-      100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+    /* Subtle Red Pulse for Low HP (No massive ring) */
+    @keyframes death-pulse {
+      0% { border-color: #7f1d1d; box-shadow: 0 0 5px rgba(220, 38, 38, 0.2); }
+      50% { border-color: #ef4444; box-shadow: 0 0 15px rgba(220, 38, 38, 0.4); } 
+      100% { border-color: #7f1d1d; box-shadow: 0 0 5px rgba(220, 38, 38, 0.2); }
     }
 
-    /* 2. Electrical Short (Jerky motion + Yellow Flash) */
+    /* Electrical Short */
     @keyframes electrical-short {
-      0% { transform: translate(0, 0) skew(0deg); border-color: #ef4444; }
-      20% { transform: translate(-2px, 2px) skew(-1deg); border-color: #facc15; box-shadow: 0 0 10px #facc15; } /* Yellow Flash */
-      40% { transform: translate(2px, -2px) skew(1deg); border-color: #ef4444; }
-      60% { transform: translate(-2px, -2px) skew(-1deg); opacity: 0.8; }
-      80% { transform: translate(2px, 2px) skew(1deg); border-color: #facc15; }
-      100% { transform: translate(0, 0) skew(0deg); border-color: inherit; }
+      0% { transform: translate(0, 0); border-color: #ef4444; }
+      20% { transform: translate(-2px, 2px); border-color: #facc15; }
+      40% { transform: translate(2px, -2px); border-color: #ef4444; }
+      60% { transform: translate(-2px, -2px); opacity: 0.9; }
+      80% { transform: translate(2px, 2px); border-color: #facc15; }
+      100% { transform: translate(0, 0); border-color: inherit; }
     }
 
-    /* 3. CRT Static Noise (Overlay) */
+    /* Static Noise Overlay */
     @keyframes static-noise {
       0% { background-position: 0 0; }
       100% { background-position: 100% 100%; }
     }
 
-    /* 4. White Flash (Impact) */
+    /* White Hit Flash */
     @keyframes hit-flash {
-      0% { filter: brightness(3) contrast(2); background-color: white; }
-      50% { filter: brightness(2) contrast(1.5); }
+      0% { filter: brightness(2) contrast(1.2); background-color: rgba(255,255,255,0.1); }
       100% { filter: brightness(1) contrast(1); background-color: transparent; }
     }
 
-    /* --- CLASS UTILITIES --- */
-    .animate-attack-right { animation: lunge-right 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important; }
-    .animate-attack-left { animation: lunge-left 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important; }
+    .animate-attack-right { animation: lunge-right 0.2s ease-out !important; }
+    .animate-attack-left { animation: lunge-left 0.2s ease-out !important; }
     
-    /* Use this for when HP < 30% */
+    /* Much subtler dying state */
     .animate-dying { 
-      animation: death-shockwave 1.5s infinite ease-out !important; 
-      border: 1px solid #ef4444 !important;
+      animation: death-pulse 2s infinite ease-in-out !important; 
     }
     
-    /* Use this for Critical Hits */
-    .animate-short-circuit { 
-      animation: electrical-short 0.4s ease-in-out !important; 
-    }
-    
-    /* Use this for Standard Hits */
-    .animate-hit { 
-      animation: hit-flash 0.15s ease-out !important; 
-    }
+    .animate-short-circuit { animation: electrical-short 0.4s ease-in-out !important; }
+    .animate-hit { animation: hit-flash 0.15s ease-out !important; }
 
-    /* Optional: Add this class to a child div for "Sparks" */
     .spark-overlay {
-      position: absolute;
-      inset: 0;
-      opacity: 0.1;
-      pointer-events: none;
-      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+      position: absolute; inset: 0; opacity: 0.15; pointer-events: none;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
       animation: static-noise 0.2s infinite steps(4);
-      display: none; /* Toggle this via JS */
-    }
-    .animate-short-circuit .spark-overlay {
-      display: block;
+      display: none;
     }
   `;
   document.head.appendChild(style);
 };
-injectStyles();
 
 // --- 2. SKELETON (HUD Style) ---
 const SchematicSkeleton = ({ status = 'healthy' }) => {
@@ -275,10 +253,12 @@ const BotCard = ({ bot, currentHealth, maxHealth, slotLevels, isAttacking, side 
         style={{ display: (systemStatus === 'critical' || isHit) ? 'block' : 'none' }} 
       />
 
-      {/* Background Grid - Pulses Red if Critical/Dead */}
+     // ... inside BotCard return ...
+
+      {/* Background Grid - Now extremely subtle (10% opacity) */}
       <div className={cn(
           "absolute inset-0 pointer-events-none transition-colors duration-500", 
-          (systemStatus === 'critical' || isDead) ? "bg-red-950/40 animate-pulse" : "opacity-5"
+          (systemStatus === 'critical' || isDead) ? "bg-red-950/10" : "opacity-5" // Changed /40 to /10
         )} 
         style={{ backgroundImage: 'radial-gradient(#ffffff 1px, transparent 1px)', backgroundSize: '16px 16px' }} 
       />
