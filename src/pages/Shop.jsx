@@ -1,13 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Helmet } from 'react-helmet';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useGameContext, THEMES } from '@/context/GameContext';
 import { useSoundContext } from '@/context/SoundContext';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Package, Coins, Palette, Check, Trash2, Box, ShieldCheck } from 'lucide-react';
+import { 
+  ArrowLeft, Package, Coins, Palette, Check, Trash2, Box, 
+  ShieldCheck, Skull, AlertTriangle, RefreshCw 
+} from 'lucide-react';
 import { MYSTERY_CRATE_COST, RARITY_COLORS } from '@/constants/gameConstants';
-import { getPartById } from '@/data/parts';
+import { getPartById, ALL_PARTS } from '@/data/parts'; // Import ALL_PARTS to generate daily stock
 import * as LucideIcons from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
 import RarityBadge from '@/components/RarityBadge';
@@ -15,25 +18,72 @@ import { cn } from '@/lib/utils';
 import ScreenBackground from '@/components/ScreenBackground';
 import shopBg from '@/assets/facto_bg.jpg'; 
 
-// Create a safe map of icons to avoid computed namespace access issues
 const IconMap = { ...LucideIcons };
 
+// --- THE FENCE CONFIG ---
 const THEME_PRICE = 500;
 const CATEGORIES = ['ALL', 'Head', 'RightArm', 'LeftArm', 'Chassis'];
+const VENDOR_QUOTES = [
+    "Don't ask where I got this.",
+    "Cleaned the blood off myself.",
+    "No refunds. No witnesses.",
+    "This fell off a transport ship.",
+    "You got the scrap? I got the goods.",
+    "Quickly. I don't have all day.",
+    "Top shelf. Illegal in 12 sectors."
+];
 
 const Shop = () => {
   const navigate = useNavigate();
   const { gameState, updateScrap, addToInventory, purchaseMysteryBox, unlockTheme, getSellValue, sellItem, sellAllCommonItems } = useGameContext();
   const { playSound } = useSoundContext();
+  
   const [activeCategory, setActiveCategory] = useState('ALL');
+  const [vendorQuote, setVendorQuote] = useState(VENDOR_QUOTES[0]);
 
-  const handlePurchase = () => {
-    if (gameState.scrap < MYSTERY_CRATE_COST) {
+  // --- DAILY STOCK GENERATOR (Client-Side Mock) ---
+  // In a real app, this would come from the server based on the date.
+  // Here we just pick 3 random items every time you mount the component (or could seed by date).
+  const dailyStock = useMemo(() => {
+      // Filter out Mythics/Omegas for daily shop (keep them rare)
+      const validStock = ALL_PARTS.filter(p => p.tier >= 2 && p.tier <= 4); 
+      const stock = [];
+      for(let i=0; i<3; i++) {
+          const randomPart = validStock[Math.floor(Math.random() * validStock.length)];
+          // Add a random price variance (Black Market pricing)
+          const markup = Math.floor(Math.random() * 20) + 10; 
+          stock.push({ ...randomPart, price: getSellValue(randomPart.tier) * 4 + markup });
+      }
+      return stock;
+  }, []); // Empty dependency array = generates once per visit
+
+  const handlePurchaseStock = (part) => {
+      if (gameState.scrap < part.price) {
+          playVendorSound('DENY');
+          return;
+      }
+      updateScrap(-part.price);
+      addToInventory(part.id);
+      playSound('BUY');
+      setVendorQuote("Pleasure doing business.");
       toast({
-        title: "Insufficient Scrap",
-        description: `You need ${MYSTERY_CRATE_COST} scrap to purchase a Mystery Crate`,
-        variant: "destructive"
+          title: "Black Market Deal 🤝",
+          description: `Acquired ${part.name}`,
+          className: cn("text-white border", RARITY_COLORS[part.tier].bg, RARITY_COLORS[part.tier].border)
       });
+  };
+
+  const playVendorSound = (type) => {
+      // Placeholder for voice lines later
+      if(type === 'DENY') {
+          playSound('ERROR');
+          setVendorQuote("You're short on scrap, kid.");
+      }
+  };
+
+  const handleCratePurchase = () => {
+    if (gameState.scrap < MYSTERY_CRATE_COST) {
+      playVendorSound('DENY');
       return;
     }
     
@@ -41,10 +91,11 @@ const Shop = () => {
     updateScrap(-MYSTERY_CRATE_COST);
     addToInventory(newPart.id);
     playSound('BUY');
+    setVendorQuote("Let's see what we fished out...");
     
     toast({
-      title: "Mystery Crate Opened! 🎁",
-      description: `Acquired ${newPart.name} (${newPart.rarity})!`,
+      title: "Smuggler's Cache Opened 📦",
+      description: `Found: ${newPart.name} (${newPart.rarity})`,
       className: cn("text-white border", RARITY_COLORS[newPart.tier].bg, RARITY_COLORS[newPart.tier].border)
     });
   };
@@ -53,20 +104,17 @@ const Shop = () => {
     if (gameState.unlockedThemes.includes(themeName)) return;
 
     if (gameState.scrap < THEME_PRICE) {
-      toast({
-        title: "Insufficient Scrap",
-        description: `You need ${THEME_PRICE} scrap to unlock this theme.`,
-        variant: "destructive"
-      });
+      playVendorSound('DENY');
       return;
     }
 
     updateScrap(-THEME_PRICE);
     unlockTheme(themeName);
     playSound('BUY');
+    setVendorQuote("Flashy. I like it.");
     toast({
-      title: "Theme Unlocked! 🎨",
-      description: `You can now apply the ${themeName} theme in the Workshop.`,
+      title: "OS Theme Cracked 🔓",
+      description: `Installed ${themeName} protocol.`,
       className: "bg-[var(--accent-color)] text-black border border-white font-bold"
     });
   };
@@ -75,10 +123,11 @@ const Shop = () => {
     const value = sellItem(itemId);
     if (value) {
       playSound('EQUIP'); 
+      setVendorQuote("I can strip this for parts.");
       toast({
-        title: "Item Sold",
+        title: "Liquidated",
         description: `Sold ${itemName} for ${value} Scrap`,
-        className: "bg-green-900/50 border-green-500 text-green-200"
+        className: "bg-red-900/50 border-red-500 text-red-200"
       });
     }
   };
@@ -87,14 +136,16 @@ const Shop = () => {
     const { soldCount, totalValue } = sellAllCommonItems();
     if (soldCount > 0) {
       playSound('EQUIP');
+      setVendorQuote("Trash for cash. Classic.");
       toast({
-        title: "Bulk Sale Complete",
-        description: `Recycled ${soldCount} common items for ${totalValue} Scrap`,
-        className: "bg-green-900/50 border-green-500 text-green-200"
+        title: "Bulk Liquidation",
+        description: `Recycled ${soldCount} items for ${totalValue} Scrap`,
+        className: "bg-red-900/50 border-red-500 text-red-200"
       });
     }
   };
   
+  // --- DATA FILTERING ---
   const inventoryParts = gameState.inventory.map(id => getPartById(id)).filter(Boolean);
   const filteredParts = activeCategory === 'ALL' 
     ? inventoryParts 
@@ -107,78 +158,77 @@ const Shop = () => {
 
   const commonItemsCount = inventoryParts.filter(p => p.tier === 1).length;
   
-const purchasableThemes = [
-    // --- TIER 1: COLORS (Cheap?) ---
+  // --- THEME DATA (Keeping your existing logic) ---
+  const purchasableThemes = [
     { name: 'Cyber Blue', color: THEMES['Cyber Blue'].hex },
     { name: 'Crimson Red', color: THEMES['Crimson Red'].hex },
     { name: 'Midas Gold', color: THEMES['Midas Gold'].hex },
     { name: 'Hot Pink', color: THEMES['Hot Pink'].hex },
     { name: 'Electric Orange', color: THEMES['Electric Orange'].hex },
-
-    // --- TIER 2: NEON & TECH (Mid-Range?) ---
     { name: 'Neon Violet', color: THEMES['Neon Violet'].hex },
     { name: 'Toxic Acid', color: THEMES['Toxic Acid'].hex },
     { name: 'Plasma Teal', color: THEMES['Plasma Teal'].hex },
-    { name: 'Solar Flare', color: THEMES['Solar Flare'].hex },     // NEW
+    { name: 'Solar Flare', color: THEMES['Solar Flare'].hex },
     { name: 'Amber Terminal', color: THEMES['Amber Terminal'].hex },
-
-    // --- TIER 3: TACTICAL (cool dark modes) ---
-    { name: 'Stealth Grey', color: THEMES['Stealth Grey'].hex },   // NEW
-    { name: 'Night Ops', color: THEMES['Night Ops'].hex },         // NEW
-    { name: 'Blood Moon', color: THEMES['Blood Moon'].hex },       // NEW
+    { name: 'Stealth Grey', color: THEMES['Stealth Grey'].hex },
+    { name: 'Night Ops', color: THEMES['Night Ops'].hex },
+    { name: 'Blood Moon', color: THEMES['Blood Moon'].hex },
     { name: 'Matrix Code', color: THEMES['Matrix Code'].hex },
-
-    // --- TIER 4: LUXURY (Expensive status symbols) ---
     { name: 'Ice White', color: THEMES['Ice White'].hex },
     { name: 'Royal Purple', color: THEMES['Royal Purple'].hex },
     { name: 'Rose Gold', color: THEMES['Rose Gold'].hex },
-    { name: 'Obsidian', color: THEMES['Obsidian'].hex },           // NEW
+    { name: 'Obsidian', color: THEMES['Obsidian'].hex },
     { name: 'Void', color: THEMES['Void'].hex },
   ];
 
   return (
     <>
       <Helmet>
-        <title>Shop - Robot Battle Arena</title>
+        <title>Black Market - Scrap Syndicate</title>
       </Helmet>
       
-      {/* 1. BACKGROUND LAYER */}
-      <ScreenBackground image={shopBg} opacity={0.4} />
+      <ScreenBackground image={shopBg} opacity={0.3} />
 
-      {/* 2. MAIN CONTENT */}
       <div className="h-screen overflow-y-auto bg-transparent font-mono text-[#e0e0e0] flex flex-col relative z-10 pb-12">
         
-        {/* HEADER SECTION (Unified Hub Style) */}
-        <div className="bg-black/80 border-b border-[var(--accent-color)] backdrop-blur-md sticky top-0 z-40">
+        {/* HEADER SECTION */}
+        <div className="bg-black/90 border-b border-red-900/50 backdrop-blur-md sticky top-0 z-40 shadow-2xl">
             <div className="max-w-7xl mx-auto p-4 flex flex-col md:flex-row justify-between items-center gap-4">
                 
-                {/* Title & Back Button */}
                 <div className="text-center md:text-left flex items-center gap-4">
                     <Button 
                         onClick={() => navigate('/hub')} 
                         variant="ghost" 
-                        className="text-gray-400 hover:text-[var(--accent-color)] p-0 h-auto hover:bg-transparent"
+                        className="text-red-800 hover:text-red-500 p-0 h-auto hover:bg-transparent"
                     >
                         <ArrowLeft className="w-6 h-6" />
                     </Button>
                     <div>
-                        <h1 className="text-3xl font-black text-[var(--accent-color)] uppercase tracking-widest [text-shadow:0_0_15px_rgba(var(--accent-rgb),0.5)] leading-none">
-                            Supply Depot
+                        <h1 className="text-3xl font-black text-red-600 uppercase tracking-widest [text-shadow:0_0_15px_rgba(220,38,38,0.5)] leading-none italic">
+                            BLACK MARKET
                         </h1>
                         <div className="flex items-center gap-2 mt-1 justify-center md:justify-start">
-                            <span className="w-2 h-2 bg-yellow-500 animate-pulse rounded-full" />
-                            <p className="text-[10px] text-gray-500 uppercase tracking-[0.3em]">Acquisitions & Liquidations</p>
+                            <span className="w-2 h-2 bg-red-600 animate-pulse rounded-full" />
+                            <p className="text-[10px] text-red-900 uppercase tracking-[0.3em] font-bold">Unregulated Goods</p>
                         </div>
                     </div>
                 </div>
 
-                {/* COMPACT STATS BAR */}
-                <div className="flex items-center gap-4 md:gap-8 bg-[#050505] border border-gray-800 rounded-sm px-6 py-2">
+                {/* VENDOR QUOTE BOX */}
+                <div className="hidden md:flex flex-col items-end opacity-70">
+                    <div className="bg-zinc-900 border-l-2 border-red-600 px-4 py-2 max-w-sm italic text-right text-xs text-gray-400">
+                        "{vendorQuote}"
+                    </div>
+                    <div className="text-[9px] text-red-800 uppercase tracking-widest mt-1 font-bold">THE OPERATOR</div>
+                </div>
+
+                {/* STATS BAR */}
+                <div className="flex items-center gap-4 bg-zinc-950 border border-zinc-800 rounded-sm px-6 py-2 shadow-inner">
                     <div className="flex items-center gap-3">
-                        <Coins className="w-4 h-4 text-yellow-500" />
-                        <div className="flex flex-col">
-                            <span className="text-xs text-gray-500 uppercase tracking-wider">Scrap</span>
-                            <span className="text-lg font-bold text-yellow-500 leading-none">{gameState.scrap}</span>
+                        <Coins className="w-4 h-4 text-yellow-600" />
+                        <div className="flex flex-col text-right">
+                            <span className="text-[9px] text-zinc-600 uppercase tracking-wider">Funds</span>
+                            <span className="text-lg font-bold text-yellow-600 leading-none">{gameState.scrap}</span>
                         </div>
                     </div>
                 </div>
@@ -187,161 +237,145 @@ const purchasableThemes = [
 
         <div className="max-w-7xl mx-auto w-full p-4 md:p-8 space-y-8">
           
-          {/* SECTION 1: PURCHASING (Tightened Layout) */}
-          <div className="grid md:grid-cols-2 gap-4">
+          {/* SECTION 1: THE GOODS (Daily Stock + Cache) */}
+          <div className="grid lg:grid-cols-3 gap-6">
             
-            {/* Mystery Crate - Reduced Padding */}
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.2 }}
-              className="bg-black/60 backdrop-blur-md rounded-none p-5 border border-[var(--accent-color)] flex flex-col justify-between"
+            {/* DAILY ROTATION (New!) */}
+            <motion.div 
+               initial={{ opacity: 0, x: -20 }}
+               animate={{ opacity: 1, x: 0 }}
+               className="lg:col-span-2 bg-black/60 border border-zinc-800 p-5 relative overflow-hidden"
             >
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 border border-purple-500 bg-purple-500/10 rounded-sm">
-                      <Package className="w-6 h-6 text-purple-400" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-bold text-[#e0e0e0] uppercase tracking-wider">Mystery Crate</h3>
-                    <p className="text-gray-500 text-[10px] uppercase tracking-widest">Random Tier 1-4 part</p>
-                  </div>
+                <div className="absolute top-0 left-0 bg-red-900/80 text-white text-[9px] font-bold px-2 py-1 uppercase tracking-widest">
+                    Daily Rotation
                 </div>
-                <div className="text-right">
-                  <div className="text-2xl font-bold text-yellow-500">{MYSTERY_CRATE_COST}</div>
-                  <div className="text-[9px] text-gray-500 uppercase">Scrap</div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                    {dailyStock.map((part, idx) => {
+                         const Icon = IconMap[part.icon] || IconMap.Box;
+                         const colors = RARITY_COLORS[part.tier];
+                         return (
+                             <div key={idx} className="bg-zinc-900/80 border border-zinc-700 p-3 flex flex-col justify-between group hover:border-red-500 transition-colors">
+                                 <div>
+                                     <div className="flex justify-between items-start mb-2">
+                                         <Icon className={cn("w-6 h-6", colors.text)} />
+                                         <RarityBadge tier={part.tier} className="scale-75 origin-right" />
+                                     </div>
+                                     <div className="text-sm font-bold text-gray-300 truncate">{part.name}</div>
+                                     <div className="text-[10px] text-zinc-600 uppercase">{part.slot}</div>
+                                 </div>
+                                 <Button 
+                                     onClick={() => handlePurchaseStock(part)}
+                                     disabled={gameState.scrap < part.price}
+                                     className="w-full mt-3 h-8 bg-black border border-zinc-600 hover:border-yellow-500 hover:text-yellow-500 text-xs font-mono"
+                                 >
+                                     {part.price} SCRAP
+                                 </Button>
+                             </div>
+                         )
+                    })}
                 </div>
-              </div>
-              
-              {/* Compact Probability Chart */}
-              <div className="grid grid-cols-4 gap-1 mb-4 text-center text-[9px] uppercase tracking-wider font-mono">
-                <div className="bg-gray-900 border border-gray-600 p-1 rounded-sm">
-                  <div className="text-gray-400">Common</div>
-                  <div className="text-white font-bold">50%</div>
-                </div>
-                <div className="bg-emerald-900/20 border border-emerald-600 p-1 rounded-sm">
-                  <div className="text-emerald-400">Uncommon</div>
-                  <div className="text-white font-bold">30%</div>
-                </div>
-                <div className="bg-blue-900/20 border border-blue-600 p-1 rounded-sm">
-                  <div className="text-blue-400">Rare</div>
-                  <div className="text-white font-bold">15%</div>
-                </div>
-                 <div className="bg-amber-900/20 border border-amber-600 p-1 rounded-sm shadow-[0_0_5px_rgba(245,158,11,0.2)]">
-                  <div className="text-amber-400">Leg.</div>
-                  <div className="text-white font-bold">5%</div>
-                </div>
-              </div>
-              
-              <Button
-                onClick={handlePurchase}
-                disabled={gameState.scrap < MYSTERY_CRATE_COST}
-                className="w-full h-10 bg-purple-900/20 border border-purple-500 text-purple-400 hover:bg-purple-900/40 hover:text-purple-300 text-xs rounded-sm uppercase tracking-[0.2em] font-bold shadow-[0_0_15px_rgba(168,85,247,0.1)] hover:shadow-[0_0_20px_rgba(168,85,247,0.3)] transition-all"
-              >
-                Purchase Crate
-              </Button>
             </motion.div>
 
-            {/* Cosmetics Section - Reduced Padding & Height */}
+            {/* SMUGGLER'S CACHE (Was Mystery Crate) */}
             <motion.div
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.3 }}
-              className="bg-black/60 backdrop-blur-md rounded-none p-5 border border-[var(--accent-color)] flex flex-col h-[220px]"
+              className="bg-zinc-950/80 p-5 border border-purple-900/50 flex flex-col justify-between relative overflow-hidden group"
             >
-               <div className="flex items-center justify-between mb-4 flex-shrink-0">
-                 <div className="flex items-center gap-3">
-                    <div className="p-2 border border-[var(--accent-color)] bg-[rgba(var(--accent-rgb),0.1)] rounded-sm">
-                       <Palette className="w-6 h-6 text-[var(--accent-color)]" />
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-bold text-[#e0e0e0] uppercase tracking-wider">Cosmetics</h3>
-                      <p className="text-gray-500 text-[10px] uppercase tracking-widest">Interfaces</p>
-                    </div>
-                 </div>
-               </div>
-
-               <div className="flex-1 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-700 space-y-2">
-                 {purchasableThemes.map((theme) => {
-                   const isOwned = gameState.unlockedThemes.includes(theme.name);
-                   return (
-                     <div key={theme.name} className="flex items-center justify-between p-2 border border-gray-800 bg-gray-900/50 hover:bg-gray-900 transition-colors rounded-sm">
-                       <div className="flex items-center gap-3">
-                         <div className="w-6 h-6 border border-white/20 rounded-sm" style={{ backgroundColor: theme.color, boxShadow: `0 0 5px ${theme.color}` }} />
-                         <div className="font-bold text-white uppercase tracking-wider text-[10px]">{theme.name}</div>
+               <div className="absolute -right-6 -top-6 w-24 h-24 bg-purple-600/20 rounded-full blur-2xl group-hover:bg-purple-600/30 transition-all"></div>
+               
+               <div>
+                   <div className="flex items-center gap-3 mb-2">
+                       <Package className="w-8 h-8 text-purple-500" />
+                       <div>
+                           <h3 className="text-xl font-black text-purple-500 italic uppercase">Smuggler's Cache</h3>
+                           <p className="text-zinc-500 text-[10px] uppercase tracking-widest">Contraband Lottery</p>
                        </div>
-                       
-                       <Button
-                          onClick={() => handleThemePurchase(theme.name)}
-                          disabled={isOwned || gameState.scrap < THEME_PRICE}
-                          size="sm"
-                          className={cn(
-                            "h-6 min-w-[80px] rounded-sm uppercase font-bold text-[9px]",
-                            isOwned ? "bg-gray-800 text-gray-500 border-gray-700" : "bg-black border-[var(--accent-color)] text-[var(--accent-color)] hover:bg-[rgba(var(--accent-rgb),0.1)]"
-                          )}
-                       >
-                          {isOwned ? "OWNED" : `${THEME_PRICE} $`}
-                       </Button>
-                     </div>
-                   );
-                 })}
+                   </div>
+                   
+                   {/* Compact Probability */}
+                   <div className="flex gap-1 mt-4 text-[9px] font-mono uppercase text-center opacity-60">
+                       <div className="flex-1 bg-zinc-900 py-1 border-b-2 border-gray-500">Comm 50%</div>
+                       <div className="flex-1 bg-zinc-900 py-1 border-b-2 border-emerald-500">Unc 30%</div>
+                       <div className="flex-1 bg-zinc-900 py-1 border-b-2 border-blue-500">Rare 15%</div>
+                       <div className="flex-1 bg-zinc-900 py-1 border-b-2 border-amber-500">Leg 5%</div>
+                   </div>
                </div>
+              
+              <div className="mt-6">
+                  <div className="flex justify-between items-end mb-2">
+                      <span className="text-[9px] text-zinc-500 uppercase">Buy-in</span>
+                      <span className="text-xl font-bold text-yellow-600">{MYSTERY_CRATE_COST}</span>
+                  </div>
+                  <Button
+                    onClick={handleCratePurchase}
+                    disabled={gameState.scrap < MYSTERY_CRATE_COST}
+                    className="w-full h-12 bg-purple-900/20 border border-purple-500 text-purple-400 hover:bg-purple-500 hover:text-black font-black uppercase tracking-widest"
+                  >
+                    Open Cache
+                  </Button>
+              </div>
             </motion.div>
           </div>
-          
-          {/* Active Loadout Section (Read Only) */}
-          {equippedParts.length > 0 && (
-             <motion.div
-               initial={{ opacity: 0, y: 20 }}
-               animate={{ opacity: 1, y: 0 }}
-             >
-                <h3 className="flex items-center gap-2 text-sm font-bold text-gray-400 mb-4 uppercase tracking-widest border-b border-gray-800 pb-2">
-                   <ShieldCheck className="w-4 h-4" /> Active Loadout <span className="text-[10px] text-gray-600 ml-2">(Cannot Sell Equipped Items)</span>
-                </h3>
-                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
-                   {equippedParts.map((part, index) => {
-                      const Icon = IconMap[part.icon] || IconMap.Box;
-                      const colors = RARITY_COLORS[part.tier];
-                      return (
-                         <div key={`equipped-${index}`} className={cn("p-3 border rounded-sm bg-gray-900/40 opacity-70 grayscale-[0.5]", colors.border)}>
-                            <div className="flex justify-between items-start mb-2">
-                               <Icon className={cn("w-5 h-5", colors.text)} />
-                               <span className="text-[9px] bg-gray-800 px-1 rounded text-gray-400">EQUIPPED</span>
-                            </div>
-                            <div className="text-[10px] font-bold text-gray-400 truncate">{part.name}</div>
-                         </div>
-                      )
-                   })}
-                </div>
-             </motion.div>
-          )}
 
+          {/* COSMETICS ROW (Condensed) */}
+          <div className="bg-black/40 border-y border-zinc-800 py-4 overflow-x-auto flex gap-4 px-4 scrollbar-hide">
+              <div className="flex-none flex items-center gap-2 px-4 border-r border-zinc-800">
+                  <Palette className="w-5 h-5 text-zinc-600" />
+                  <div className="leading-tight">
+                      <div className="text-xs font-bold text-zinc-400 uppercase">OS Themes</div>
+                      <div className="text-[9px] text-zinc-600">Visual Overrides</div>
+                  </div>
+              </div>
+              {purchasableThemes.map((theme) => {
+                  const isOwned = gameState.unlockedThemes.includes(theme.name);
+                  return (
+                      <button
+                        key={theme.name}
+                        onClick={() => handleThemePurchase(theme.name)}
+                        disabled={isOwned || gameState.scrap < THEME_PRICE}
+                        className={cn(
+                            "flex-none flex items-center gap-2 px-3 py-1.5 border rounded-sm transition-all min-w-[140px]",
+                            isOwned ? "border-zinc-800 bg-zinc-900 opacity-50" : "border-zinc-700 bg-black hover:border-white"
+                        )}
+                      >
+                          <div className="w-3 h-3 rounded-full" style={{ backgroundColor: theme.color }}></div>
+                          <div className="text-left">
+                              <div className="text-[9px] font-bold text-gray-300 uppercase">{theme.name}</div>
+                              <div className="text-[8px] text-zinc-500">{isOwned ? "INSTALLED" : `${THEME_PRICE} CR`}</div>
+                          </div>
+                      </button>
+                  )
+              })}
+          </div>
+          
           {/* INVENTORY / STORAGE SECTION */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-            className="bg-black/60 backdrop-blur-md rounded-none p-6 border border-gray-800"
+            className="bg-black/60 backdrop-blur-md p-6 border border-zinc-800"
           >
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-gray-800 pb-4 mb-4 gap-4">
-               <div className="flex flex-col">
-                   <h3 className="text-lg font-bold text-[#e0e0e0] uppercase tracking-widest flex items-center gap-2">
-                     <Box className="w-4 h-4 text-[var(--accent-color)]" />
-                     Storage
-                   </h3>
-                   <span className="text-[10px] text-gray-500 mt-1">{filteredParts.length} items found</span>
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-zinc-800 pb-4 mb-4 gap-4">
+               <div className="flex items-center gap-3">
+                   <div className="bg-red-900/20 p-2 rounded-sm border border-red-900/50">
+                       <Trash2 className="w-5 h-5 text-red-700" />
+                   </div>
+                   <div>
+                       <h3 className="text-lg font-bold text-zinc-300 uppercase tracking-widest">Scrapyard</h3>
+                       <span className="text-[10px] text-zinc-600 uppercase">Sell unwanted parts</span>
+                   </div>
                </div>
                
-               <div className="flex flex-wrap gap-2">
+               <div className="flex gap-2">
                    {CATEGORIES.map(cat => (
                        <button
                            key={cat}
                            onClick={() => setActiveCategory(cat)}
                            className={cn(
-                               "px-3 py-1 text-[10px] font-bold uppercase tracking-wider rounded-sm border transition-all",
+                               "px-3 py-1 text-[9px] font-bold uppercase tracking-wider border transition-all",
                                activeCategory === cat 
-                                ? "bg-[var(--accent-color)] text-black border-[var(--accent-color)]" 
-                                : "bg-black text-gray-500 border-gray-800 hover:border-gray-600"
+                                ? "bg-zinc-200 text-black border-white" 
+                                : "bg-black text-zinc-600 border-zinc-800 hover:border-zinc-600"
                            )}
                        >
                            {cat === 'RightArm' ? 'R-Arm' : cat === 'LeftArm' ? 'L-Arm' : cat}
@@ -353,19 +387,19 @@ const purchasableThemes = [
                  <Button 
                    onClick={handleSellAllCommons}
                    size="sm"
-                   className="bg-red-900/20 text-red-400 border border-red-900 hover:bg-red-900/40 hover:text-red-300 uppercase font-mono text-[10px] tracking-wider h-7"
+                   className="bg-red-950/40 text-red-500 border border-red-900/50 hover:bg-red-900 hover:text-white uppercase font-mono text-[10px] h-8"
                  >
-                    <Trash2 className="w-3 h-3 mr-2" /> Dump Commons ({commonItemsCount})
+                    Dump All Commons ({commonItemsCount})
                  </Button>
                )}
             </div>
             
             {filteredParts.length === 0 ? (
-              <div className="text-gray-600 text-center py-12 border-2 border-dashed border-gray-800 font-mono uppercase rounded-lg bg-black/20 text-xs">
-                <p>No items found in category: {activeCategory}</p>
+              <div className="text-zinc-700 text-center py-12 border-2 border-dashed border-zinc-900 font-mono uppercase text-xs">
+                No scrap found in sector: {activeCategory}
               </div>
             ) : (
-              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-7 gap-2">
                 <AnimatePresence mode='popLayout'>
                   {filteredParts.map((part, index) => {
                     const Icon = IconMap[part.icon] || IconMap.Box;
@@ -378,45 +412,32 @@ const purchasableThemes = [
                         layout
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.5, transition: { duration: 0.2 } }}
+                        exit={{ opacity: 0, scale: 0.5 }}
                         className={cn(
-                          "rounded-sm p-3 border relative group bg-black transition-all hover:bg-gray-900 flex flex-col justify-between min-h-[130px]",
-                          part.tier >= 3 ? colors.border : "border-gray-800 hover:border-[var(--accent-color)]",
+                          "rounded-sm p-2 border relative group bg-black transition-all hover:bg-zinc-900 flex flex-col justify-between h-[110px]",
+                          "border-zinc-800 hover:border-red-800"
                         )}
                       >
-                        {/* Content Container */}
                         <div className="relative z-10">
-                          <div className="flex justify-between items-start mb-2">
-                            <Icon className={cn("w-6 h-6", colors.text)} />
-                            <RarityBadge tier={part.tier} className="scale-[0.6] origin-top-right -mr-3 -mt-2" />
+                          <div className="flex justify-between items-start mb-1">
+                            <Icon className={cn("w-5 h-5", colors.text)} />
+                            <RarityBadge tier={part.tier} className="scale-[0.6] -mr-2 -mt-1" />
                           </div>
-                          <div className="text-[10px] font-bold text-[#e0e0e0] mb-1 truncate font-mono uppercase tracking-tight">
+                          <div className="text-[9px] font-bold text-zinc-400 mb-0.5 truncate font-mono uppercase">
                             {part.name}
                           </div>
-                          <div className="text-[8px] text-gray-500 uppercase tracking-widest mb-2">
-                            [{part.slot}]
-                          </div>
                         </div>
 
-                        {/* HOVER STATS (Covers Image, NOT sell button) */}
-                        <div className="absolute inset-x-0 top-0 h-[65%] bg-black/95 p-2 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-center text-[9px] font-mono border-b border-gray-800 pointer-events-none z-20">
-                          <div className="flex justify-between mb-1"><span>DMG:</span> <span className="text-red-400">{part.stats.Damage}</span></div>
-                          <div className="flex justify-between mb-1"><span>SPD:</span> <span className="text-yellow-400">{part.stats.Speed}</span></div>
-                          <div className="flex justify-between"><span>ARM:</span> <span className="text-green-400">{part.stats.Armor}</span></div>
-                        </div>
-
-                        {/* SELL BUTTON (Always Visible / Accessible) */}
-                        <Button
-                          onClick={(e) => {
-                             e.stopPropagation();
-                             handleSell(part.id, part.name);
-                          }}
-                          variant="outline"
-                          className="w-full h-7 mt-auto border-gray-700 bg-gray-900/50 hover:bg-red-900/30 hover:text-red-400 hover:border-red-500 text-gray-500 text-[9px] uppercase font-mono tracking-wider flex justify-between px-2 relative z-30"
+                        {/* SELL OVERLAY */}
+                        <div className="absolute inset-0 bg-red-900/90 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-20 cursor-pointer"
+                             onClick={(e) => {
+                                 e.stopPropagation();
+                                 handleSell(part.id, part.name);
+                             }}
                         >
-                           <span>Sell</span>
-                           <span className="flex items-center text-white"><span className="text-yellow-500 mr-1 font-bold">{sellValue}</span></span>
-                        </Button>
+                            <span className="text-[9px] font-bold text-red-200 uppercase mb-1">LIQUIDATE</span>
+                            <span className="text-lg font-bold text-white">{sellValue}</span>
+                        </div>
                       </motion.div>
                     );
                   })}
