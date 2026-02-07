@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Helmet } from 'react-helmet';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
@@ -6,11 +6,11 @@ import { useGameContext, THEMES } from '@/context/GameContext';
 import { useSoundContext } from '@/context/SoundContext';
 import { Button } from '@/components/ui/button';
 import { 
-  ArrowLeft, Package, Coins, Palette, Check, Trash2, Box, 
-  ShieldCheck, Skull, AlertTriangle, RefreshCw 
+  ArrowLeft, Package, Coins, Palette, Trash2, Box, 
+  ShieldCheck, X, Zap, Activity
 } from 'lucide-react';
 import { MYSTERY_CRATE_COST, RARITY_COLORS } from '@/constants/gameConstants';
-import { getPartById, ALL_PARTS } from '@/data/parts'; // Import ALL_PARTS to generate daily stock
+import { getPartById, ALL_PARTS } from '@/data/parts';
 import * as LucideIcons from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
 import RarityBadge from '@/components/RarityBadge';
@@ -20,7 +20,7 @@ import shopBg from '@/assets/facto_bg.jpg';
 
 const IconMap = { ...LucideIcons };
 
-// --- THE FENCE CONFIG ---
+// --- CONFIG ---
 const THEME_PRICE = 500;
 const CATEGORIES = ['ALL', 'Head', 'RightArm', 'LeftArm', 'Chassis'];
 const VENDOR_QUOTES = [
@@ -39,51 +39,44 @@ const Shop = () => {
   const { playSound } = useSoundContext();
   
   const [activeCategory, setActiveCategory] = useState('ALL');
-  const [vendorQuote, setVendorQuote] = useState(VENDOR_QUOTES[0]);
+  const [showThemeModal, setShowThemeModal] = useState(false);
+  
+  // Pick a random quote once on mount
+  const vendorQuote = useMemo(() => VENDOR_QUOTES[Math.floor(Math.random() * VENDOR_QUOTES.length)], []);
 
-  // --- DAILY STOCK GENERATOR (Client-Side Mock) ---
-  // In a real app, this would come from the server based on the date.
-  // Here we just pick 3 random items every time you mount the component (or could seed by date).
+  // --- DAILY STOCK GENERATOR ---
   const dailyStock = useMemo(() => {
-      // Filter out Mythics/Omegas for daily shop (keep them rare)
       const validStock = ALL_PARTS.filter(p => p.tier >= 2 && p.tier <= 4); 
       const stock = [];
+      // Seed based generation could go here, for now random
       for(let i=0; i<3; i++) {
-          const randomPart = validStock[Math.floor(Math.random() * validStock.length)];
-          // Add a random price variance (Black Market pricing)
-          const markup = Math.floor(Math.random() * 20) + 10; 
-          stock.push({ ...randomPart, price: getSellValue(randomPart.tier) * 4 + markup });
+          if (validStock.length > 0) {
+              const randomPart = validStock[Math.floor(Math.random() * validStock.length)];
+              const markup = Math.floor(Math.random() * 20) + 10; 
+              stock.push({ ...randomPart, price: getSellValue(randomPart.tier) * 4 + markup });
+          }
       }
       return stock;
-  }, []); // Empty dependency array = generates once per visit
+  }, []); 
 
   const handlePurchaseStock = (part) => {
       if (gameState.scrap < part.price) {
-          playVendorSound('DENY');
+          playSound('ERROR');
           return;
       }
       updateScrap(-part.price);
       addToInventory(part.id);
       playSound('BUY');
-      setVendorQuote("Pleasure doing business.");
       toast({
-          title: "Black Market Deal 🤝",
-          description: `Acquired ${part.name}`,
+          title: "Acquired",
+          description: part.name,
           className: cn("text-white border", RARITY_COLORS[part.tier].bg, RARITY_COLORS[part.tier].border)
       });
   };
 
-  const playVendorSound = (type) => {
-      // Placeholder for voice lines later
-      if(type === 'DENY') {
-          playSound('ERROR');
-          setVendorQuote("You're short on scrap, kid.");
-      }
-  };
-
   const handleCratePurchase = () => {
     if (gameState.scrap < MYSTERY_CRATE_COST) {
-      playVendorSound('DENY');
+      playSound('ERROR');
       return;
     }
     
@@ -91,11 +84,10 @@ const Shop = () => {
     updateScrap(-MYSTERY_CRATE_COST);
     addToInventory(newPart.id);
     playSound('BUY');
-    setVendorQuote("Let's see what we fished out...");
     
     toast({
-      title: "Smuggler's Cache Opened 📦",
-      description: `Found: ${newPart.name} (${newPart.rarity})`,
+      title: "Cache Opened",
+      description: `${newPart.name} (${newPart.rarity})`,
       className: cn("text-white border", RARITY_COLORS[newPart.tier].bg, RARITY_COLORS[newPart.tier].border)
     });
   };
@@ -104,17 +96,16 @@ const Shop = () => {
     if (gameState.unlockedThemes.includes(themeName)) return;
 
     if (gameState.scrap < THEME_PRICE) {
-      playVendorSound('DENY');
+      playSound('ERROR');
       return;
     }
 
     updateScrap(-THEME_PRICE);
     unlockTheme(themeName);
     playSound('BUY');
-    setVendorQuote("Flashy. I like it.");
     toast({
-      title: "OS Theme Cracked 🔓",
-      description: `Installed ${themeName} protocol.`,
+      title: "Theme Installed",
+      description: `${themeName} protocol active.`,
       className: "bg-[var(--accent-color)] text-black border border-white font-bold"
     });
   };
@@ -123,29 +114,15 @@ const Shop = () => {
     const value = sellItem(itemId);
     if (value) {
       playSound('EQUIP'); 
-      setVendorQuote("I can strip this for parts.");
       toast({
         title: "Liquidated",
-        description: `Sold ${itemName} for ${value} Scrap`,
-        className: "bg-red-900/50 border-red-500 text-red-200"
-      });
-    }
-  };
-
-  const handleSellAllCommons = () => {
-    const { soldCount, totalValue } = sellAllCommonItems();
-    if (soldCount > 0) {
-      playSound('EQUIP');
-      setVendorQuote("Trash for cash. Classic.");
-      toast({
-        title: "Bulk Liquidation",
-        description: `Recycled ${soldCount} items for ${totalValue} Scrap`,
+        description: `+${value} Scrap`,
         className: "bg-red-900/50 border-red-500 text-red-200"
       });
     }
   };
   
-  // --- DATA FILTERING ---
+  // --- FILTERING ---
   const inventoryParts = gameState.inventory.map(id => getPartById(id)).filter(Boolean);
   const filteredParts = activeCategory === 'ALL' 
     ? inventoryParts 
@@ -158,7 +135,7 @@ const Shop = () => {
 
   const commonItemsCount = inventoryParts.filter(p => p.tier === 1).length;
   
-  // --- THEME DATA (Keeping your existing logic) ---
+  // Theme List
   const purchasableThemes = [
     { name: 'Cyber Blue', color: THEMES['Cyber Blue'].hex },
     { name: 'Crimson Red', color: THEMES['Crimson Red'].hex },
@@ -189,13 +166,63 @@ const Shop = () => {
       
       <ScreenBackground image={shopBg} opacity={0.3} />
 
+      {/* --- THEME CATALOG MODAL --- */}
+      <AnimatePresence>
+        {showThemeModal && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setShowThemeModal(false)} />
+            <motion.div 
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="relative z-10 bg-zinc-950 border border-zinc-700 w-full max-w-4xl max-h-[80vh] flex flex-col shadow-2xl"
+            >
+              <div className="p-4 border-b border-zinc-800 flex justify-between items-center bg-black/50">
+                <div className="flex items-center gap-3">
+                    <Palette className="w-5 h-5 text-zinc-400" />
+                    <h2 className="text-xl font-black text-white uppercase tracking-widest">Visual Interface Protocols</h2>
+                </div>
+                <Button variant="ghost" size="sm" onClick={() => setShowThemeModal(false)}>
+                    <X className="w-6 h-6 text-zinc-500 hover:text-white" />
+                </Button>
+              </div>
+              
+              <div className="p-6 overflow-y-auto grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {purchasableThemes.map((theme) => {
+                  const isOwned = gameState.unlockedThemes.includes(theme.name);
+                  return (
+                      <button
+                        key={theme.name}
+                        onClick={() => handleThemePurchase(theme.name)}
+                        disabled={isOwned || gameState.scrap < THEME_PRICE}
+                        className={cn(
+                            "flex flex-col items-center gap-3 p-4 border rounded-sm transition-all group relative overflow-hidden",
+                            isOwned ? "border-zinc-800 bg-zinc-900/50" : "border-zinc-700 bg-black hover:border-white"
+                        )}
+                      >
+                          <div className="w-12 h-12 rounded-full shadow-lg" style={{ backgroundColor: theme.color, boxShadow: `0 0 15px ${theme.color}` }}></div>
+                          <div className="text-center z-10">
+                              <div className="text-xs font-bold text-gray-300 uppercase tracking-wider">{theme.name}</div>
+                              <div className={cn("text-[10px] mt-1 font-mono", isOwned ? "text-emerald-500" : "text-zinc-500")}>
+                                {isOwned ? "INSTALLED" : `${THEME_PRICE} SCRAP`}
+                              </div>
+                          </div>
+                      </button>
+                  )
+              })}
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
       <div className="h-screen overflow-y-auto bg-transparent font-mono text-[#e0e0e0] flex flex-col relative z-10 pb-12">
         
         {/* HEADER SECTION */}
-        <div className="bg-black/90 border-b border-red-900/50 backdrop-blur-md sticky top-0 z-40 shadow-2xl">
-            <div className="max-w-7xl mx-auto p-4 flex flex-col md:flex-row justify-between items-center gap-4">
+        <div className="bg-black/90 border-b border-red-900/30 backdrop-blur-md sticky top-0 z-40 shadow-2xl">
+            <div className="max-w-7xl mx-auto px-4 py-3 flex flex-col md:flex-row justify-between items-center gap-4">
                 
-                <div className="text-center md:text-left flex items-center gap-4">
+                <div className="text-center md:text-left flex items-center gap-4 w-full md:w-auto justify-between md:justify-start">
                     <Button 
                         onClick={() => navigate('/hub')} 
                         variant="ghost" 
@@ -204,27 +231,29 @@ const Shop = () => {
                         <ArrowLeft className="w-6 h-6" />
                     </Button>
                     <div>
-                        <h1 className="text-3xl font-black text-red-600 uppercase tracking-widest [text-shadow:0_0_15px_rgba(220,38,38,0.5)] leading-none italic">
+                        <h1 className="text-2xl md:text-3xl font-black text-red-600 uppercase tracking-widest [text-shadow:0_0_15px_rgba(220,38,38,0.5)] leading-none italic">
                             BLACK MARKET
                         </h1>
-                        <div className="flex items-center gap-2 mt-1 justify-center md:justify-start">
-                            <span className="w-2 h-2 bg-red-600 animate-pulse rounded-full" />
-                            <p className="text-[10px] text-red-900 uppercase tracking-[0.3em] font-bold">Unregulated Goods</p>
+                        <div className="flex items-center gap-2 mt-1">
+                            <span className="text-[10px] text-zinc-500 uppercase tracking-wider">
+                                // VENDOR_COMM_LINK: <span className="text-red-400 italic">"{vendorQuote}"</span>
+                            </span>
                         </div>
                     </div>
                 </div>
 
-                {/* VENDOR QUOTE BOX */}
-                <div className="hidden md:flex flex-col items-end opacity-70">
-                    <div className="bg-zinc-900 border-l-2 border-red-600 px-4 py-2 max-w-sm italic text-right text-xs text-gray-400">
-                        "{vendorQuote}"
-                    </div>
-                    <div className="text-[9px] text-red-800 uppercase tracking-widest mt-1 font-bold">THE OPERATOR</div>
-                </div>
+                {/* STATS BAR + COSMETICS BTN */}
+                <div className="flex items-center gap-4">
+                    <Button 
+                        onClick={() => setShowThemeModal(true)}
+                        size="sm"
+                        variant="outline"
+                        className="h-8 border-zinc-700 text-zinc-400 hover:text-white hover:border-white text-[10px] uppercase tracking-wider"
+                    >
+                        <Palette className="w-3 h-3 mr-2" /> Catalog
+                    </Button>
 
-                {/* STATS BAR */}
-                <div className="flex items-center gap-4 bg-zinc-950 border border-zinc-800 rounded-sm px-6 py-2 shadow-inner">
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 bg-zinc-950 border border-zinc-800 rounded-sm px-4 py-1.5 shadow-inner">
                         <Coins className="w-4 h-4 text-yellow-600" />
                         <div className="flex flex-col text-right">
                             <span className="text-[9px] text-zinc-600 uppercase tracking-wider">Funds</span>
@@ -235,38 +264,44 @@ const Shop = () => {
             </div>
         </div>
 
-        <div className="max-w-7xl mx-auto w-full p-4 md:p-8 space-y-8">
+        <div className="max-w-7xl mx-auto w-full p-4 md:p-8 space-y-6">
           
-          {/* SECTION 1: THE GOODS (Daily Stock + Cache) */}
+          {/* ROW 1: GOODS */}
           <div className="grid lg:grid-cols-3 gap-6">
             
-            {/* DAILY ROTATION (New!) */}
+            {/* DAILY ROTATION */}
             <motion.div 
                initial={{ opacity: 0, x: -20 }}
                animate={{ opacity: 1, x: 0 }}
-               className="lg:col-span-2 bg-black/60 border border-zinc-800 p-5 relative overflow-hidden"
+               className="lg:col-span-2 bg-black/60 border border-zinc-800 p-4 relative"
             >
-                <div className="absolute top-0 left-0 bg-red-900/80 text-white text-[9px] font-bold px-2 py-1 uppercase tracking-widest">
-                    Daily Rotation
+                <div className="absolute top-0 left-0 bg-red-900/80 text-white text-[9px] font-bold px-2 py-1 uppercase tracking-widest flex items-center gap-2">
+                    <RefreshCw className="w-3 h-3" /> Daily Rotation
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
                     {dailyStock.map((part, idx) => {
                          const Icon = IconMap[part.icon] || IconMap.Box;
                          const colors = RARITY_COLORS[part.tier];
                          return (
-                             <div key={idx} className="bg-zinc-900/80 border border-zinc-700 p-3 flex flex-col justify-between group hover:border-red-500 transition-colors">
-                                 <div>
-                                     <div className="flex justify-between items-start mb-2">
-                                         <Icon className={cn("w-6 h-6", colors.text)} />
-                                         <RarityBadge tier={part.tier} className="scale-75 origin-right" />
+                             <div key={idx} className="bg-zinc-900/40 border border-zinc-800 p-3 flex flex-col justify-between group hover:border-red-500/50 transition-colors">
+                                 <div className="flex gap-3 mb-2">
+                                     <div className={cn("p-2 border bg-black h-10 w-10 flex items-center justify-center", colors.border)}>
+                                         <Icon className={cn("w-5 h-5", colors.text)} />
                                      </div>
-                                     <div className="text-sm font-bold text-gray-300 truncate">{part.name}</div>
-                                     <div className="text-[10px] text-zinc-600 uppercase">{part.slot}</div>
+                                     <div className="min-w-0">
+                                         <div className="text-xs font-bold text-gray-200 truncate">{part.name}</div>
+                                         <RarityBadge tier={part.tier} className="scale-75 origin-left mt-1" />
+                                     </div>
+                                 </div>
+                                 <div className="grid grid-cols-3 gap-1 mb-3 text-[9px] font-mono text-zinc-500">
+                                     <div className="bg-black p-1 text-center border border-zinc-800">DMG <span className="text-zinc-300 block">{part.stats.Damage}</span></div>
+                                     <div className="bg-black p-1 text-center border border-zinc-800">SPD <span className="text-zinc-300 block">{part.stats.Speed}</span></div>
+                                     <div className="bg-black p-1 text-center border border-zinc-800">ARM <span className="text-zinc-300 block">{part.stats.Armor}</span></div>
                                  </div>
                                  <Button 
                                      onClick={() => handlePurchaseStock(part)}
                                      disabled={gameState.scrap < part.price}
-                                     className="w-full mt-3 h-8 bg-black border border-zinc-600 hover:border-yellow-500 hover:text-yellow-500 text-xs font-mono"
+                                     className="w-full h-7 bg-zinc-950 border border-zinc-700 hover:border-yellow-500 hover:text-yellow-500 text-[10px] font-mono"
                                  >
                                      {part.price} SCRAP
                                  </Button>
@@ -276,97 +311,86 @@ const Shop = () => {
                 </div>
             </motion.div>
 
-            {/* SMUGGLER'S CACHE (Was Mystery Crate) */}
+            {/* SMUGGLER'S CACHE */}
             <motion.div
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
-              className="bg-zinc-950/80 p-5 border border-purple-900/50 flex flex-col justify-between relative overflow-hidden group"
+              className="bg-gradient-to-br from-zinc-900 to-black p-4 border border-purple-900/30 flex flex-col justify-between relative overflow-hidden"
             >
-               <div className="absolute -right-6 -top-6 w-24 h-24 bg-purple-600/20 rounded-full blur-2xl group-hover:bg-purple-600/30 transition-all"></div>
-               
-               <div>
-                   <div className="flex items-center gap-3 mb-2">
-                       <Package className="w-8 h-8 text-purple-500" />
-                       <div>
-                           <h3 className="text-xl font-black text-purple-500 italic uppercase">Smuggler's Cache</h3>
-                           <p className="text-zinc-500 text-[10px] uppercase tracking-widest">Contraband Lottery</p>
-                       </div>
+               <div className="flex items-center gap-4 relative z-10">
+                   <div className="p-3 bg-purple-900/20 border border-purple-500/50 rounded-sm">
+                       <Package className="w-6 h-6 text-purple-400" />
                    </div>
-                   
-                   {/* Compact Probability */}
-                   <div className="flex gap-1 mt-4 text-[9px] font-mono uppercase text-center opacity-60">
-                       <div className="flex-1 bg-zinc-900 py-1 border-b-2 border-gray-500">Comm 50%</div>
-                       <div className="flex-1 bg-zinc-900 py-1 border-b-2 border-emerald-500">Unc 30%</div>
-                       <div className="flex-1 bg-zinc-900 py-1 border-b-2 border-blue-500">Rare 15%</div>
-                       <div className="flex-1 bg-zinc-900 py-1 border-b-2 border-amber-500">Leg 5%</div>
+                   <div>
+                       <h3 className="text-lg font-black text-purple-400 italic uppercase">Smuggler's Cache</h3>
+                       <p className="text-zinc-500 text-[10px] uppercase tracking-widest">Contraband Lottery</p>
                    </div>
                </div>
+               
+               <div className="grid grid-cols-2 gap-2 my-4 relative z-10">
+                   <div className="bg-black/50 p-2 text-center border border-purple-900/20">
+                       <div className="text-[9px] text-zinc-500 uppercase">Buy-in</div>
+                       <div className="text-lg font-bold text-yellow-500">{MYSTERY_CRATE_COST}</div>
+                   </div>
+                   <div className="bg-black/50 p-2 text-center border border-purple-900/20">
+                       <div className="text-[9px] text-zinc-500 uppercase">Yield</div>
+                       <div className="text-lg font-bold text-purple-400">Tier 1-4</div>
+                   </div>
+               </div>
+               
+               <Button
+                onClick={handleCratePurchase}
+                disabled={gameState.scrap < MYSTERY_CRATE_COST}
+                className="w-full h-10 bg-purple-600 hover:bg-purple-500 text-white font-black uppercase tracking-widest text-xs relative z-10"
+              >
+                Unlock Cache
+              </Button>
               
-              <div className="mt-6">
-                  <div className="flex justify-between items-end mb-2">
-                      <span className="text-[9px] text-zinc-500 uppercase">Buy-in</span>
-                      <span className="text-xl font-bold text-yellow-600">{MYSTERY_CRATE_COST}</span>
-                  </div>
-                  <Button
-                    onClick={handleCratePurchase}
-                    disabled={gameState.scrap < MYSTERY_CRATE_COST}
-                    className="w-full h-12 bg-purple-900/20 border border-purple-500 text-purple-400 hover:bg-purple-500 hover:text-black font-black uppercase tracking-widest"
-                  >
-                    Open Cache
-                  </Button>
-              </div>
+              {/* Background FX */}
+              <div className="absolute -right-10 -bottom-10 w-32 h-32 bg-purple-600/10 rounded-full blur-3xl"></div>
             </motion.div>
           </div>
-
-          {/* COSMETICS ROW (Condensed) */}
-          <div className="bg-black/40 border-y border-zinc-800 py-4 overflow-x-auto flex gap-4 px-4 scrollbar-hide">
-              <div className="flex-none flex items-center gap-2 px-4 border-r border-zinc-800">
-                  <Palette className="w-5 h-5 text-zinc-600" />
-                  <div className="leading-tight">
-                      <div className="text-xs font-bold text-zinc-400 uppercase">OS Themes</div>
-                      <div className="text-[9px] text-zinc-600">Visual Overrides</div>
-                  </div>
-              </div>
-              {purchasableThemes.map((theme) => {
-                  const isOwned = gameState.unlockedThemes.includes(theme.name);
-                  return (
-                      <button
-                        key={theme.name}
-                        onClick={() => handleThemePurchase(theme.name)}
-                        disabled={isOwned || gameState.scrap < THEME_PRICE}
-                        className={cn(
-                            "flex-none flex items-center gap-2 px-3 py-1.5 border rounded-sm transition-all min-w-[140px]",
-                            isOwned ? "border-zinc-800 bg-zinc-900 opacity-50" : "border-zinc-700 bg-black hover:border-white"
-                        )}
-                      >
-                          <div className="w-3 h-3 rounded-full" style={{ backgroundColor: theme.color }}></div>
-                          <div className="text-left">
-                              <div className="text-[9px] font-bold text-gray-300 uppercase">{theme.name}</div>
-                              <div className="text-[8px] text-zinc-500">{isOwned ? "INSTALLED" : `${THEME_PRICE} CR`}</div>
-                          </div>
-                      </button>
-                  )
-              })}
-          </div>
           
-          {/* INVENTORY / STORAGE SECTION */}
+          {/* ROW 2: ACTIVE LOADOUT (Visual Reference) */}
+          {equippedParts.length > 0 && (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                <div className="flex items-center gap-2 mb-2 border-b border-zinc-800 pb-1">
+                    <Activity className="w-4 h-4 text-emerald-500" />
+                    <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest">Active Loadout</h3>
+                    <span className="text-[9px] text-zinc-600 ml-auto uppercase">Safe from liquidation</span>
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-6 gap-2">
+                    {equippedParts.map((part, i) => {
+                        const Icon = IconMap[part.icon] || IconMap.Box;
+                        return (
+                            <div key={i} className="bg-zinc-900/30 border border-zinc-800 p-2 flex items-center gap-3 opacity-75">
+                                <Icon className="w-4 h-4 text-zinc-500" />
+                                <div className="truncate text-[10px] font-bold text-zinc-400">{part.name}</div>
+                            </div>
+                        )
+                    })}
+                </div>
+            </motion.div>
+          )}
+
+          {/* ROW 3: SCRAPYARD (Inventory) */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-black/60 backdrop-blur-md p-6 border border-zinc-800"
+            className="bg-black/60 backdrop-blur-md p-4 border border-zinc-800 min-h-[400px]"
           >
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-zinc-800 pb-4 mb-4 gap-4">
-               <div className="flex items-center gap-3">
-                   <div className="bg-red-900/20 p-2 rounded-sm border border-red-900/50">
-                       <Trash2 className="w-5 h-5 text-red-700" />
+            {/* Toolbar */}
+            <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+               <div className="flex items-center gap-3 w-full md:w-auto">
+                   <div className="bg-zinc-900 p-2 rounded-sm border border-zinc-700">
+                       <Trash2 className="w-4 h-4 text-zinc-400" />
                    </div>
                    <div>
                        <h3 className="text-lg font-bold text-zinc-300 uppercase tracking-widest">Scrapyard</h3>
-                       <span className="text-[10px] text-zinc-600 uppercase">Sell unwanted parts</span>
                    </div>
                </div>
                
-               <div className="flex gap-2">
+               <div className="flex flex-wrap gap-1 justify-center">
                    {CATEGORIES.map(cat => (
                        <button
                            key={cat}
@@ -387,19 +411,15 @@ const Shop = () => {
                  <Button 
                    onClick={handleSellAllCommons}
                    size="sm"
-                   className="bg-red-950/40 text-red-500 border border-red-900/50 hover:bg-red-900 hover:text-white uppercase font-mono text-[10px] h-8"
+                   className="bg-red-950/20 text-red-500 border border-red-900/30 hover:bg-red-900 hover:text-white uppercase font-mono text-[9px] h-7 px-3"
                  >
-                    Dump All Commons ({commonItemsCount})
+                    Dump Commons ({commonItemsCount})
                  </Button>
                )}
             </div>
             
-            {filteredParts.length === 0 ? (
-              <div className="text-zinc-700 text-center py-12 border-2 border-dashed border-zinc-900 font-mono uppercase text-xs">
-                No scrap found in sector: {activeCategory}
-              </div>
-            ) : (
-              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-7 gap-2">
+            {/* Grid */}
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-7 gap-2">
                 <AnimatePresence mode='popLayout'>
                   {filteredParts.map((part, index) => {
                     const Icon = IconMap[part.icon] || IconMap.Box;
@@ -413,37 +433,42 @@ const Shop = () => {
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0, scale: 0.5 }}
-                        className={cn(
-                          "rounded-sm p-2 border relative group bg-black transition-all hover:bg-zinc-900 flex flex-col justify-between h-[110px]",
-                          "border-zinc-800 hover:border-red-800"
-                        )}
+                        className="bg-black border border-zinc-800 p-2 flex flex-col justify-between h-[120px] group hover:border-zinc-600 transition-colors relative"
                       >
-                        <div className="relative z-10">
-                          <div className="flex justify-between items-start mb-1">
+                        {/* Top Info */}
+                        <div className="flex justify-between items-start">
                             <Icon className={cn("w-5 h-5", colors.text)} />
                             <RarityBadge tier={part.tier} className="scale-[0.6] -mr-2 -mt-1" />
-                          </div>
-                          <div className="text-[9px] font-bold text-zinc-400 mb-0.5 truncate font-mono uppercase">
-                            {part.name}
-                          </div>
+                        </div>
+                        
+                        {/* Name & Stats (Always Visible) */}
+                        <div className="mt-1">
+                            <div className="text-[9px] font-bold text-zinc-300 truncate uppercase">{part.name}</div>
+                            <div className="flex gap-1 text-[8px] font-mono text-zinc-600 mt-1">
+                                <span title="Damage" className="text-red-900/80">{part.stats.Damage}</span> • 
+                                <span title="Speed" className="text-yellow-900/80">{part.stats.Speed}</span> • 
+                                <span title="Armor" className="text-green-900/80">{part.stats.Armor}</span>
+                            </div>
                         </div>
 
-                        {/* SELL OVERLAY */}
-                        <div className="absolute inset-0 bg-red-900/90 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-20 cursor-pointer"
-                             onClick={(e) => {
-                                 e.stopPropagation();
-                                 handleSell(part.id, part.name);
-                             }}
+                        {/* Sell Button (Bottom) */}
+                        <Button
+                            onClick={() => handleSell(part.id, part.name)}
+                            className="w-full h-5 bg-zinc-900 border border-zinc-800 text-[8px] text-zinc-500 hover:bg-red-900 hover:text-white hover:border-red-600 mt-auto uppercase"
                         >
-                            <span className="text-[9px] font-bold text-red-200 uppercase mb-1">LIQUIDATE</span>
-                            <span className="text-lg font-bold text-white">{sellValue}</span>
-                        </div>
+                            Sell {sellValue}
+                        </Button>
                       </motion.div>
                     );
                   })}
                 </AnimatePresence>
-              </div>
-            )}
+                
+                {filteredParts.length === 0 && (
+                  <div className="col-span-full py-12 text-center text-zinc-700 text-xs font-mono uppercase border-2 border-dashed border-zinc-900">
+                      Sector Empty
+                  </div>
+                )}
+            </div>
           </motion.div>
         </div>
       </div>
